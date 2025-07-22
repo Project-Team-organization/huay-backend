@@ -4,6 +4,7 @@ const lotterySetsController = require("../controller/lottery/lotterySets.control
 const lotteryTypeController = require("../controller/lottery/lotteryType.controller");
 const huayController = require("../controller/lottery/huay.controller");
 const bettingTypesController = require("../controller/lottery/bettingTypes.controller");
+const lotteryResultsController = require("../controller/lottery/lottery_results.controller");
 const { isAdmin } = require("../middleware/authadmin.middleware");
 const { handleError } = require("puppeteer");
 
@@ -47,8 +48,33 @@ router.get("/huay/:id", huayController.getHuayById); // Get Huay by ID
 router.put("/huay/:id", huayController.updateHuay); // Update Huay //รอเเก้ไข
 
 // ผลหวย
-router.post("/getLotteryResult",isAdmin, huayController.evaluateLotteryResults); // ประกาศผลและค้นหาผู้ชนะ
-router.get("/huay/:lottery_result_id/winners", huayController.getLotteryWinners); // ดูรายชื่อผู้ชนะ
-router.get("/huay/:lottery_result_id/items", huayController.getLotteryResultItems); // ดูผลรางวัลแต่ละประเภท
+
+router.post("/getLotteryResult", huayController.evaluateLotteryResults); // ออกผลหวย
+
+// 1. ดึงข้อมูล lotteryresults ทั้งหมด แบบ pagination
+router.get("/lotteryresults", lotteryResultsController.getAllLotteryResults);
+
+// 2. ดึงข้อมูล lotteryresults แบบ pagination by id
+router.get("/lotteryresults/:id", lotteryResultsController.getLotteryResultById);
+
+// 3. ดึงข้อมูล lotteryresults แบบ pagination by lottery_result_id
+router.get("/lotteryresults/by-result/:lottery_result_id", lotteryResultsController.getLotteryResultsByResultId);
+
+// 4. ดึงข้อมูล lotteryresults แบบ pagination by betting_type_id
+router.get("/lotteryresults/by-betting-type/:betting_type_id", lotteryResultsController.getLotteryResultsByBettingType);
+
+// 5. ลบข้อมูลจากผู้เล่นที่ถูกรางวัล
+router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.deleteLotteryResultAndItems);
+
+
+
+
+
+
+// router.get("/huay/:lottery_result_id/winners", huayController.getLotteryWinners); // ดูรายชื่อผู้ชนะ
+
+
+// //รายละเอียดผู้ถูกรางวัล
+// router.get("/huay/:lottery_result_id/items", huayController.getLotteryResultItems); // ดูผลรางวัลแต่ละประเภท
 
 module.exports = router;

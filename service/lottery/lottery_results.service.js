@@ -104,6 +104,159 @@ class LotteryResultService {
     return await LotteryResultItem.find({ lottery_result_id })
       .populate('betting_type_id', 'name');
   }
+
+  // 1. ดึงข้อมูลทั้งหมดแบบ pagination
+  async getAllLotteryResults({ page = 1, limit = 10, startDate, endDate }) {
+    try {
+      const query = {};
+      
+      if (startDate && endDate) {
+        query.draw_date = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        };
+      }
+
+      // Add pagination
+      const skip = (page - 1) * limit;
+
+      const [results, totalCount] = await Promise.all([
+        LotteryResult.find(query)
+          .populate('createdBy', '_id')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(parseInt(limit)),
+        LotteryResult.countDocuments(query)
+      ]);
+
+      const total = totalCount || 0;
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: results,
+        pagination: {
+          total,
+          totalPages,
+          currentPage: page,
+          limit
+        }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 2. ดึงข้อมูลตาม id แบบ pagination
+  async getLotteryResultById(id, { page = 1, limit = 10 }) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const [items, total] = await Promise.all([
+        LotteryResultItem.find({ lottery_result_id: id })
+          .populate('betting_type_id', 'name')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        LotteryResultItem.countDocuments({ lottery_result_id: id })
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: items,
+        pagination: {
+          total,
+          totalPages,
+          currentPage: page,
+          limit
+        }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 3. ดึงข้อมูลตาม lottery_result_id แบบ pagination
+  async getLotteryResultsByResultId(lottery_result_id, { page = 1, limit = 10 }) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const [items, total] = await Promise.all([
+        LotteryResultItem.find({ lottery_result_id })
+          .populate('betting_type_id', 'name')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        LotteryResultItem.countDocuments({ lottery_result_id })
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: items,
+        pagination: {
+          total,
+          totalPages,
+          currentPage: page,
+          limit
+        }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 4. ดึงข้อมูลตาม betting_type_id แบบ pagination
+  async getLotteryResultsByBettingType(betting_type_id, { page = 1, limit = 10 }) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const [items, total] = await Promise.all([
+        LotteryResultItem.find({ betting_type_id })
+          .populate('lottery_result_id')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        LotteryResultItem.countDocuments({ betting_type_id })
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: items,
+        pagination: {
+          total,
+          totalPages,
+          currentPage: page,
+          limit
+        }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 5. ลบข้อมูลตาม lottery_result_id
+  async deleteLotteryResultAndItems(lottery_result_id) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // ลบ lottery result items
+      await LotteryResultItem.deleteMany({ lottery_result_id }, { session });
+      
+      // ลบ lottery result
+      await LotteryResult.findByIdAndDelete(lottery_result_id, { session });
+
+      await session.commitTransaction();
+      return true;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
 }
 
 module.exports = new LotteryResultService(); 

@@ -294,12 +294,14 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
         // บันทึกประวัติการเพิ่มเครดิต
         await UserTransection.create({
           user_id: user._id,
-          type: 'win',
+          type: 'payout',
           amount: totalWinAmount,
           detail: `ถูกรางวัลหวย งวดวันที่ ${huayResults.date}`,
           status: 'success',
-          before_credit: user.credit - totalWinAmount,
-          after_credit: user.credit
+          balance_before: user.credit - totalWinAmount,
+          balance_after: user.credit,
+          ref_id: userBet._id,
+          description: `ถูกรางวัลหวย งวดวันที่ ${huayResults.date}`,
         });
 
         console.log(`💰 เพิ่มเครดิต ${totalWinAmount} บาท ให้ ${user.username}`);
