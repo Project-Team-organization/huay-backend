@@ -16,8 +16,7 @@ const lotteryWinnerSchema = new mongoose.Schema({
     required: true
   },
   betting_type_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'BettingTypes',
+    type: String,
     default: null
   },
   matched_numbers: [{
