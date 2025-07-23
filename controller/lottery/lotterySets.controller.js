@@ -23,7 +23,8 @@ exports.getLotterySets = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Lottery Sets retrieved successfully.",
-      data: lotteries,
+      data: lotteries?.data,
+      pagination: lotteries?.pagination,
     });
   } catch (error) {
     return res.status(400).json({

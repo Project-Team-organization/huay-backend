@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 
 exports.createLotterySets = async function (data) {
   try {
-    validateInput(data);
+    await validateInput(data);
     await validateLotteryType(data.lottery_type_id);
     // await validateBettingOptionsAndIds(data.betting_options);
 
@@ -70,6 +70,7 @@ exports.getLotteryById = async function (lotteryId) {
 
 exports.updateLotterySets = async function (lotteryId, data) {
   try {
+    await validateInput(data, lotteryId);
     const updatedDoc = await LotterySets.findByIdAndUpdate(
       lotteryId,
       { $set: data },
@@ -110,13 +111,43 @@ exports.deleteLottery = async function (lotteryId) {
   }
 };
 
-async function validateInput(data) {
+async function validateInput(data, lotteryId = null) {
   if (typeof data !== "object" || Array.isArray(data) || data === null) {
     throw new Error("Input must be a single object.");
   }
 
   if (!data.lottery_type_id) {
     throw new Error("lottery_type_id is required.");
+  }
+
+  // ตรวจสอบชื่อซ้ำ
+  if (data.name) {
+    const query = { name: data.name };
+    // ถ้าเป็นการอัพเดท ไม่เช็คกับข้อมูลของตัวเอง
+    if (lotteryId) {
+      query._id = { $ne: lotteryId };
+    }
+    const existingLottery = await LotterySets.findOne(query);
+    if (existingLottery) {
+      throw new Error("ชื่อนี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น");
+    }
+  }
+
+  // ตรวจสอบเวลา
+  if (data.openTime && data.closeTime) {
+    const currentDate = new Date();
+    const openTime = new Date(data.openTime);
+    const closeTime = new Date(data.closeTime);
+
+    // ตรวจสอบว่า openTime ต้องมากกว่าเวลาปัจจุบัน
+    if (openTime <= currentDate) {
+      throw new Error("เวลาเปิดต้องมากกว่าเวลาปัจจุบัน");
+    }
+
+    // ตรวจสอบว่า closeTime ต้องมากกว่า openTime
+    if (closeTime <= openTime) {
+      throw new Error("เวลาปิดต้องมากกว่าเวลาเปิด");
+    }
   }
 }
 
