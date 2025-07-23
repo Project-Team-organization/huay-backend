@@ -27,26 +27,6 @@ const lotterySetsSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    betting_options: [
-      {
-        betting_type_id: {
-          type: mongoose.Schema.Types.ObjectId,
-          required: true,
-        },
-        payout_rate: {
-          type: Number,
-          required: true,
-        },
-        min_bet: {
-          type: Number,
-          required: true,
-        },
-        max_bet: {
-          type: Number,
-          required: true,
-        },
-      },
-    ],
   },
   {
     versionKey: false,

@@ -7,7 +7,7 @@ exports.createLotterySets = async function (data) {
   try {
     validateInput(data);
     await validateLotteryType(data.lottery_type_id);
-    await validateBettingOptionsAndIds(data.betting_options);
+    // await validateBettingOptionsAndIds(data.betting_options);
 
     const createdSet = await LotterySets.create(data);
 
@@ -31,10 +31,6 @@ exports.getLotterySets = async function (query) {
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
       .populate("lottery_type_id")
-      .populate({
-        path: "betting_options.betting_type_id",
-        model: "BettingTypes",
-      });
 
     if (slug) {
       lotterySets = lotterySets.filter(
@@ -60,10 +56,7 @@ exports.getLotterySets = async function (query) {
 
 exports.getLotteryById = async function (lotteryId) {
   try {
-    const lottery = await LotterySets.findById(lotteryId).populate({
-      path: "betting_options.betting_type_id",
-      model: "BettingTypes",
-    });
+    const lottery = await LotterySets.findById(lotteryId).populate("lottery_type_id");
 
     if (!lottery) {
       throw new Error("LotterySets not found.");
@@ -77,84 +70,17 @@ exports.getLotteryById = async function (lotteryId) {
 
 exports.updateLotterySets = async function (lotteryId, data) {
   try {
-    const updateData = {};
-    const bettingOptionUpdates = [];
-
-    for (const [key, value] of Object.entries(data)) {
-      if (key === "betting_options") {
-        if (!Array.isArray(value) || value.length === 0) continue;
-
-        value.forEach((opt) => {
-          const { betting_type_id, ...fields } = opt;
-
-          if (!betting_type_id) return;
-
-          const setFields = {};
-          for (const [fKey, fValue] of Object.entries(fields)) {
-            if (fValue !== "" && fValue !== null && fValue !== undefined) {
-              setFields[`betting_options.$[elem].${fKey}`] = fValue;
-            }
-          }
-
-          if (Object.keys(setFields).length > 0) {
-            bettingOptionUpdates.push({
-              filter: { "elem.betting_type_id": betting_type_id },
-              set: setFields,
-            });
-          }
-        });
-
-        continue;
-      }
-
-      if (typeof value === "string" && value.trim() !== "") {
-        updateData[key] = value.trim();
-      } else if (typeof value === "number" || typeof value === "boolean") {
-        updateData[key] = value;
-      } else if (Array.isArray(value) && value.length > 0) {
-        updateData[key] = value;
-      } else if (
-        typeof value === "object" &&
-        value !== null &&
-        Object.values(value).some(
-          (v) => v !== "" && v !== null && v !== undefined
-        )
-      ) {
-        const filtered = {};
-        for (const [k, v] of Object.entries(value)) {
-          if (v !== "" && v !== null && v !== undefined) {
-            filtered[k] = v;
-          }
-        }
-        if (Object.keys(filtered).length > 0) {
-          updateData[key] = filtered;
-        }
-      }
-    }
-
-    let updatedDoc = null;
-    if (Object.keys(updateData).length > 0) {
-      updatedDoc = await LotterySets.findByIdAndUpdate(lotteryId, updateData, {
-        new: true,
-      });
-    } else {
-      updatedDoc = await LotterySets.findById(lotteryId);
-    }
+    const updatedDoc = await LotterySets.findByIdAndUpdate(
+      lotteryId,
+      { $set: data },
+      { new: true }
+    ).populate('lottery_type_id');
 
     if (!updatedDoc) {
       throw new Error("Lottery not found.");
     }
 
-    for (const update of bettingOptionUpdates) {
-      await LotterySets.updateOne(
-        { _id: lotteryId },
-        { $set: update.set },
-        { arrayFilters: [update.filter] }
-      );
-    }
-
-    const finalDoc = await LotterySets.findById(lotteryId);
-    return finalDoc;
+    return updatedDoc;
   } catch (error) {
     console.error("Error updating lottery item:", error.message);
     throw error;
@@ -191,10 +117,6 @@ async function validateInput(data) {
 
   if (!data.lottery_type_id) {
     throw new Error("lottery_type_id is required.");
-  }
-
-  if (!Array.isArray(data.betting_options)) {
-    throw new Error("betting_options must be an array.");
   }
 }
 
