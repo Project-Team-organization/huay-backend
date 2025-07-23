@@ -270,7 +270,7 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
                 betting_type_id: bet.betting_type_id,
                 matched_numbers: [userNumber],
                 payout: payout,
-                status: 'pending'
+                status: 'paid'
               });
               winners.push(winner);
 

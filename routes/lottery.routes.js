@@ -49,7 +49,7 @@ router.put("/huay/:id", huayController.updateHuay); // Update Huay //รอเ�
 
 // ผลหวย
 
-router.post("/getLotteryResult", huayController.evaluateLotteryResults); // ออกผลหวย
+router.post("/getLotteryResult", isAdmin, huayController.evaluateLotteryResults); // ออกผลหวย
 
 // 1. ดึงข้อมูล lotteryresults ทั้งหมด แบบ pagination
 router.get("/lotteryresults", lotteryResultsController.getAllLotteryResults);
@@ -67,11 +67,8 @@ router.get("/lotteryresults/by-betting-type/:betting_type_id", lotteryResultsCon
 router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.deleteLotteryResultAndItems);
 
 
-
-
-
-
-// router.get("/huay/:lottery_result_id/winners", huayController.getLotteryWinners); // ดูรายชื่อผู้ชนะ
+// 6. ค้นหาผลถูกรางวัล by lottery_result_id
+router.get("/lotteryresults/winners/:lottery_result_id", lotteryResultsController.getLotteryWinners);
 
 
 // //รายละเอียดผู้ถูกรางวัล

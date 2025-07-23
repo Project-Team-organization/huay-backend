@@ -92,12 +92,43 @@ class LotteryResultService {
   }
 
   // ดึงรายการผู้ชนะทั้งหมด
-  async getLotteryWinners(lottery_result_id) {
-    return await LotteryWinner.find({ lottery_result_id })
-      .populate('user_id', 'username')
-      .populate('betting_type_id', 'name')
-      .populate('lottery_result_id', 'draw_date');
+  async getLotteryWinners(lottery_result_id,page,limit, startDate, endDate) {
+
+    const query = {};
+    if (startDate && endDate) {
+      query.lottery_result_id = lottery_result_id;
+      query.draw_date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [results, totalCount] = await Promise.all([
+      LotteryWinner.find(query)
+        .populate('user_id', 'username')
+        .populate('betting_type_id', 'name')
+        .populate('lottery_result_id', 'draw_date')
+        .skip(skip)
+        .limit(parseInt(limit)),
+      LotteryWinner.countDocuments(query)
+    ]);
+
+    const total = totalCount || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: results,
+      pagination: {
+        total,
+        totalPages,
+        currentPage: page,
+        limit
+      }
+    };
   }
+
 
   // ดึงรายการผลรางวัลทั้งหมดของงวด
   async getLotteryResultItems(lottery_result_id) {
@@ -122,7 +153,6 @@ class LotteryResultService {
 
       const [results, totalCount] = await Promise.all([
         LotteryResult.find(query)
-          .populate('createdBy', '_id')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(parseInt(limit)),
@@ -152,12 +182,11 @@ class LotteryResultService {
       const skip = (page - 1) * limit;
 
       const [items, total] = await Promise.all([
-        LotteryResultItem.find({ lottery_result_id: id })
-          .populate('betting_type_id', 'name')
+        LotteryResult.find({ _id: id })
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit),
-        LotteryResultItem.countDocuments({ lottery_result_id: id })
+        LotteryResult.countDocuments({ _id: id })
       ]);
 
       const totalPages = Math.ceil(total / limit);

@@ -27,19 +27,21 @@ exports.evaluateLotteryResults = async (req, res) => {
 // ดึงรายการผู้ชนะทั้งหมด
 exports.getLotteryWinners = async (req, res) => {
   try {
+    console.log(req.query);
     const { lottery_result_id } = req.params;
-    
-    const winners = await lotteryResultService.getLotteryWinners(lottery_result_id);
+    const { page = 1, limit = 10 , startDate, endDate} = req.query;
+    const winners = await lotteryResultService.getLotteryWinners(lottery_result_id,page,limit, startDate, endDate );
 
-    res.status(200).json({
-      success: true,
-      data: winners
-    });
+    const response = await handleSuccess(
+      winners.data,
+      'ดึงข้อมูลผู้ชนะสำเร็จ',
+      200,
+      winners.pagination
+    );
+    return res.status(response.status).json(response);
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผู้ชนะได้');
+    return res.status(response.status).json(response);
   }
 };
 
