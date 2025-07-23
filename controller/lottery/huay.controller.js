@@ -239,6 +239,12 @@ exports.evaluateLotteryResults = async (req, res) => {
   try {
     const { lottery_set_id } = req.query;
     const user_id = req.user._id;
+    if(!user_id){
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required.",
+      });
+    }
 
     const result = await huayService.evaluateUserBetsByLotterySet(lottery_set_id, user_id);
     
