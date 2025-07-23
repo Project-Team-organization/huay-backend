@@ -2,7 +2,7 @@ const huayService = require("../../service/lottery/huay.service");
 const axios = require("axios");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const mongoose = require("mongoose");
-const lotteryResultService = require('../../service/lottery/lottery_results.service');
+const lotteryResultService = require("../../service/lottery/lottery_results.service");
 
 exports.createHuay = async (req, res) => {
   try {
@@ -47,7 +47,7 @@ exports.createHuayAPI = async (req, res) => {
     if (!lottery_set_id) {
       return res.status(400).json({
         success: false,
-        message: "Missing lottery_set_id .",
+        message: "Missing lottery_set_id.",
       });
     }
 
@@ -69,20 +69,54 @@ exports.createHuayAPI = async (req, res) => {
         lottery_set_id,
         huay_name: prizeFirst.name,
         huay_number: prizeFirst.number,
-        reward: prizeFirst.reward,
+      });
+
+      huayData.push(
+        ...getFrontThreeFromFirstPrize(prizeFirst, lottery_set_id),
+        ...getLastFourFromFirstPrize(prizeFirst, lottery_set_id),
+        ...getLastTwoFromFirstPrize(prizeFirst, lottery_set_id),
+        ...getTodThreeFromFirstPrize(prizeFirst, lottery_set_id)
+      );
+    }
+
+    const prizeFrontThree = data.prizes.find(
+      (prize) => prize.id === "prizeFrontThree"
+    );
+    if (prizeFrontThree && Array.isArray(prizeFrontThree.number)) {
+      huayData.push({
+        lottery_set_id,
+        huay_name: "เลขหน้า 3 ตัว",
+        huay_number: prizeFrontThree.number,
       });
     }
 
-    data.runningNumbers.forEach((running) => {
-      if (Array.isArray(running.number)) {
-        huayData.push({
+    huayData.push(
+      ...data.runningNumbers
+        .filter((running) => Array.isArray(running.number))
+        .map((running) => ({
           lottery_set_id,
           huay_name: running.name,
           huay_number: running.number,
-          reward: running.reward,
-        });
-      }
-    });
+        }))
+    );
+
+    const frontThreeItem = huayData.find(
+      (item) => item.huay_name === "รางวัลเลขหน้า 3 ตัว"
+    );
+    if (frontThreeItem) {
+      huayData.push(
+        ...getTodFrontThreeFromHuayData(frontThreeItem, lottery_set_id)
+      );
+    }
+
+    const backThreeItem = huayData.find(
+      (item) => item.huay_name === "รางวัลเลขท้าย 3 ตัว"
+    );
+    if (backThreeItem) {
+      huayData.push(
+        ...getTodBackThreeFromHuayData(backThreeItem, lottery_set_id)
+      );
+    }
 
     if (!huayData.length) {
       return res.status(400).json({
@@ -91,7 +125,8 @@ exports.createHuayAPI = async (req, res) => {
       });
     }
 
-    const result = await huayService.create(huayData, lottery_set_id);
+    const updatedHuayData = await renameHuayNamesAsync(huayData);
+    const result = await huayService.create(updatedHuayData, lottery_set_id);
 
     return res.status(200).json({
       success: true,
@@ -246,12 +281,19 @@ exports.evaluateLotteryResults = async (req, res) => {
       });
     }
 
-    const result = await huayService.evaluateUserBetsByLotterySet(lottery_set_id, user_id);
-    
+    const result = await huayService.evaluateUserBetsByLotterySet(
+      lottery_set_id,
+      user_id
+    );
+
     const response = await handleSuccess("ตรวจผลหวยสำเร็จ", result);
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, "เกิดข้อผิดพลาดในการตรวจผลหวย", 400);
+    const response = await handleError(
+      error,
+      "เกิดข้อผิดพลาดในการตรวจผลหวย",
+      400
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -260,13 +302,17 @@ exports.evaluateLotteryResults = async (req, res) => {
 exports.getLotteryWinners = async (req, res) => {
   try {
     const { lottery_result_id } = req.params;
-    
+
     const winners = await huayService.getLotteryWinners(lottery_result_id);
-    
+
     const response = await handleSuccess("ดึงข้อมูลผู้ชนะสำเร็จ", winners);
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูลผู้ชนะ", 400);
+    const response = await handleError(
+      error,
+      "เกิดข้อผิดพลาดในการดึงข้อมูลผู้ชนะ",
+      400
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -275,13 +321,202 @@ exports.getLotteryWinners = async (req, res) => {
 exports.getLotteryResultItems = async (req, res) => {
   try {
     const { lottery_result_id } = req.params;
-    
-    const resultItems = await huayService.getLotteryResultItems(lottery_result_id);
-    
-    const response = await handleSuccess("ดึงข้อมูลผลรางวัลสำเร็จ", resultItems);
+
+    const resultItems = await huayService.getLotteryResultItems(
+      lottery_result_id
+    );
+
+    const response = await handleSuccess(
+      "ดึงข้อมูลผลรางวัลสำเร็จ",
+      resultItems
+    );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูลผลรางวัล", 400);
+    const response = await handleError(
+      error,
+      "เกิดข้อผิดพลาดในการดึงข้อมูลผลรางวัล",
+      400
+    );
     return res.status(response.status).json(response);
+  }
+};
+
+const renameHuayNamesAsync = async (huayData) => {
+  try {
+    const mapping = {
+      "รางวัลเลขหน้า 3 ตัว": "เลขหน้า 3 ตัว",
+      "รางวัลเลขท้าย 3 ตัว": "เลขท้าย 3 ตัว",
+      "รางวัลเลขท้าย 2 ตัว": "เลขท้าย 2 ตัว",
+    };
+
+    return huayData.map((item) => ({
+      ...item,
+      huay_name: mapping[item.huay_name] || item.huay_name,
+    }));
+  } catch (error) {
+    console.error("renameHuayNamesAsync error:", error);
+    return huayData; // fallback คืนค่าเดิม
+  }
+};
+
+const getFrontThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    return prizeFirst.number.map((fullNumber) => ({
+      lottery_set_id,
+      huay_name: "3 ตัวหน้ารางวัลที่ 1",
+      huay_number: [fullNumber.slice(0, 3)],
+    }));
+  } catch (error) {
+    console.error("getFrontThreeFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getLastFourFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    return prizeFirst.number.map((fullNumber) => ({
+      lottery_set_id,
+      huay_name: "เลขท้าย 4 ตัวรางวัลที่หนึ่ง",
+      huay_number: [fullNumber.slice(-4)],
+    }));
+  } catch (error) {
+    console.error("getLastFourFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getLastTwoFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    return prizeFirst.number.map((fullNumber) => ({
+      lottery_set_id,
+      huay_name: "2 ตัวท้ายรางวังวัลที่ 1",
+      huay_number: [fullNumber.slice(-2)],
+    }));
+  } catch (error) {
+    console.error("getLastTwoFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getTodThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    function generateTod3Permutations(numberStr) {
+      if (!numberStr || numberStr.length !== 3) return [];
+
+      const [a, b, c] = numberStr.split("");
+      return [a + b + c, a + c + b, b + a + c, b + c + a, c + a + b, c + b + a];
+    }
+
+    const allPermutations = prizeFirst.number.flatMap((fullNumber) => {
+      const lastThree = fullNumber.slice(-3);
+      return generateTod3Permutations(lastThree);
+    });
+
+    const uniquePermutations = [...new Set(allPermutations)];
+
+    return [
+      {
+        lottery_set_id,
+        huay_name: "โต๊ด 3 ตัวของรางวัลที่หนึ่ง",
+        huay_number: uniquePermutations,
+      },
+    ];
+  } catch (error) {
+    console.error("getTodThreeFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getTodFrontThreeFromHuayData = (huayDataItem, lottery_set_id) => {
+  try {
+    if (!huayDataItem || !Array.isArray(huayDataItem.huay_number)) return [];
+    console.log("Input huay_number:", huayDataItem.huay_number);
+
+    const generatePermutations = (str) => {
+      const results = new Set();
+      const arr = str.split("");
+
+      const permute = (arr, l, r) => {
+        if (l === r) {
+          results.add(arr.join(""));
+        } else {
+          for (let i = l; i <= r; i++) {
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+            permute(arr, l + 1, r);
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+          }
+        }
+      };
+
+      permute(arr, 0, arr.length - 1);
+      return Array.from(results);
+    };
+
+    const allTodNumbers = huayDataItem.huay_number.flatMap((num) =>
+      generatePermutations(num)
+    );
+    const uniqueTodNumbers = [...new Set(allTodNumbers)];
+
+    return [
+      {
+        lottery_set_id,
+        huay_name: "เลขหน้า 3 ตัวโต๊ด",
+        huay_number: uniqueTodNumbers,
+      },
+    ];
+  } catch (error) {
+    console.error("getTodFrontThreeFromHuayData error:", error);
+    return [];
+  }
+};
+
+const getTodBackThreeFromHuayData = (huayDataItem, lottery_set_id) => {
+  try {
+    if (!huayDataItem || !Array.isArray(huayDataItem.huay_number)) return [];
+    console.log("Input huay_number:", huayDataItem.huay_number);
+
+    const generatePermutations = (str) => {
+      const results = new Set();
+      const arr = str.split("");
+
+      const permute = (arr, l, r) => {
+        if (l === r) {
+          results.add(arr.join(""));
+        } else {
+          for (let i = l; i <= r; i++) {
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+            permute(arr, l + 1, r);
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+          }
+        }
+      };
+
+      permute(arr, 0, arr.length - 1);
+      return Array.from(results);
+    };
+
+    const allTodNumbers = huayDataItem.huay_number.flatMap((num) =>
+      generatePermutations(num)
+    );
+    const uniqueTodNumbers = [...new Set(allTodNumbers)];
+
+    return [
+      {
+        lottery_set_id,
+        huay_name: "เลขท้าย 3 ตัวโต๊ด",
+        huay_number: uniqueTodNumbers,
+      },
+    ];
+  } catch (error) {
+    console.error("getTodFrontThreeFromHuayData error:", error);
+    return [];
   }
 };
