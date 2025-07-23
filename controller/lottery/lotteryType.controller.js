@@ -1,5 +1,6 @@
 const lotteryTypeService = require("../../service/lottery/lotteryType.service");
 const { validateCreateLotteryType } = require("../../validators/Validator");
+const { handleSuccess, handleError } = require("../../utils/responseHandler");
 
 exports.createLotteryType = async (req, res) => {
   try {
@@ -14,17 +15,19 @@ exports.createLotteryType = async (req, res) => {
     }
 
     const created = await lotteryTypeService.createLotteryType(value);
-    return res.status(201).json({
-      success: true,
-      message: "Lottery Type  created successfully.",
-      data: created,
-    });
+    const successResponse = await handleSuccess(
+      created,
+      "Lottery Type created successfully.",
+      201
+    );
+    return res.status(successResponse.status).json(successResponse);
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: "Failed to create lottery Type .",
-      error: error.message,
-    });
+    const message = error.message || "Failed to create lottery Type.";
+    const code = error.code || "INTERNAL_ERROR";
+    const status = error.statusCode || 400;
+
+    const errorResponse = await handleError(code, message, status);
+    return res.status(status).json(errorResponse);
   }
 };
 

@@ -8,16 +8,20 @@ exports.createLotteryType = async (data) => {
       lottery_type: data.lottery_type,
     });
     if (exists) {
-      throw new Error("Lottery type นี้มีอยู่แล้ว");
+      const error = new Error("Lottery type นี้มีอยู่แล้ว");
+      error.code = "LOTTERY_TYPE_DUPLICATE";
+      error.statusCode = 409;
+      throw error;
     }
 
     const newBettingType = await LotteryType.create(data);
     return newBettingType;
   } catch (error) {
     console.error("Service Error - createLotteryType:", error.message);
-    throw new Error("Failed to create betting type: " + error.message);
+    throw error;
   }
 };
+
 exports.getLotteryType = async function () {
   return await LotteryType.find();
 };
