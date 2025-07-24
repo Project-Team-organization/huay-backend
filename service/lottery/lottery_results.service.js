@@ -286,6 +286,47 @@ class LotteryResultService {
       session.endSession();
     }
   }
+
+  // ค้นหาผู้ชนะตาม lottery set และ user_id
+  async getWinnersByLotterySetAndUser(lottery_set_id, user_id, { page = 1, limit = 10 }) {
+    try {
+      const skip = (page - 1) * limit;
+
+      // หา lottery_result_id จาก lottery_set_id
+      const lotteryResults = await LotteryResult.find({ lottery_set_id });
+      const lotteryResultIds = lotteryResults.map(result => result._id);
+
+      const query = {
+        lottery_result_id: { $in: lotteryResultIds },
+        user_id: user_id
+      };
+
+      const [winners, total] = await Promise.all([
+        LotteryWinner.find(query)
+          .populate('user_id', 'username')
+          .populate('betting_type_id', 'name')
+          .populate('lottery_result_id', 'draw_date')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(parseInt(limit)),
+        LotteryWinner.countDocuments(query)
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: winners,
+        pagination: {
+          total,
+          totalPages,
+          currentPage: page,
+          limit
+        }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new LotteryResultService(); 

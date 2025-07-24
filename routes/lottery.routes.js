@@ -5,6 +5,7 @@ const lotteryTypeController = require("../controller/lottery/lotteryType.control
 const huayController = require("../controller/lottery/huay.controller");
 const bettingTypesController = require("../controller/lottery/bettingTypes.controller");
 const lotteryResultsController = require("../controller/lottery/lottery_results.controller");
+const LotteryLimitedNumbersController = require('../controller/lottery/lottery_limited_numbers.controller');
 const { isAdmin } = require("../middleware/authadmin.middleware");
 const { handleError } = require("puppeteer");
 
@@ -70,8 +71,22 @@ router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.del
 // 6. ค้นหาผลถูกรางวัล by lottery_result_id
 router.get("/lotteryresults/winners/:lottery_result_id", lotteryResultsController.getLotteryWinners);
 
+// ค้นหาผู้ชนะตาม lottery set และ user_id
+router.get('/lotteryresults/winners/lottery-set/:lottery_set_id/:user_id', lotteryResultsController.getWinnersByLotterySetAndUser);
+
 
 // //รายละเอียดผู้ถูกรางวัล
 // router.get("/huay/:lottery_result_id/items", huayController.getLotteryResultItems); // ดูผลรางวัลแต่ละประเภท
 
+// Routes for lottery limited numbers
+router.get('/limited-numbers', LotteryLimitedNumbersController.getAllWithPagination);
+router.get('/limited-numbers/:id', LotteryLimitedNumbersController.getById);
+router.get('/limited-numbers/lottery-set/:lotterySetId', LotteryLimitedNumbersController.getByLotterySetId);
+
+router.post('/limited-numbers', LotteryLimitedNumbersController.create);
+router.put('/limited-numbers/:id', LotteryLimitedNumbersController.update);
+router.delete('/limited-numbers/:id', LotteryLimitedNumbersController.delete);
+// ดึงข้อมูลเลขที่มีการแทงสูงสุด by lotterySetId
+router.get('/limited-numbers/lottery-set/:lotterySetId/top-betting', LotteryLimitedNumbersController.getTopBettingNumbers);
+//
 module.exports = router;

@@ -7,6 +7,7 @@ const LotteryWinner = require('../../models/lottery_winners.model');
 const LotteryType = require('../../models/lotteryType.model');
 const User = require('../../models/user.model');
 const UserTransection = require('../../models/user.transection.model');
+const LotteryLimitedNumbers = require('../../models/lottery_limited_numbers.model');
 const { default: mongoose } = require('mongoose');
 const fetch = require('node-fetch');
 
@@ -143,78 +144,88 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
     if (!lottery_set) {
       throw new Error("lottery_set_id is required.");
     }
-    console.log(lottery_set.lottery_type_id);
-    const lottery_type = await LotteryType.findById(lottery_set.lottery_type_id);
-    if (!lottery_type || lottery_type == null) {
-      throw new Error("lottery_type_id is required.");
-    }
 
-    // 2. สร้างผลหวยในระบบใหม่
-    const lotteryResult = await LotteryResult.create({
-      lottery_set_id,
-      draw_date: new Date(),
-      status: 'published',
-      createdBy
-    });
+    // ตรวจสอบว่ามี lottery_results อยู่แล้วหรือไม่
+    let lotteryResult = await LotteryResult.findOne({ lottery_set_id });
+    let resultItems = [];
 
-    // 3. บันทึกรายการรางวัล
-    const resultItems = [];
-
-    // สร้างรายการรางวัลตาม betting_types ที่มีในระบบ
-    for (const betType of lottery_type.betting_types) {
-      let numbers = [];
-      
-      switch (betType.code) {
-        case '6d_top':
-          numbers = [huayResults.firstPrize];
-          break;
-        case '5d_top':
-          numbers = [huayResults.firstPrize.slice(-5)];
-          break;
-        case '4d_top':
-          numbers = [huayResults.firstPrize.slice(-4)];
-          break;
-        case '3top':
-          numbers = [huayResults.firstPrize.slice(-3)];
-          break;
-        case '3toad':
-          numbers = [huayResults.firstPrize.slice(-3)];
-          break;
-        case '3front':
-          numbers = huayResults.frontThreeDigits;
-          break;
-        case '3back':
-          numbers = huayResults.backThreeDigits;
-          break;
-        case '2top':
-          numbers = [huayResults.firstPrize.slice(-2)];
-          break;
-        case '2bottom':
-          numbers = [huayResults.backTwoDigits];
-          break;
-        case '1top':
-          numbers = huayResults.firstPrize.slice(-3).split('');
-          break;
-        case '1bottom':
-          numbers = huayResults.backTwoDigits.split('');
-          break;
+    if (!lotteryResult) {
+      console.log(lottery_set.lottery_type_id);
+      const lottery_type = await LotteryType.findById(lottery_set.lottery_type_id);
+      if (!lottery_type || lottery_type == null) {
+        throw new Error("lottery_type_id is required.");
       }
 
-      if (numbers.length > 0) {
-        // สร้างและบันทึก LotteryResultItem
-        const resultItem = await LotteryResultItem.create({
-          lottery_result_id: lotteryResult._id,
-          betting_type_id: betType.code,
-          name: betType.name,
-          reward: betType.payout_rate,
-          numbers: numbers,
-          winner_count: 0
-        });
-        resultItems.push(resultItem);
+      // 2. สร้างผลหวยในระบบใหม่
+      lotteryResult = await LotteryResult.create({
+        lottery_set_id,
+        draw_date: new Date(),
+        status: 'published',
+        createdBy
+      });
+
+      // 3. บันทึกรายการรางวัล
+      // สร้างรายการรางวัลตาม betting_types ที่มีในระบบ
+      for (const betType of lottery_type.betting_types) {
+        let numbers = [];
+        
+        switch (betType.code) {
+          case '6d_top':
+            numbers = [huayResults.firstPrize];
+            break;
+          case '5d_top':
+            numbers = [huayResults.firstPrize.slice(-5)];
+            break;
+          case '4d_top':
+            numbers = [huayResults.firstPrize.slice(-4)];
+            break;
+          case '3top':
+            numbers = [huayResults.firstPrize.slice(-3)];
+            break;
+          case '3toad':
+            numbers = [huayResults.firstPrize.slice(-3)];
+            break;
+          case '3front':
+            numbers = huayResults.frontThreeDigits;
+            break;
+          case '3back':
+            numbers = huayResults.backThreeDigits;
+            break;
+          case '2top':
+            numbers = [huayResults.firstPrize.slice(-2)];
+            break;
+          case '2bottom':
+            numbers = [huayResults.backTwoDigits];
+            break;
+          case '1top':
+            numbers = huayResults.firstPrize.slice(-3).split('');
+            break;
+          case '1bottom':
+            numbers = huayResults.backTwoDigits.split('');
+            break;
+        }
+
+        if (numbers.length > 0) {
+          // สร้างและบันทึก LotteryResultItem
+          const resultItem = await LotteryResultItem.create({
+            lottery_result_id: lotteryResult._id,
+            betting_type_id: betType.code,
+            name: betType.name,
+            reward: betType.payout_rate,
+            numbers: numbers,
+            winner_count: 0
+          });
+          resultItems.push(resultItem);
+        }
       }
+    } else {
+      // ถ้ามี lottery_results อยู่แล้ว ให้ดึง resultItems ที่มีอยู่
+      resultItems = await LotteryResultItem.find({ lottery_result_id: lotteryResult._id });
     }
 
     console.log("📝 บันทึกรายการรางวัลทั้งหมดแล้ว:", resultItems.length, "รายการ");
+
+  
 
     // 4. หาผู้ใช้ที่ยังไม่ถูกตรวจและตรวจรางวัล
     const pendingBets = await UserBet.find({
@@ -239,7 +250,7 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
       // ตรวจสอบแต่ละรายการแทง
       for (const bet of userBet.bets) {
         // หารายการรางวัลที่ตรงกับประเภทการแทง
-        const matchedResult = resultItems.find(item => item.betting_type_id === bet.betting_type_id);
+        const matchedResult = resultItems.find(item => item.betting_type_id === bet.betting_type_id );
         
         if (matchedResult) {
           console.log(`🎲 ตรวจประเภท: ${matchedResult.name}`);
@@ -248,6 +259,20 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
           for (const numObj of bet.numbers) {
             const userNumber = numObj.number;
             const amount = numObj.amount;
+
+            // ตรวจสอบเลขอั้น
+            const limitedNumber =  await LotteryLimitedNumbers.find({lottery_set_id: lottery_set_id ,betting_type_id: matchedResult.betting_type_id ,number: userNumber });
+            if (limitedNumber && limitedNumber.length > 0) {
+              if (limitedNumber[0].limit_type === 'full') {
+                console.log(`⛔ เลขอั้นประเภท full: ${userNumber}`);
+                continue; // ข้ามไปเลขถัดไป
+              }
+              
+              if (limitedNumber[0].limit_type === 'cap' && amount > limitedNumber[0].max_total_bet) {
+                console.log(`⚠️ เลขอั้นประเภท cap: ${userNumber} เกินกำหนด`);
+                continue; // ข้ามไปเลขถัดไป
+              }
+            }
 
             // ตรวจว่าถูกรางวัลไหม
             const isWin = matchedResult.numbers.includes(userNumber);
@@ -259,7 +284,16 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
 
             if (isWin) {
               // คำนวณเงินรางวัล: จำนวนเงินที่แทง * อัตราจ่าย
-              const payout = amount * matchedResult.reward;
+              let payout_rate = matchedResult.reward;
+              
+              // ถ้าเป็นเลขอั้นประเภท partial ให้ใช้ payout_rate ของเลขอั้น
+              const lotterylimit_partial = await LotteryLimitedNumbers.find({lottery_set_id: lottery_set_id ,betting_type_id: matchedResult.betting_type_id ,number: userNumber, limit_type: 'partial' });
+              if (lotterylimit_partial && lotterylimit_partial.length > 0) {
+                payout_rate = lotterylimit_partial[0].payout_rate;
+                console.log(`💡 ใช้อัตราจ่ายเลขอั้น: ${payout_rate}`);
+              }
+              
+              const payout = amount * payout_rate;
               totalWinAmount += payout;
 
               // สร้างรายการผู้ชนะ
@@ -267,7 +301,7 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
                 user_id: userBet.user_id,
                 bet_id: userBet._id,
                 lottery_result_id: lotteryResult._id,
-                betting_type_id: bet.betting_type_id,
+                betting_type_id: matchedResult.betting_type_id,
                 matched_numbers: [userNumber],
                 payout: payout,
                 status: 'paid'
@@ -318,6 +352,9 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
         `🎯 ผล: ${userBet.status.toUpperCase()}`
       );
     }
+
+    // อัพเดทสถานะ lottery_set เป็น resulted
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: 'resulted' });
 
     console.log(`\n✅ ตรวจเสร็จทั้งหมด ${pendingBets.length} รายการ`);
     

@@ -186,3 +186,31 @@ exports.deleteLotteryResultAndItems = async (req, res) => {
     return res.status(response.status).json(response);
   }
 }; 
+
+// ค้นหาผู้ชนะตาม lottery set และ user_id
+exports.getWinnersByLotterySetAndUser = async (req, res) => {
+  try {
+    const { lottery_set_id, user_id } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const result = await lotteryResultService.getWinnersByLotterySetAndUser(
+      lottery_set_id,
+      user_id,
+      {
+        page: parseInt(page),
+        limit: parseInt(limit)
+      }
+    );
+
+    const response = await handleSuccess(
+      result.data,
+      'ดึงข้อมูลผู้ชนะสำเร็จ',
+      200,
+      result.pagination
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผู้ชนะได้');
+    return res.status(response.status).json(response);
+  }
+}; 
