@@ -11,11 +11,7 @@ exports.getLotteryUserSets = async function (query) {
 
     let lotterySets = await LotterySets.find(filter)
       .limit(parseInt(limit) || 10)
-      .populate("lottery_type_id")
-      .populate({
-        path: "betting_options.betting_type_id",
-        model: "BettingTypes",
-      });
+      .populate("lottery_type_id");
 
     if (slug) {
       lotterySets = lotterySets.filter(
@@ -30,10 +26,7 @@ exports.getLotteryUserSets = async function (query) {
 
 exports.getLotteryUserSetsById = async function (lotteryId) {
   try {
-    const lottery = await LotterySets.findById(lotteryId).populate({
-      path: "betting_options.betting_type_id",
-      model: "BettingTypes",
-    });
+    const lottery = await LotterySets.findById(lotteryId);
 
     if (!lottery) {
       throw new Error("LotterySets not found.");
