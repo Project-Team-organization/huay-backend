@@ -553,7 +553,7 @@ const getLastFiveFromFirstPrize = (prizeFirst, lottery_set_id) => {
       lottery_set_id,
       huay_name: "เลขท้าย 5 ตัวรางวัลที่หนึ่ง",
       huay_number: [fullNumber.slice(-5)],
-      Code: "5d_top",
+      code: "5d_top",
     }));
   } catch (error) {
     console.error("getLastFiveFromFirstPrize error:", error);
