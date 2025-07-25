@@ -75,7 +75,9 @@ exports.createHuayAPI = async (req, res) => {
         ...getFrontThreeFromFirstPrize(prizeFirst, lottery_set_id),
         ...getLastFourFromFirstPrize(prizeFirst, lottery_set_id),
         ...getLastTwoFromFirstPrize(prizeFirst, lottery_set_id),
-        ...getTodThreeFromFirstPrize(prizeFirst, lottery_set_id)
+        ...getTodThreeFromFirstPrize(prizeFirst, lottery_set_id),
+        ...getLastFiveFromFirstPrize(prizeFirst, lottery_set_id),
+        ...getTodFourFromFirstPrize(prizeFirst, lottery_set_id)
       );
     }
 
@@ -274,7 +276,7 @@ exports.evaluateLotteryResults = async (req, res) => {
   try {
     const { lottery_set_id } = req.query;
     const user_id = req.user._id;
-    if(!user_id){
+    if (!user_id) {
       return res.status(400).json({
         success: false,
         message: "User ID is required.",
@@ -517,6 +519,69 @@ const getTodBackThreeFromHuayData = (huayDataItem, lottery_set_id) => {
     ];
   } catch (error) {
     console.error("getTodFrontThreeFromHuayData error:", error);
+    return [];
+  }
+};
+
+const getLastFiveFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    return prizeFirst.number.map((fullNumber) => ({
+      lottery_set_id,
+      huay_name: "เลขท้าย 5 ตัวรางวัลที่หนึ่ง",
+      huay_number: [fullNumber.slice(-5)],
+      Code: "5d_top",
+    }));
+  } catch (error) {
+    console.error("getLastFiveFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getTodFourFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    const generateTod4Permutations = (numberStr) => {
+      if (!numberStr || numberStr.length !== 4) return [];
+
+      const results = new Set();
+      const arr = numberStr.split("");
+
+      const permute = (arr, l, r) => {
+        if (l === r) {
+          results.add(arr.join(""));
+        } else {
+          for (let i = l; i <= r; i++) {
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+            permute(arr, l + 1, r);
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+          }
+        }
+      };
+
+      permute(arr, 0, arr.length - 1);
+      return Array.from(results);
+    };
+
+    const allPermutations = prizeFirst.number.flatMap((fullNumber) => {
+      const lastFour = fullNumber.slice(-4);
+      return generateTod4Permutations(lastFour);
+    });
+
+    const uniquePermutations = [...new Set(allPermutations)];
+
+    return [
+      {
+        lottery_set_id,
+        huay_name: "4 ตัวท้ายโต๊ด",
+        huay_number: uniquePermutations,
+        code: "4d_top",
+      },
+    ];
+  } catch (error) {
+    console.error("getTodFourFromFirstPrize error:", error);
     return [];
   }
 };
