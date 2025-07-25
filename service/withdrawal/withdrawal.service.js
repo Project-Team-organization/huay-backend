@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const moment = require("moment-timezone");
 const Withdrawal = require("../../models/withdrawal.models");
 const User = require("../../models/user.model");
+const UserTransaction = require("../../models/user.transection.model");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 
 // สร้างคำขอถอนเงิน
@@ -55,6 +56,20 @@ exports.createWithdrawal = async function ({
     // หักเงินจาก user ทันที
     user.credit -= amount;
     await user.save();
+
+    // บันทึก transaction
+    const userTransaction = new UserTransaction({
+      user_id: user._id,
+      type: 'withdraw',
+      amount: amount,
+      balance_before: user.credit,
+      balance_after: user.credit - amount,
+      ref_id: newWithdrawal._id,
+      ref_model: 'Withdrawal',
+      description: description || `ถอนเงินไปยัง ${bank_name} เลขที่บัญชี ${bank_number}`,
+      created_at: new Date()
+    });
+    await userTransaction.save();
 
     return newWithdrawal;
 
@@ -299,6 +314,19 @@ exports.deductFromAdmin = async function ({
     user.credit -= amount;
     await user.save();
   
+    // บันทึก transaction
+    const userTransaction = new UserTransaction({
+      user_id: user._id,
+      type: 'withdraw',
+      amount: amount,
+      balance_before: user.credit,
+      balance_after: user.credit - amount,
+      ref_id: newWithdrawal._id,
+      ref_model: 'Withdrawal',
+      description: description || `ถอนเงินโดย Admin ${addcredit_admin_name} ไปยัง ${bank_name} เลขที่บัญชี ${bank_number}`,
+      created_at: new Date()
+    });
+    await userTransaction.save();
 
     return newWithdrawal;
 
@@ -382,6 +410,9 @@ exports.deleteWithdrawal = async function ({
     if (!withdrawal) {
       throw new Error("ไม่พบข้อมูลการถอนเงิน");
     }
+
+    // ลบ transaction ที่เกี่ยวข้อง
+    await UserTransaction.deleteOne({ ref_id: withdrawal._id, type: 'withdraw' });
 
     // ถ้าสถานะเป็น pending ให้คืนเงิน
     if (withdrawal.status === 'pending') {

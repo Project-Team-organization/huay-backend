@@ -250,3 +250,68 @@ exports.getTopupDays = async function (req, res) {
     return res.status(response.status).json(response);
   }
 };
+
+
+// ดึง transaction ของ user (สำหรับ admin)
+exports.getUserTransactions = async function (req, res) {
+  try {
+    const { user_id } = req.params;
+    const { page = 1, limit = 10, type, startDate, endDate } = req.query || {};
+
+    const result = await creditService.getUserTransactions(user_id, {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      type,
+      startDate,
+      endDate
+    });
+
+    const response = await handleSuccess(
+      result.data,
+      "Get user transactions successful",
+      200,
+      {
+        ...result.pagination,
+        summary: result.summary
+      }
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "Failed to get user transactions");
+    return res.status(response.status).json(response);
+  }
+};
+
+// ดึง transaction ของตัวเอง (สำหรับ user)
+exports.getMyTransactions = async function (req, res) {
+  try {
+    const user_id = req.user._id;
+    const { page = 1, limit = 10, type, startDate, endDate } = req.query || {};
+
+    const result = await creditService.getUserTransactions(user_id, {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      type,
+      startDate,
+      endDate
+    });
+
+    const response = await handleSuccess(
+      result.data,
+      "Get my transactions successful",
+      200,
+      {
+        ...result.pagination,
+        summary: result.summary
+      }
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "Failed to get transactions");
+    return res.status(response.status).json(response);
+  }
+};
+
+
+//
+

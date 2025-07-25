@@ -7,6 +7,10 @@ router.post("/create",creditController.createCredit);
 router.post("/createuser", isUser, creditController.createCreditUser);
 router.get("/history/getuser", isUser, creditController.getCreditsBytoken);
 
+// เพิ่ม routes สำหรับ transaction
+router.get("/transactions/user/:user_id", creditController.getUserTransactions); // สำหรับ admin
+router.get("/transactions/my", isUser, creditController.getMyTransactions); // สำหรับ user
+
 router.get("/get", creditController.getAllCredits);
 router.get("/getbyid/:id", creditController.getCreditsByID);
 router.get("/user/:user_id", creditController.getCreditsByUserId);

@@ -25,8 +25,13 @@ const userTransactionSchema = new mongoose.Schema({
   },
   ref_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "UserBet", // หรือเปลี่ยนเป็น collection ที่เกี่ยวข้อง
-    default: null,
+    required: false,
+    refPath: 'ref_model'
+  },
+  ref_model: {
+    type: String,
+    required: false,
+    enum: ['UserBet', 'Credit', 'Withdrawal']
   },
   description: {
     type: String,
