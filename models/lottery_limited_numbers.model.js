@@ -25,6 +25,13 @@ const lotteryLimitedNumbersSchema = new mongoose.Schema({
             return this.limit_type === 'partial';
         }
     },
+    payout_type:{
+        type: String,
+        enum: ['rate', 'percentage'],
+        required: function() {
+            return this.limit_type === 'partial';
+        }
+    },
     max_total_bet: {
         type: Number,
         required: function() {

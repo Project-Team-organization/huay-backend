@@ -3,6 +3,7 @@ const User = require("../../../models/user.model");
 const LotterySet = require("../../../models/lotterySets.model");
 const UserTransaction = require("../../../models/user.transection.model");
 const BettingType = require("../../../models/bettingTypes.model");
+const LotteryLimitedNumbers = require("../../../models/lottery_limited_numbers.model");
 const mongoose = require("mongoose");
 
 exports.createUserBet = async function (user_id, lottery_set_id, bets) {
@@ -13,12 +14,64 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
 
     // ดู set หวย
     const lotterySet = await validateLotterySet(lottery_set_id);
-    const bettingTypeMap = {};
 
+    // ตรวจสอบเลขที่ถูกจำกัด type: full
+    const limitedNumbersFull = await LotteryLimitedNumbers.find({
+      lottery_set_id: lotterySet._id,
+      limit_type: "full" 
+    });
+
+    // ตรวจสอบเลขที่ถูกจำกัด type: cap
+    const limitedNumbersCap = await LotteryLimitedNumbers.find({
+      lottery_set_id: lotterySet._id,
+      limit_type: "cap"
+    });
+
+    // ตรวจสอบแต่ละ bet ว่ามีเลขที่ถูกจำกัดหรือไม่
+    for (const bet of bets) {
+      // ตรวจสอบ limit_type: full
+      const limitedForBetTypeFull = limitedNumbersFull.filter(limit => 
+        limit.betting_type_id.toString() === bet.betting_type_id.toString()
+      );
+
+      if (limitedForBetTypeFull.length > 0) {
+        for (const number of bet.numbers) {
+          const isLimited = limitedForBetTypeFull.some(limit => 
+            limit.number === number.number
+          );
+          if (isLimited) {
+            throw new Error(`เลข ${number.number} ถูกจำกัดการแทงสำหรับประเภท ${bet.betting_type_id}`);
+          }
+        }
+      }
+
+      // ตรวจสอบ limit_type: cap
+      const limitedForBetTypeCap = limitedNumbersCap.filter(limit => 
+        limit.betting_type_id.toString() === bet.betting_type_id.toString()
+      );
+
+      if (limitedForBetTypeCap.length > 0) {
+        for (const number of bet.numbers) {
+          const limitCap = limitedForBetTypeCap.find(limit => 
+            limit.number === number.number
+          );
+          if (limitCap && number.amount > limitCap.max_total_bet) {
+            throw new Error(`เลข ${number.number} แทงได้ไม่เกิน ${limitCap.max_total_bet} บาท สำหรับประเภท ${bet.betting_type_id}`);
+          }
+        }
+      }
+    }
+
+    // คำนวณ bet_amount สำหรับแต่ละ bet
+    bets.forEach(bet => {
+      bet.bet_amount = bet.numbers.reduce((sum, number) => sum + number.amount, 0);
+    });
+
+    const bettingTypeMap = {};
     const user = await User.findById(user_id);
     const balance_before = user.credit;
 
-    const total_bet_amount = bets.reduce((sum, bet) => {return sum + bet.bet_amount;}, 0);
+    const total_bet_amount = bets.reduce((sum, bet) => sum + bet.bet_amount, 0);
   
     //เช็ค เงินในเครดิต ว่าพอไหม?
     await validateUserCredit(user_id, total_bet_amount);

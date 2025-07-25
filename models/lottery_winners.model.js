@@ -15,6 +15,11 @@ const lotteryWinnerSchema = new mongoose.Schema({
     ref: 'LotteryResult',
     required: true
   },
+  lottery_set_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'LotterySet',
+    required: true
+  },
   betting_type_id: {
     type: String,
     default: null

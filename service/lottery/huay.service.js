@@ -285,15 +285,26 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
             if (isWin) {
               // คำนวณเงินรางวัล: จำนวนเงินที่แทง * อัตราจ่าย
               let payout_rate = matchedResult.reward;
-              
+              let payout_rate_partial = 0;
+              let payout_type = '';
+              let payout = 0;
               // ถ้าเป็นเลขอั้นประเภท partial ให้ใช้ payout_rate ของเลขอั้น
               const lotterylimit_partial = await LotteryLimitedNumbers.find({lottery_set_id: lottery_set_id ,betting_type_id: matchedResult.betting_type_id ,number: userNumber, limit_type: 'partial' });
               if (lotterylimit_partial && lotterylimit_partial.length > 0) {
-                payout_rate = lotterylimit_partial[0].payout_rate;
-                console.log(`💡 ใช้อัตราจ่ายเลขอั้น: ${payout_rate}`);
+                payout_rate_partial = lotterylimit_partial[0].payout_rate;
+                payout_type = lotterylimit_partial[0].payout_type;
+                console.log(`💡 ใช้อัตราจ่ายเลขอั้น: ${payout_rate}  ${payout_type}`);
               }
-              
-              const payout = amount * payout_rate;
+              if(payout_type === 'rate'){
+                payout = amount * payout_rate_partial;
+              }else if(payout_type == 'percentage'){
+                payout = (amount * payout_rate) * (payout_rate_partial / 100);
+                console.log(amount * payout_rate)
+                console.log(payout_rate_partial / 100)
+                console.log(`💡 ใช้อัตราจ่ายเลขอั้น: ${payout}`);
+              }else{
+                payout = amount * payout_rate;
+              }
               totalWinAmount += payout;
 
               // สร้างรายการผู้ชนะ
@@ -302,6 +313,7 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
                 bet_id: userBet._id,
                 lottery_result_id: lotteryResult._id,
                 betting_type_id: matchedResult.betting_type_id,
+                lottery_set_id: lottery_set_id,
                 matched_numbers: [userNumber],
                 payout: payout,
                 status: 'paid'
