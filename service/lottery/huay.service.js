@@ -131,6 +131,67 @@ exports.printLotteryResults = async function() {
   }
 };
 
+// ฟังก์ชันสำหรับสร้างรายการรางวัล
+const createLotteryResultItems = async (lottery_type, huayResults, lotteryResult) => {
+  const resultItems = [];
+  
+  // สร้างรายการรางวัลตาม betting_types ที่มีในระบบ
+  for (const betType of lottery_type.betting_types) {
+    let numbers = [];
+    
+    switch (betType.code) {
+      case '6d_top':
+        numbers = [huayResults.firstPrize];
+        break;
+      case '5d_top':
+        numbers = [huayResults.firstPrize.slice(-5)];
+        break;
+      case '4d_top':
+        numbers = [huayResults.firstPrize.slice(-4)];
+        break;
+      case '3top':
+        numbers = [huayResults.firstPrize.slice(-3)];
+        break;
+      case '3toad':
+        numbers = [huayResults.firstPrize.slice(-3)];
+        break;
+      case '3front':
+        numbers = huayResults.frontThreeDigits;
+        break;
+      case '3back':
+        numbers = huayResults.backThreeDigits;
+        break;
+      case '2top':
+        numbers = [huayResults.firstPrize.slice(-2)];
+        break;
+      case '2bottom':
+        numbers = [huayResults.backTwoDigits];
+        break;
+      case '1top':
+        numbers = huayResults.firstPrize.slice(-3).split('');
+        break;
+      case '1bottom':
+        numbers = huayResults.backTwoDigits.split('');
+        break;
+    }
+
+    if (numbers.length > 0) {
+      // สร้างและบันทึก LotteryResultItem
+      const resultItem = await LotteryResultItem.create({
+        lottery_result_id: lotteryResult._id,
+        betting_type_id: betType.code,
+        name: betType.name,
+        reward: betType.payout_rate,
+        numbers: numbers,
+        winner_count: 0
+      });
+      resultItems.push(resultItem);
+    }
+  }
+  
+  return resultItems;
+};
+
 // ประเมินผลการแทงหวยและค้นหาผู้ชนะ
 exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy) {
   try {
@@ -164,60 +225,27 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
         createdBy
       });
 
-      // 3. บันทึกรายการรางวัล
-      // สร้างรายการรางวัลตาม betting_types ที่มีในระบบ
-      for (const betType of lottery_type.betting_types) {
-        let numbers = [];
-        
-        switch (betType.code) {
-          case '6d_top':
-            numbers = [huayResults.firstPrize];
-            break;
-          case '5d_top':
-            numbers = [huayResults.firstPrize.slice(-5)];
-            break;
-          case '4d_top':
-            numbers = [huayResults.firstPrize.slice(-4)];
-            break;
-          case '3top':
-            numbers = [huayResults.firstPrize.slice(-3)];
-            break;
-          case '3toad':
-            numbers = [huayResults.firstPrize.slice(-3)];
-            break;
-          case '3front':
-            numbers = huayResults.frontThreeDigits;
-            break;
-          case '3back':
-            numbers = huayResults.backThreeDigits;
-            break;
-          case '2top':
-            numbers = [huayResults.firstPrize.slice(-2)];
-            break;
-          case '2bottom':
-            numbers = [huayResults.backTwoDigits];
-            break;
-          case '1top':
-            numbers = huayResults.firstPrize.slice(-3).split('');
-            break;
-          case '1bottom':
-            numbers = huayResults.backTwoDigits.split('');
-            break;
-        }
-
-        if (numbers.length > 0) {
+      // 3. บันทึกรายการรางวัลโดยใช้ฟังก์ชันใหม่
+      const huay_results = await huay.find({lottery_set_id: lottery_set_id});
+      if(huay_results && huay_results.length > 0){
+        // สร้าง LotteryResultItems จากข้อมูลในตาราง huay
+        for (const huayItem of huay_results) {
           // สร้างและบันทึก LotteryResultItem
           const resultItem = await LotteryResultItem.create({
             lottery_result_id: lotteryResult._id,
-            betting_type_id: betType.code,
-            name: betType.name,
-            reward: betType.payout_rate,
-            numbers: numbers,
+            betting_type_id: huayItem.code, // ใช้ code จาก huay เป็น betting_type_id
+            name: huayItem.huay_name,
+            reward: lottery_type.betting_types.find(bt => bt.code === huayItem.code)?.payout_rate || 0,
+            numbers: huayItem.huay_number,
             winner_count: 0
           });
           resultItems.push(resultItem);
         }
+      } else {
+        resultItems = await createLotteryResultItems(lottery_type, huayResults, lotteryResult);
       }
+
+      
     } else {
       // ถ้ามี lottery_results อยู่แล้ว ให้ดึง resultItems ที่มีอยู่
       resultItems = await LotteryResultItem.find({ lottery_result_id: lotteryResult._id });
