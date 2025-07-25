@@ -599,7 +599,7 @@ const getTodFourFromFirstPrize = (prizeFirst, lottery_set_id) => {
         lottery_set_id,
         huay_name: "4 ตัวท้ายโต๊ด",
         huay_number: uniquePermutations,
-        code: "4d_top",
+        code: "4d_toot",
       },
     ];
   } catch (error) {
