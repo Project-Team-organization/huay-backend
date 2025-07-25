@@ -69,6 +69,7 @@ exports.createHuayAPI = async (req, res) => {
         lottery_set_id,
         huay_name: prizeFirst.name,
         huay_number: prizeFirst.number,
+        code: "6d_top",
       });
 
       huayData.push(
@@ -351,13 +352,28 @@ const renameHuayNamesAsync = async (huayData) => {
       "รางวัลเลขท้าย 2 ตัว": "เลขท้าย 2 ตัว",
     };
 
-    return huayData.map((item) => ({
-      ...item,
-      huay_name: mapping[item.huay_name] || item.huay_name,
-    }));
+    return huayData.map((item) => {
+      const newName = mapping[item.huay_name] || item.huay_name;
+      const newItem = {
+        ...item,
+        huay_name: newName,
+      };
+
+      if (newName === "เลขท้าย 2 ตัว") {
+        newItem.code = "2d_bottom";
+      }
+      if (newName === "เลขท้าย 3 ตัว") {
+        newItem.code = "3d_bottom";
+      }
+       if (newName === "เลขหน้า 3 ตัว") {
+        newItem.code = "3d_front_2";
+      }
+
+      return newItem;
+    });
   } catch (error) {
     console.error("renameHuayNamesAsync error:", error);
-    return huayData; // fallback คืนค่าเดิม
+    return huayData;
   }
 };
 
@@ -369,6 +385,7 @@ const getFrontThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
       lottery_set_id,
       huay_name: "3 ตัวหน้ารางวัลที่ 1",
       huay_number: [fullNumber.slice(0, 3)],
+      code:"3d_front"
     }));
   } catch (error) {
     console.error("getFrontThreeFromFirstPrize error:", error);
@@ -384,6 +401,7 @@ const getLastFourFromFirstPrize = (prizeFirst, lottery_set_id) => {
       lottery_set_id,
       huay_name: "เลขท้าย 4 ตัวรางวัลที่หนึ่ง",
       huay_number: [fullNumber.slice(-4)],
+      code: "4d_top",
     }));
   } catch (error) {
     console.error("getLastFourFromFirstPrize error:", error);
@@ -399,6 +417,7 @@ const getLastTwoFromFirstPrize = (prizeFirst, lottery_set_id) => {
       lottery_set_id,
       huay_name: "2 ตัวท้ายรางวังวัลที่ 1",
       huay_number: [fullNumber.slice(-2)],
+      code:"2d_top"
     }));
   } catch (error) {
     console.error("getLastTwoFromFirstPrize error:", error);
@@ -429,6 +448,7 @@ const getTodThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
         lottery_set_id,
         huay_name: "โต๊ด 3 ตัวของรางวัลที่หนึ่ง",
         huay_number: uniquePermutations,
+        code:"3d_toot"
       },
     ];
   } catch (error) {
@@ -472,6 +492,7 @@ const getTodFrontThreeFromHuayData = (huayDataItem, lottery_set_id) => {
         lottery_set_id,
         huay_name: "เลขหน้า 3 ตัวโต๊ด",
         huay_number: uniqueTodNumbers,
+        code:"3d_front_toot_2"
       },
     ];
   } catch (error) {
@@ -515,6 +536,7 @@ const getTodBackThreeFromHuayData = (huayDataItem, lottery_set_id) => {
         lottery_set_id,
         huay_name: "เลขท้าย 3 ตัวโต๊ด",
         huay_number: uniqueTodNumbers,
+        code:"3d_bottom_toot"
       },
     ];
   } catch (error) {
