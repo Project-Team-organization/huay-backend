@@ -187,7 +187,7 @@ exports.updateAdmin = async (req, res) => {
     const result = await adminService.updateadmin(id, body, {
       user_id: req.user._id,
       role: req.user.role,
-      full_name: req.user.username
+      full_name: req.user.username,
     });
     return res.status(result.status).json(result);
   } catch (err) {
@@ -322,6 +322,90 @@ exports.disactiveadmin = async (req, res) => {
       data: { error: error.message, stack: error.stack, referrer, ip },
     });
     const response = await handleError(error);
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getUserBetAll = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    console.log("Page:", page, "Limit:", limit);
+
+    const { bets, pagination } = await adminService.getAllUserBets(page, limit);
+
+    const response = await handleSuccess(
+      bets,
+      "ดึงข้อมูลการแทงหวยสำเร็จ",
+      200,
+      pagination
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(
+      error,
+      "เกิดข้อผิดพลาดในการดึงข้อมูลการแทงหวย",
+      400
+    );
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getUserBetByIdUser = async (req, res) => {
+  try {
+    const userId = req.params.user_id || req.query.user_id;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing user ID.",
+      });
+    }
+
+    const bets = await adminService.getUserBetByIdUser(userId);
+
+    const response = await handleSuccess(
+      bets,
+      "ดึงข้อมูลการแทงหวยของผู้ใช้สำเร็จ",
+      200
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(
+      error,
+      "เกิดข้อผิดพลาดในการดึงข้อมูลการแทงหวยของผู้ใช้",
+      400
+    );
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getUserBetById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    console.log("id", id);
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing user ID.",
+      });
+    }
+
+    const bets = await adminService.getUserBetById(id);
+
+    const response = await handleSuccess(
+      bets,
+      "ดึงข้อมูลการแทงหวยของผู้ใช้สำเร็จ",
+      200
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(
+      error,
+      "เกิดข้อผิดพลาดในการดึงข้อมูลการแทงหวยของผู้ใช้",
+      400
+    );
     return res.status(response.status).json(response);
   }
 };

@@ -1,4 +1,5 @@
 const admin = require("../../models/admin.model");
+const UserBet = require("../../models/userBetSchema.models");
 const superadmin = require("../../models/superadmin.model");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const PasswordHistory = require("../../models/history.chang.password.model");
@@ -278,5 +279,76 @@ exports.disactiveadmin = async (id) => {
     return handleSuccess(result, "อัพเดทสถานะ Admin เป็น inactive สำเร็จ");
   } catch (error) {
     return handleError(error);
+  }
+};
+
+exports.getAllUserBets = async function (page = 1, limit = 10) {
+  try {
+    const skip = (page - 1) * limit;
+    const total = await UserBet.countDocuments();
+    const bets = await UserBet.find()
+      .populate("lottery_set_id")
+      .sort({ bet_date: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return {
+      bets,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    console.error("❌ getAllUserBets error:", error.message);
+    throw error;
+  }
+};
+
+exports.getUserBetByIdUser = async function (user_id, lottery_set_id, status) {
+  try {
+    if (!user_id) throw new Error("user_id ต้องไม่ว่าง");
+
+    const filter = { user_id };
+
+    if (lottery_set_id) {
+      filter.lottery_set_id = lottery_set_id;
+    }
+    if (status) {
+      filter.status = status;
+    }
+    const bets = await UserBet.find(filter)
+      .select("-bets -created_at -updated_at -user_id")
+      .populate({
+        path: "lottery_set_id",
+      })
+      .sort({ bet_date: -1 });
+    return bets;
+  } catch (error) {
+    console.error("❌ getUserBetsById error:", error.message);
+    throw error;
+  }
+};
+
+exports.getUserBetById = async function (id) {
+  try {
+    if (!id) throw new Error("bet_iidd ต้องไม่ว่าง");
+
+    const bet = await UserBet.findById(id)
+      .select("-bets -created_at -updated_at -user_id")
+      .populate({
+        path: "lottery_set_id",
+      });
+
+    if (!bet) {
+      throw new Error("ไม่พบข้อมูลการแทงหวยตาม id ที่ระบุ");
+    }
+
+    return bet;
+  } catch (error) {
+    console.error("❌ getUserBetById error:", error.message);
+    throw error;
   }
 };
