@@ -95,6 +95,7 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
       balance_before,
       balance_after,
       ref_id: bet._id,
+      ref_model: 'UserBet',
       description: "แทงหวย",
       created_at: new Date(),
     });
@@ -276,6 +277,7 @@ exports.cancelUserBet = async function (user_id, bet_id) {
       balance_before,
       balance_after,
       ref_id: userBet._id,
+      ref_model: 'UserBet',
       description: "ยกเลิกการแทงหวยและคืนเครดิต",
       created_at: new Date(),
     });

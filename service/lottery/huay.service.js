@@ -375,6 +375,7 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
           balance_before: user.credit - totalWinAmount,
           balance_after: user.credit,
           ref_id: userBet._id,
+          ref_model: 'UserBet',
           description: `ถูกรางวัลหวย งวดวันที่ ${huayResults.date}`,
         });
 
