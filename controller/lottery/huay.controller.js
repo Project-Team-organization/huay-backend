@@ -78,7 +78,10 @@ exports.createHuayAPI = async (req, res) => {
         ...getLastTwoFromFirstPrize(prizeFirst, lottery_set_id),
         ...getTodThreeFromFirstPrize(prizeFirst, lottery_set_id),
         ...getLastFiveFromFirstPrize(prizeFirst, lottery_set_id),
-        ...getTodFourFromFirstPrize(prizeFirst, lottery_set_id)
+        ...getTodFourFromFirstPrize(prizeFirst, lottery_set_id),
+        ...getTodFrontThreeFromFirstPrize(prizeFirst, lottery_set_id),
+        ...getTopThreeFromFirstPrize(prizeFirst, lottery_set_id),
+        ...getOneTopFromFirstPrize(prizeFirst, lottery_set_id)
       );
     }
 
@@ -118,6 +121,15 @@ exports.createHuayAPI = async (req, res) => {
     if (backThreeItem) {
       huayData.push(
         ...getTodBackThreeFromHuayData(backThreeItem, lottery_set_id)
+      );
+    }
+
+    const twoDigitItem = huayData.find(
+      (item) => item.huay_name === "รางวัลเลขท้าย 2 ตัว"
+    );
+    if (twoDigitItem) {
+      huayData.push(
+        ...getOneBottomFromFirstPrize(twoDigitItem, lottery_set_id)
       );
     }
 
@@ -365,7 +377,7 @@ const renameHuayNamesAsync = async (huayData) => {
       if (newName === "เลขท้าย 3 ตัว") {
         newItem.code = "3d_bottom";
       }
-       if (newName === "เลขหน้า 3 ตัว") {
+      if (newName === "เลขหน้า 3 ตัว") {
         newItem.code = "3d_front_2";
       }
 
@@ -385,7 +397,7 @@ const getFrontThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
       lottery_set_id,
       huay_name: "3 ตัวหน้ารางวัลที่ 1",
       huay_number: [fullNumber.slice(0, 3)],
-      code:"3d_front"
+      code: "3d_front",
     }));
   } catch (error) {
     console.error("getFrontThreeFromFirstPrize error:", error);
@@ -417,7 +429,7 @@ const getLastTwoFromFirstPrize = (prizeFirst, lottery_set_id) => {
       lottery_set_id,
       huay_name: "2 ตัวท้ายรางวังวัลที่ 1",
       huay_number: [fullNumber.slice(-2)],
-      code:"2d_top"
+      code: "2d_top",
     }));
   } catch (error) {
     console.error("getLastTwoFromFirstPrize error:", error);
@@ -448,7 +460,7 @@ const getTodThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
         lottery_set_id,
         huay_name: "โต๊ด 3 ตัวของรางวัลที่หนึ่ง",
         huay_number: uniquePermutations,
-        code:"3d_toot"
+        code: "3d_toot",
       },
     ];
   } catch (error) {
@@ -492,7 +504,7 @@ const getTodFrontThreeFromHuayData = (huayDataItem, lottery_set_id) => {
         lottery_set_id,
         huay_name: "เลขหน้า 3 ตัวโต๊ด",
         huay_number: uniqueTodNumbers,
-        code:"3d_front_toot_2"
+        code: "3d_front_toot_2",
       },
     ];
   } catch (error) {
@@ -536,7 +548,7 @@ const getTodBackThreeFromHuayData = (huayDataItem, lottery_set_id) => {
         lottery_set_id,
         huay_name: "เลขท้าย 3 ตัวโต๊ด",
         huay_number: uniqueTodNumbers,
-        code:"3d_bottom_toot"
+        code: "3d_bottom_toot",
       },
     ];
   } catch (error) {
@@ -604,6 +616,117 @@ const getTodFourFromFirstPrize = (prizeFirst, lottery_set_id) => {
     ];
   } catch (error) {
     console.error("getTodFourFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getTodFrontThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    const generateTod3Permutations = (numberStr) => {
+      if (!numberStr || numberStr.length !== 3) return [];
+
+      const results = new Set();
+      const arr = numberStr.split("");
+
+      const permute = (arr, l, r) => {
+        if (l === r) {
+          results.add(arr.join(""));
+        } else {
+          for (let i = l; i <= r; i++) {
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+            permute(arr, l + 1, r);
+            [arr[l], arr[i]] = [arr[i], arr[l]];
+          }
+        }
+      };
+
+      permute(arr, 0, arr.length - 1);
+      return Array.from(results);
+    };
+
+    const allPermutations = prizeFirst.number.flatMap((fullNumber) => {
+      const frontThree = fullNumber.slice(0, 3);
+      return generateTod3Permutations(frontThree);
+    });
+
+    const uniquePermutations = [...new Set(allPermutations)];
+
+    return [
+      {
+        lottery_set_id,
+        huay_name: "3 ตัวหน้ารางวัลที่ 1 โต๊ด",
+        huay_number: uniquePermutations,
+        code: "3d_front_toot",
+      },
+    ];
+  } catch (error) {
+    console.error("getTodFrontThreeFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getTopThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    return prizeFirst.number.map((fullNumber) => ({
+      lottery_set_id,
+      huay_name: "3 ตัวท้ายรางวัลที่ 1",
+      huay_number: [fullNumber.slice(-3)],
+      code: "3d_top",
+    }));
+  } catch (error) {
+    console.error("getTopThreeFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getOneTopFromFirstPrize = (prizeFirst, lottery_set_id) => {
+  try {
+    if (!prizeFirst || !Array.isArray(prizeFirst.number)) return [];
+
+    const digitSet = new Set();
+
+    prizeFirst.number.forEach((fullNumber) => {
+      const lastThree = fullNumber.slice(-3);
+      lastThree.split("").forEach((digit) => digitSet.add(digit));
+    });
+
+    return [
+      {
+        lottery_set_id,
+        huay_name: "1 ตัวท้ายรางวัลที่ 1",
+        huay_number: [...digitSet],
+        code: "1top",
+      },
+    ];
+  } catch (error) {
+    console.error("getOneTopFromFirstPrize error:", error);
+    return [];
+  }
+};
+
+const getOneBottomFromFirstPrize = (twoDigitItem, lottery_set_id) => {
+  try {
+    if (!twoDigitItem || !Array.isArray(twoDigitItem.huay_number)) return [];
+
+    const digitSet = new Set();
+    twoDigitItem.huay_number.forEach((number) => {
+      number.split("").forEach((digit) => digitSet.add(digit));
+    });
+
+    return [
+      {
+        lottery_set_id,
+        huay_name: "วิ่งล่าง",
+        huay_number: [...digitSet],
+        code: "1bottom",
+      },
+    ];
+  } catch (error) {
+    console.error("getOneBottomFromFirstPrize error:", error);
     return [];
   }
 };
