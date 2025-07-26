@@ -42,4 +42,10 @@ router.get("/bet", authmiddleware.isUser, betController.getUserBetsById);
 router.get("/bet/:id", authmiddleware.isUser, betController.getUserBetByPk);
 router.get("/bet/find/all", authmiddleware.isUser, betController.getUserBetAll);
 
+
+// user ดูเลขหวย
+router.get("/huay", lotteryController.getAllHuay); // Get Huay A;;
+router.get("/huay/set/:id", lotteryController.getHuay); // Get Huay By Lotter Set
+router.get("/huay/:id", lotteryController.getHuayById); // Get Huay by ID 
+
 module.exports = router;
