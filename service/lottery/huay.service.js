@@ -343,6 +343,7 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
                 betting_type_id: matchedResult.betting_type_id,
                 lottery_set_id: lottery_set_id,
                 matched_numbers: [userNumber],
+                number: userNumber, // เพิ่มการเก็บเลขที่ถูกรางวัล
                 payout: payout,
                 status: 'paid'
               });
@@ -386,6 +387,19 @@ exports.evaluateUserBetsByLotterySet = async function (lottery_set_id, createdBy
       userBet.status = winners.some(w => w.bet_id.toString() === userBet._id.toString()) 
         ? "won" 
         : "lost";
+
+
+      userBet.bets.forEach(bet => {
+        bet.numbers.forEach(num => {
+          // เช็คว่าเลขนี้ถูกรางวัลหรือไม่
+          const isWinner = winners.some(w => 
+            w.bet_id.toString() === userBet._id.toString() && 
+            w.matched_numbers.includes(num.number) && 
+            w.betting_type_id === bet.betting_type_id
+          );
+          num.is_won = isWinner;
+        });
+      });
       userBet.updated_at = new Date();
       await userBet.save();
 
