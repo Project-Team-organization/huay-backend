@@ -28,6 +28,7 @@ exports.createHuay = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Huay data inserted successfully",
       data: result,
     });
   } catch (error) {
@@ -145,6 +146,7 @@ exports.createHuayAPI = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Huay data inserted successfully",
       data: result,
     });
   } catch (error) {
