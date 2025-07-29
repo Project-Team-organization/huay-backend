@@ -207,7 +207,7 @@ async function checkLotterySetResults() {
   try {
     // ใช้เวลาเซิร์ฟเวอร์ (UTC) โดยตรง
     const serverTime = new Date();
-    console.log('serverTime', serverTime);
+    // console.log('serverTime', serverTime);
 
     //เปิดหวยอัตโนมัติ
     const openLotterySets = await LotterySets.find({
