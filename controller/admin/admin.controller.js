@@ -409,3 +409,92 @@ exports.getUserBetById = async (req, res) => {
     return res.status(response.status).json(response);
   }
 };
+
+
+
+exports.getUserTransactions = async function (req, res) {
+  try {
+   
+    const { page = 1, limit = 10, type, startDate, endDate } = req.query || {};
+
+    const result = await adminService.getUserTransactions( {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      type,
+      startDate,
+      endDate
+    });
+
+    const response = await handleSuccess(
+      result.data,
+      "Get user transactions successful",
+      200,
+      {
+        ...result.pagination,
+        summary: result.summary
+      }
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "Failed to get user transactions");
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getUserTransactionById = async function (req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      const response = await handleError(null, "กรุณาระบุ ID ของธุรกรรม", 400);
+      return res.status(response.status).json(response);
+    }
+
+    const transaction = await adminService.getUserTransactionById(id);
+
+    const response = await handleSuccess(
+      transaction,
+      "ดึงข้อมูลธุรกรรมสำเร็จ",
+      200
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูลธุรกรรม");
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getUserTransactionsByUserId = async function (req, res) {
+  try {
+    const { user_id } = req.params;
+    const { page, limit, type, startDate, endDate } = req.query;
+
+    if (!user_id) {
+      const response = await handleError(null, "กรุณาระบุ ID ของผู้ใช้", 400);
+      return res.status(response.status).json(response);
+    }
+
+    const result = await adminService.getUserTransactionsByUserId(user_id, {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      type,
+      startDate,
+      endDate
+    });
+
+    const response = await handleSuccess(
+      result.data,
+      "ดึงข้อมูลธุรกรรมของผู้ใช้สำเร็จ",
+      200,
+      {
+        ...result.pagination,
+        summary: result.summary
+      }
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูลธุรกรรมของผู้ใช้");
+    return res.status(response.status).json(response);
+  }
+};
+

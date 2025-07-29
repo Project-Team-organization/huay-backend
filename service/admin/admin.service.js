@@ -3,6 +3,7 @@ const UserBet = require("../../models/userBetSchema.models");
 const superadmin = require("../../models/superadmin.model");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const PasswordHistory = require("../../models/history.chang.password.model");
+const UserTransaction = require("../../models/user.transection.model");
 const bcrypt = require("bcrypt");
 
 // create admin
@@ -288,6 +289,7 @@ exports.getAllUserBets = async function (page = 1, limit = 10) {
     const total = await UserBet.countDocuments();
     const bets = await UserBet.find()
       .populate("lottery_set_id")
+      .populate("user_id","full_name")
       .sort({ bet_date: -1 })
       .skip(skip)
       .limit(limit);
@@ -338,9 +340,11 @@ exports.getUserBetById = async function (id) {
 
     const bet = await UserBet.findById(id)
       .select("-bets -created_at -updated_at -user_id")
+      .populate("user_id","full_name")
       .populate({
         path: "lottery_set_id",
       });
+      
 
     if (!bet) {
       throw new Error("ไม่พบข้อมูลการแทงหวยตาม id ที่ระบุ");
@@ -350,5 +354,173 @@ exports.getUserBetById = async function (id) {
   } catch (error) {
     console.error("❌ getUserBetById error:", error.message);
     throw error;
+  }
+};
+
+
+exports.getUserTransactions = async function ( { page = 1, limit = 10, type, startDate, endDate } = {}) {
+  try {
+    const skip = (page - 1) * limit;
+    
+    // สร้าง query object
+    let query = {};
+
+    // เพิ่มเงื่อนไขการค้นหาตาม type ถ้ามีการระบุ
+    if (type) {
+      query.type = type;
+    }
+
+    // เพิ่มเงื่อนไขการค้นหาตามช่วงวันที่
+    if (startDate || endDate) {
+      query.created_at = {};
+      
+      if (startDate) {
+        query.created_at.$gte = new Date(startDate + "T00:00:00.000Z");
+      }
+      
+      if (endDate) {
+        query.created_at.$lte = new Date(endDate + "T23:59:59.999Z");
+      }
+    }
+
+    // ดึงข้อมูล transaction
+    const transactions = await UserTransaction.find(query)
+      .sort({ created_at: -1 }) // เรียงจากใหม่ไปเก่า
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: 'ref_id',
+        refPath: 'ref_model'
+      })
+      .populate('user_id', 'username phone'); // เพิ่มข้อมูล user
+
+    // นับจำนวนทั้งหมด
+    const total = await UserTransaction.countDocuments(query);
+
+    // คำนวณยอดรวมของแต่ละประเภท transaction
+    const summary = await UserTransaction.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: "$type",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // แยกสรุปตาม ref_model
+    const modelSummary = await UserTransaction.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: "$ref_model",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    return {
+      data: transactions,
+      summary,
+      modelSummary,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    console.error("Error in getUserTransactions:", error.message);
+    throw new Error("ไม่สามารถดึงข้อมูล transaction ได้");
+  }
+};
+
+exports.getUserTransactionById = async function (transactionId) {
+  try {
+    const transaction = await UserTransaction.findById(transactionId)
+      .populate({
+        path: 'ref_id',
+        refPath: 'ref_model'
+      })
+      .populate('user_id', 'username phone');
+
+    if (!transaction) {
+      throw new Error("ไม่พบข้อมูลธุรกรรม");
+    }
+
+    return transaction;
+  } catch (error) {
+    console.error("Error in getUserTransactionById:", error.message);
+    throw new Error("ไม่สามารถดึงข้อมูลธุรกรรมได้");
+  }
+};
+
+exports.getUserTransactionsByUserId = async function (userId, { page = 1, limit = 10, type, startDate, endDate } = {}) {
+  try {
+    const skip = (page - 1) * limit;
+    
+    // สร้าง query object
+    let query = { user_id: userId };
+
+    // เพิ่มเงื่อนไขการค้นหาตาม type ถ้ามีการระบุ
+    if (type) {
+      query.type = type;
+    }
+
+    // เพิ่มเงื่อนไขการค้นหาตามช่วงวันที่
+    if (startDate || endDate) {
+      query.created_at = {};
+      
+      if (startDate) {
+        query.created_at.$gte = new Date(startDate + "T00:00:00.000Z");
+      }
+      
+      if (endDate) {
+        query.created_at.$lte = new Date(endDate + "T23:59:59.999Z");
+      }
+    }
+
+    // ดึงข้อมูล transaction
+    const transactions = await UserTransaction.find(query)
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: 'ref_id',
+        refPath: 'ref_model'
+      })
+      .populate('user_id', 'username phone');
+
+    // นับจำนวนทั้งหมด
+    const total = await UserTransaction.countDocuments(query);
+
+    // คำนวณยอดรวมของแต่ละประเภท transaction
+    const summary = await UserTransaction.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: "$type",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    return {
+      data: transactions,
+      summary,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    console.error("Error in getUserTransactionsByUserId:", error.message);
+    throw new Error("ไม่สามารถดึงข้อมูล transaction ได้");
   }
 };

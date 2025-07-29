@@ -5,6 +5,8 @@ const path = require('path');
 const connectDB = require("./config/db");
 const config = require("./config/config");
 const routes = require("./routes");
+const cron = require('node-cron');
+const { checkLotterySetResults } = require('./service/lottery/lotterySets.service');
 
 const app = express();
 
@@ -29,6 +31,14 @@ app.get("/check", (req, res) => {
 });
 
 app.use("/api", routes);
+
+//ออกผลหวย 
+cron.schedule('* * * * *', async () => {
+  // console.log('Running lottery sets check...');
+  await checkLotterySetResults();
+});
+
+
 
 // เริ่มเซิร์ฟเวอร์
 app.listen(config.port, () =>

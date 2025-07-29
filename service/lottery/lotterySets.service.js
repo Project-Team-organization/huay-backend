@@ -2,6 +2,7 @@ const LotterySets = require("../../models/lotterySets.model");
 const LotteryType = require("../../models/lotteryType.model");
 const BettingType = require("../../models/bettingTypes.model");
 const mongoose = require("mongoose");
+const huayService = require("./huay.service");
 
 exports.createLotterySets = async function (data) {
   try {
@@ -201,3 +202,82 @@ async function validateBettingOptionsAndIds(options) {
 
   if (errors.length) throw new Error(errors.join(" | "));
 }
+
+async function checkLotterySetResults() {
+  try {
+    const currentTime = new Date();
+    
+    //เปิดหวยอัตโนมัติ
+    const openLotterySets = await LotterySets.find({
+      openTime: { $lte: currentTime },
+      closeTime: { $gt: currentTime }, // ต้องยังไม่ถึงเวลาปิด
+      status: "scheduled" // เช็คเฉพาะที่มีสถานะ scheduled
+    }).populate('lottery_type_id');
+
+    if (openLotterySets.length > 0) {
+      for (const lotterySet of openLotterySets) {
+        try {
+          await LotterySets.findByIdAndUpdate(lotterySet._id, {
+            status: "open"
+          });
+          console.log(`🎲 เปิดรับแทงหวย: ${lotterySet.name}`);
+        } catch (error) {
+          console.error(`Error opening lottery set ${lotterySet._id}:`, error.message);
+        }
+      }
+    }
+
+    //ปิดหวยอัตโนมัติ
+    const closeLotterySets = await LotterySets.find({
+      closeTime: { $lte: currentTime },
+      status: "open" // เช็คเฉพาะที่เปิดอยู่
+    }).populate('lottery_type_id');
+
+    if (closeLotterySets.length > 0) {
+      for (const lotterySet of closeLotterySets) {
+        try {
+          await LotterySets.findByIdAndUpdate(lotterySet._id, {
+            status: "closed"
+          });
+          console.log(`🔒 ปิดรับแทงหวย: ${lotterySet.name}`);
+        } catch (error) {
+          console.error(`Error closing lottery set ${lotterySet._id}:`, error.message);
+        }
+      }
+    }
+
+    // ออกผลหวย
+    const readyLotterySets = await LotterySets.find({
+      result_time: { $lte: currentTime },
+      status: { 
+        $nin: ["resulted", "cancelled"] // ไม่เอาสถานะ resulted และ cancelled
+      }
+    }).populate('lottery_type_id');
+
+    if (readyLotterySets.length > 0) {
+      const user_id = '685d483a2144647be58f9312';
+      
+      // Process each lottery set
+      for (const lotterySet of readyLotterySets) {
+        try {
+          // ประมวลผลรางวัลสำหรับแต่ละ lottery set
+          console.log(`🔍 ออกผลหวย: ${lotterySet.name}`);
+          await huayService.evaluateUserBetsByLotterySet(lotterySet._id, user_id);
+          
+          // อัพเดทสถานะเป็น resulted หลังจากประมวลผลเสร็จ
+          await LotterySets.findByIdAndUpdate(lotterySet._id, {
+            status: "resulted"
+          });
+          
+          console.log(`🔍 ประมวลผลรางวัลสำเร็จ: ${lotterySet.name}`);
+        } catch (error) {
+          console.error(`Error processing lottery set ${lotterySet._id}:`, error.message);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking lottery set results:', error);
+  }
+}
+
+exports.checkLotterySetResults = checkLotterySetResults;
