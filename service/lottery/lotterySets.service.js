@@ -141,9 +141,9 @@ async function validateInput(data, lotteryId = null) {
     const closeTime = new Date(data.closeTime);
 
     // ตรวจสอบว่า openTime ต้องมากกว่าเวลาปัจจุบัน
-    if (openTime <= currentDate) {
-      throw new Error("เวลาเปิดต้องมากกว่าเวลาปัจจุบัน");
-    }
+    // if (openTime <= currentDate) {
+    //   throw new Error("เวลาเปิดต้องมากกว่าเวลาปัจจุบัน");
+    // }
 
     // ตรวจสอบว่า closeTime ต้องมากกว่า openTime
     if (closeTime <= openTime) {
