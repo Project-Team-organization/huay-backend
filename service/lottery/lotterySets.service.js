@@ -205,12 +205,13 @@ async function validateBettingOptionsAndIds(options) {
 
 async function checkLotterySetResults() {
   try {
-    const currentTime = new Date();
-    
+    // ใช้เวลาเซิร์ฟเวอร์ (UTC) โดยตรง
+    const serverTime = new Date();
+    console.log('serverTime', serverTime);
+
     //เปิดหวยอัตโนมัติ
     const openLotterySets = await LotterySets.find({
-      openTime: { $lte: currentTime },
-      closeTime: { $gt: currentTime }, // ต้องยังไม่ถึงเวลาปิด
+      openTime: { $lte: serverTime },
       status: "scheduled" // เช็คเฉพาะที่มีสถานะ scheduled
     }).populate('lottery_type_id');
 
@@ -229,7 +230,7 @@ async function checkLotterySetResults() {
 
     //ปิดหวยอัตโนมัติ
     const closeLotterySets = await LotterySets.find({
-      closeTime: { $lte: currentTime },
+      closeTime: { $lte: serverTime },
       status: "open" // เช็คเฉพาะที่เปิดอยู่
     }).populate('lottery_type_id');
 
@@ -248,7 +249,7 @@ async function checkLotterySetResults() {
 
     // ออกผลหวย
     const readyLotterySets = await LotterySets.find({
-      result_time: { $lte: currentTime },
+      result_time: { $lte: serverTime },
       status: { 
         $nin: ["resulted", "cancelled"] // ไม่เอาสถานะ resulted และ cancelled
       }
