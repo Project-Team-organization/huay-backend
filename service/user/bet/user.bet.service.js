@@ -301,7 +301,7 @@ exports.getUserBetByPk = async function (bet_id) {
         select: "name lottery_type_id",
         populate: {
           path: "lottery_type_id",
-          select: "lottery_type -_id",
+          select: "lottery_type betting_types -_id",
         },
       });
 
@@ -312,8 +312,21 @@ exports.getUserBetByPk = async function (bet_id) {
     const betObj = bet.toObject();
     const lotterySet = betObj.lottery_set_id;
     const lottery_type_name = lotterySet?.lottery_type_id?.lottery_type || null;
+    
+    // แมพข้อมูล betting_types เป็น object เพื่อค้นหาได้ง่าย
+    const bettingTypesMap = lotterySet?.lottery_type_id?.betting_types?.reduce((acc, type) => {
+      acc[type.code] = type;
+      return acc;
+    }, {}) || {};
 
-    // ไม่ต้อง map หรือ group ด้วย betting_type_id อีกต่อไป
+    // แมพข้อมูล bets กับ betting_types
+    const mappedBets = betObj.bets.map(bet => ({
+      ...bet,
+      payout_rate: bettingTypesMap[bet.betting_type_id]?.payout_rate || bet.betting_type_id,
+      numbers: bet.numbers,
+      bet_amount: bet.bet_amount,
+    }));
+
     const responseData = {
       _id: betObj._id,
       name: lotterySet.name,
@@ -321,7 +334,7 @@ exports.getUserBetByPk = async function (bet_id) {
       bet_date: betObj.bet_date,
       total_bet_amount: betObj.total_bet_amount,
       status: betObj.status,
-      bets: betObj.bets, // ส่ง bets ตรง ๆ
+      bets: mappedBets,
     };
     return responseData;
   } catch (error) {
