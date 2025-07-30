@@ -301,23 +301,23 @@ exports.getUserBetByPk = async function (bet_id) {
         select: "name lottery_type_id",
         populate: {
           path: "lottery_type_id",
-          select: "name -_id",
+          select: "lottery_type -_id",
         },
       });
+
+    console.log("🔍 bet:", bet);
 
     if (!bet) return null;
 
     const betObj = bet.toObject();
     const lotterySet = betObj.lottery_set_id;
-    const lottery_type_name = lotterySet?.lottery_type_id?.name || null;
+    const lottery_type_name = lotterySet?.lottery_type_id?.lottery_type || null;
 
     // ไม่ต้อง map หรือ group ด้วย betting_type_id อีกต่อไป
     const responseData = {
       _id: betObj._id,
-      lottery_set_id: {
-        name: lotterySet.name,
-        lottery_type_name,
-      },
+      name: lotterySet.name,
+      lottery_type_name,
       bet_date: betObj.bet_date,
       total_bet_amount: betObj.total_bet_amount,
       status: betObj.status,
