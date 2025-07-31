@@ -498,3 +498,47 @@ exports.getAllHuay = async (page = 1, limit = 10) => {
     throw new Error("Error retrieving all Huay data: " + error.message);
   }
 };
+
+exports.getLatestResultedHuay = async function() {
+  try {
+    // หา lottery_set ล่าสุดที่มีสถานะ resulted
+    const latestResultedSet = await LotterySets.findOne({
+      status: "resulted"
+    })
+    .sort({ result_time: -1 })
+    .select('_id name result_time');
+
+    if (!latestResultedSet) {
+      throw new Error("ไม่พบข้อมูลหวยที่ออกผลล่าสุด");
+    }
+
+    // ดึงข้อมูลหวยจากงวดล่าสุด
+    const huayResults = await huay.find({
+      lottery_set_id: latestResultedSet._id
+    }).sort({ code: 1 }); // เรียงตาม code
+
+    if (!huayResults.length) {
+      throw new Error("ไม่พบข้อมูลผลหวยในงวดล่าสุด");
+    }
+    
+    const huaythai = {
+      lottery_set: latestResultedSet,
+      results: huayResults.map(result => ({
+        huay_name: result.huay_name,
+        huay_number: result.huay_number,
+        code: result.code
+      }))
+    }
+
+    const huaylao ={
+
+    };
+    return {
+        huaythai,
+        huaylao
+    };
+  } catch (error) {
+    console.error('Error getting latest resulted huay:', error.message);
+    throw error;
+  }
+};

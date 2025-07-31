@@ -358,6 +358,23 @@ exports.getLotteryResultItems = async (req, res) => {
   }
 };
 
+exports.getLatestResultedHuay = async (req, res) => {
+  try {
+    const result = await huayService.getLatestResultedHuay();
+    return res.status(200).json({
+      success: true,
+      message: "ดึงข้อมูลผลหวยล่าสุดสำเร็จ",
+      data: result
+    });
+  } catch (error) {
+    console.error('Error in getLatestResultedHuay controller:', error.message);
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 const renameHuayNamesAsync = async (huayData) => {
   try {
     const mapping = {
