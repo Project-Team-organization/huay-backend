@@ -26,27 +26,21 @@ exports.getAllWinners = async function(query) {
     // นับจำนวนทั้งหมด
     const total = await LotteryWinner.countDocuments(filter);
 
-    // จัดกลุ่มตาม betting_type_id
-    const groupedWinners = {};
-    winners.forEach(winner => {
-      if (!groupedWinners[winner.betting_type_id]) {
-        groupedWinners[winner.betting_type_id] = [];
+    // แปลงข้อมูลให้อยู่ในรูปแบบที่ต้องการ
+    const formattedWinners = winners.map(winner => ({
+      username: winner.user_id.username,
+      number: winner.matched_numbers[0],
+      payout: winner.payout,
+      created_at: winner.createdAt,
+      lottery_set: {
+        id: winner.lottery_set_id._id,
+        name: winner.lottery_set_id.name,
+        result_time: winner.lottery_set_id.result_time
       }
-      groupedWinners[winner.betting_type_id].push({
-        username: winner.user_id.username,
-        number: winner.matched_numbers[0],
-        payout: winner.payout,
-        created_at: winner.createdAt,
-        lottery_set: {
-          id: winner.lottery_set_id._id,
-          name: winner.lottery_set_id.name,
-          result_time: winner.lottery_set_id.result_time
-        }
-      });
-    });
+    }));
 
     return {
-      data: groupedWinners,
+      data: formattedWinners,
       pagination: {
         total,
         page: parseInt(page),

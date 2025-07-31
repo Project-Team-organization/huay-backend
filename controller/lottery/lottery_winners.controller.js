@@ -6,7 +6,8 @@ exports.getAllWinners = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "ดึงข้อมูลผู้ชนะรางวัลสำเร็จ",
-      data: result
+      data: result?.data,
+      pagination: result?.pagination
     });
   } catch (error) {
     console.error('Error in getAllWinners controller:', error.message);
