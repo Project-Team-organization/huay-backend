@@ -377,12 +377,15 @@ exports.evaluateUserBetsByLotterySet = async function (
               const winner = await LotteryWinner.create({
                 user_id: userBet.user_id,
                 bet_id: userBet._id,
+                betting_name: matchedResult.name,
                 lottery_result_id: lotteryResult._id,
                 betting_type_id: matchedResult.betting_type_id,
                 lottery_set_id: lottery_set_id,
                 matched_numbers: [userNumber],
                 number: userNumber, // เพิ่มการเก็บเลขที่ถูกรางวัล
-                payout: payout,
+                bet_amount: amount,
+                payout: payout_rate,
+                reward: totalWinAmount,
                 status: "paid",
               });
               winners.push(winner);

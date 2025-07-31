@@ -19,24 +19,24 @@ exports.getAllWinners = async function(query) {
     const winners = await LotteryWinner.find(filter)
       .populate('user_id', 'username')
       .populate('lottery_set_id', 'name result_time')
-      .sort({ createdAt: -1 }) // เรียงตามเวลาล่าสุด
+      .sort({ createdAt: -1 })
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit));
 
     // นับจำนวนทั้งหมด
     const total = await LotteryWinner.countDocuments(filter);
 
-    // แปลงข้อมูลให้อยู่ในรูปแบบที่ต้องการ
+    // แปลงข้อมูลให้อยู่ในรูปแบบตาราง
     const formattedWinners = winners.map(winner => ({
-      username: winner.user_id.username,
+      full_name: winner.user_id.full_name,
+      betting_name: winner.betting_name,
+      bet_type: winner.betting_type_id, 
       number: winner.matched_numbers[0],
+      bet_amount: winner.bet_amount,
       payout: winner.payout,
-      created_at: winner.createdAt,
-      lottery_set: {
-        id: winner.lottery_set_id._id,
-        name: winner.lottery_set_id.name,
-        result_time: winner.lottery_set_id.result_time
-      }
+      reward: winner.reward,
+      lottery_set: winner.lottery_set_id.name,
+      created_at: winner.createdAt
     }));
 
     return {

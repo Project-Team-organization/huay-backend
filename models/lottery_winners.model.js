@@ -24,13 +24,25 @@ const lotteryWinnerSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  betting_name:{
+    type: String,
+    default:null
+  },
   matched_numbers: [{
     type: String,
     required: true
   }],
+  bet_amount: {
+    type: Number,
+    required: true
+  },
   payout: {
     type: Number,
     required: true
+  },
+  reward: {
+    type: Number,
+    default: 0
   },
   status: {
     type: String,
