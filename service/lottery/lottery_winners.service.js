@@ -53,3 +53,76 @@ exports.getAllWinners = async function(query) {
     throw error;
   }
 }; 
+
+exports.getLotteryWinners = async function(lottery_result_id, page, limit, startDate, endDate) {
+  const query = {};
+  if (startDate && endDate) {
+    query.lottery_result_id = lottery_result_id;
+    query.draw_date = {
+      $gte: new Date(startDate),
+      $lte: new Date(endDate)
+    };
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [results, totalCount] = await Promise.all([
+    LotteryWinner.find(query)
+      .populate('user_id', 'username full_name')
+      .populate('lottery_set_id', 'name')
+      .skip(skip)
+      .limit(parseInt(limit)),
+    LotteryWinner.countDocuments(query)
+  ]);
+
+  // แปลงข้อมูลให้ตรงตามโครงสร้างที่ต้องการ
+  const formattedData = results.map(winner => ({
+    betting_name: winner.user_id?.full_name || '',
+    bet_type: winner.betting_type_id,
+    number: winner.matched_numbers[0],
+    bet_amount: winner.bet_amount || 0,
+    payout: winner.payout_rate || 0,
+    reward: winner.payout,
+    lottery_set: winner.lottery_set_id.name,
+    created_at: winner.createdAt
+  }));
+
+  const total = totalCount || 0;
+  const total_pages = Math.ceil(total / limit);
+
+  return {
+    data: formattedData,
+    pagination: {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total_pages
+    }
+  };
+};
+
+exports.getLotteryWinnerById = async function(id) {
+  try {
+    const winner = await LotteryWinner.findById(id)
+      .populate('user_id', 'username full_name')
+      .populate('lottery_set_id', 'name');
+
+    if (!winner) {
+      throw new Error('ไม่พบข้อมูลผู้ชนะรางวัล');
+    }
+
+    // แปลงข้อมูลให้ตรงตามโครงสร้าง
+    return {
+      betting_name: winner.user_id?.full_name || '',
+      bet_type: winner.betting_type_id,
+      number: winner.matched_numbers[0],
+      bet_amount: winner.bet_amount || 0,
+      payout: winner.payout_rate || 0,
+      reward: winner.payout,
+      lottery_set: winner.lottery_set_id.name,
+      created_at: winner.createdAt
+    };
+  } catch (error) {
+    throw error;
+  }
+}; 

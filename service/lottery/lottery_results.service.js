@@ -92,8 +92,7 @@ class LotteryResultService {
   }
 
   // ดึงรายการผู้ชนะทั้งหมด
-  async getLotteryWinners(lottery_result_id,page,limit, startDate, endDate) {
-
+  async getLotteryWinners(lottery_result_id, page, limit, startDate, endDate) {
     const query = {};
     if (startDate && endDate) {
       query.lottery_result_id = lottery_result_id;
@@ -107,24 +106,35 @@ class LotteryResultService {
 
     const [results, totalCount] = await Promise.all([
       LotteryWinner.find(query)
-        .populate('user_id', 'username')
-        .populate('betting_type_id', 'name')
-        .populate('lottery_result_id', 'draw_date')
+        .populate('user_id', 'username full_name')
+        .populate('lottery_set_id', 'name')
         .skip(skip)
         .limit(parseInt(limit)),
       LotteryWinner.countDocuments(query)
     ]);
 
+    // แปลงข้อมูลให้ตรงตามโครงสร้างที่ต้องการ
+    const formattedData = results.map(winner => ({
+      betting_name: winner.user_id?.full_name || '',
+      bet_type: winner.betting_type_id,
+      number: winner.matched_numbers[0],
+      bet_amount: winner.bet_amount || 0,
+      payout: winner.payout_rate || 0,
+      reward: winner.payout,
+      lottery_set: winner.lottery_set_id.name,
+      created_at: winner.createdAt
+    }));
+
     const total = totalCount || 0;
-    const totalPages = Math.ceil(total / limit);
+    const total_pages = Math.ceil(total / limit);
 
     return {
-      data: results,
+      data: formattedData,
       pagination: {
         total,
-        totalPages,
-        currentPage: page,
-        limit
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total_pages
       }
     };
   }
@@ -153,6 +163,13 @@ class LotteryResultService {
 
       const [results, totalCount] = await Promise.all([
         LotteryResult.find(query)
+          .populate({
+            path: 'lottery_set_id',
+            populate: {
+              path: 'lottery_type_id',
+              select: 'name'
+            }
+          })
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(parseInt(limit)),
@@ -162,8 +179,30 @@ class LotteryResultService {
       const total = totalCount || 0;
       const totalPages = Math.ceil(total / limit);
 
+      // ดึงข้อมูลเลขรางวัลจาก lottery result items
+      const resultPromises = results.map(async (result) => {
+        const resultItems = await LotteryResultItem.find({
+          lottery_result_id: result._id,
+          betting_type_id: '6d_top'
+        }).select('numbers');
+
+        // แปลงสถานะให้เป็นข้อความที่ต้องการ
+        const displayStatus = result.lottery_set_id.status === 'resulted' ? 'ออกรางวัลแล้ว' : 'ยังไม่ประกาศ';
+
+        return {
+          date: result.draw_date,
+          lottery_name: result.lottery_set_id.name,
+          lottery_type: result.lottery_set_id.lottery_type_id.lottery_type,
+          number: resultItems.length > 0 ? resultItems[0].numbers[0] : '',
+          status: displayStatus,
+          winner_count: 0
+        };
+      });
+
+      const formattedResults = await Promise.all(resultPromises);
+
       return {
-        data: results,
+        data: formattedResults,
         pagination: {
           total,
           totalPages,
@@ -322,6 +361,33 @@ class LotteryResultService {
           currentPage: page,
           limit
         }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // ดึงรายการผู้ชนะตาม ID
+  async getLotteryWinnerById(id) {
+    try {
+      const winner = await LotteryWinner.findById(id)
+        .populate('user_id', 'username full_name')
+        .populate('lottery_set_id', 'name');
+
+      if (!winner) {
+        throw new Error('ไม่พบข้อมูลผู้ชนะรางวัล');
+      }
+
+      // แปลงข้อมูลให้ตรงตามโครงสร้าง
+      return {
+        betting_name: winner.user_id?.full_name || '',
+        bet_type: winner.betting_type_id,
+        number: winner.matched_numbers[0],
+        bet_amount: winner.bet_amount || 0,
+        payout: winner.payout_rate || 0,
+        reward: winner.payout,
+        lottery_set: winner.lottery_set_id.name,
+        created_at: winner.createdAt
       };
     } catch (error) {
       throw error;

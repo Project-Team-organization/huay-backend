@@ -393,9 +393,9 @@ async function checkLotterySetResults() {
 const renameHuayNamesAsync = async (huayData) => {
   try {
     const mapping = {
-      "รางวัลเลขหน้า 3 ตัว": "เลขหน้า 3 ตัว",
-      "รางวัลเลขท้าย 3 ตัว": "เลขท้าย 3 ตัว",
-      "รางวัลเลขท้าย 2 ตัว": "เลขท้าย 2 ตัว",
+      "รางวัลเลขหน้า 3 ตัว": "3 ตัวหน้า",
+      "รางวัลเลขท้าย 3 ตัว": "3 ตัวล่าง",
+      "รางวัลเลขท้าย 2 ตัว": "2 ตัวล่าง",
     };
 
     return huayData.map((item) => {
@@ -405,13 +405,13 @@ const renameHuayNamesAsync = async (huayData) => {
         huay_name: newName,
       };
 
-      if (newName === "เลขท้าย 2 ตัว") {
+      if (newName === "2 ตัวล่าง") {
         newItem.code = "2d_bottom";
       }
-      if (newName === "เลขท้าย 3 ตัว") {
+      if (newName === "3 ตัวล่าง") {
         newItem.code = "3d_bottom";
       }
-      if (newName === "เลขหน้า 3 ตัว") {
+      if (newName === "3 ตัวหน้า") {
         newItem.code = "3d_front_2";
       }
 
@@ -445,7 +445,7 @@ const getLastFourFromFirstPrize = (prizeFirst, lottery_set_id) => {
 
     return prizeFirst.number.map((fullNumber) => ({
       lottery_set_id,
-      huay_name: "เลขท้าย 4 ตัวรางวัลที่หนึ่ง",
+      huay_name: "4 ตัวบน",
       huay_number: [fullNumber.slice(-4)],
       code: "4d_top",
     }));
@@ -461,7 +461,7 @@ const getLastTwoFromFirstPrize = (prizeFirst, lottery_set_id) => {
 
     return prizeFirst.number.map((fullNumber) => ({
       lottery_set_id,
-      huay_name: "2 ตัวท้ายรางวังวัลที่ 1",
+      huay_name: "2 ตัวบน",
       huay_number: [fullNumber.slice(-2)],
       code: "2d_top",
     }));
@@ -492,7 +492,7 @@ const getTodThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
     return [
       {
         lottery_set_id,
-        huay_name: "โต๊ด 3 ตัวของรางวัลที่หนึ่ง",
+        huay_name: "3 ตัวโต๊ดหลังรางวัลที่ 1",
         huay_number: uniquePermutations,
         code: "3d_toot",
       },
@@ -536,7 +536,7 @@ const getTodFrontThreeFromHuayData = (huayDataItem, lottery_set_id) => {
     return [
       {
         lottery_set_id,
-        huay_name: "เลขหน้า 3 ตัวโต๊ด",
+        huay_name: "3 ตัวโต๊ดหน้า",
         huay_number: uniqueTodNumbers,
         code: "3d_front_toot_2",
       },
@@ -580,7 +580,7 @@ const getTodBackThreeFromHuayData = (huayDataItem, lottery_set_id) => {
     return [
       {
         lottery_set_id,
-        huay_name: "เลขท้าย 3 ตัวโต๊ด",
+        huay_name: "3 ตัวโต๊ดล่าง",
         huay_number: uniqueTodNumbers,
         code: "3d_bottom_toot",
       },
@@ -597,7 +597,7 @@ const getLastFiveFromFirstPrize = (prizeFirst, lottery_set_id) => {
 
     return prizeFirst.number.map((fullNumber) => ({
       lottery_set_id,
-      huay_name: "เลขท้าย 5 ตัวรางวัลที่หนึ่ง",
+      huay_name: "5 ตัวบน",
       huay_number: [fullNumber.slice(-5)],
       code: "5d_top",
     }));
@@ -643,7 +643,7 @@ const getTodFourFromFirstPrize = (prizeFirst, lottery_set_id) => {
     return [
       {
         lottery_set_id,
-        huay_name: "4 ตัวท้ายโต๊ด",
+        huay_name: "4 ตัวโต๊ด",
         huay_number: uniquePermutations,
         code: "4d_toot",
       },
@@ -690,7 +690,7 @@ const getTodFrontThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
     return [
       {
         lottery_set_id,
-        huay_name: "3 ตัวหน้ารางวัลที่ 1 โต๊ด",
+        huay_name: "3 ตัวโต๊ดหน้ารางวัลที่ 1",
         huay_number: uniquePermutations,
         code: "3d_front_toot",
       },
@@ -707,7 +707,7 @@ const getTopThreeFromFirstPrize = (prizeFirst, lottery_set_id) => {
 
     return prizeFirst.number.map((fullNumber) => ({
       lottery_set_id,
-      huay_name: "3 ตัวท้ายรางวัลที่ 1",
+      huay_name: "3 ตัวบน",
       huay_number: [fullNumber.slice(-3)],
       code: "3d_top",
     }));
@@ -731,7 +731,7 @@ const getOneTopFromFirstPrize = (prizeFirst, lottery_set_id) => {
     return [
       {
         lottery_set_id,
-        huay_name: "1 ตัวท้ายรางวัลที่ 1",
+        huay_name: "วิ่งบน",
         huay_number: [...digitSet],
         code: "1top",
       },

@@ -56,24 +56,10 @@ router.get("/huay/latest/result", huayController.getLatestResultedHuay);
 
 router.post("/getLotteryResult", isAdmin, huayController.evaluateLotteryResults); // ออกผลหวย
 
-// 1. ดึงข้อมูล lotteryresults ทั้งหมด แบบ pagination
-router.get("/lotteryresults", lotteryResultsController.getAllLotteryResults);
-
-// 2. ดึงข้อมูล lotteryresults แบบ pagination by id
-router.get("/lotteryresults/:id", lotteryResultsController.getLotteryResultById);
-
-// 3. ดึงข้อมูล lotteryresults แบบ pagination by lottery_result_id
-router.get("/lotteryresults/by-result/:lottery_result_id", lotteryResultsController.getLotteryResultsByResultId);
-
-// 4. ดึงข้อมูล lotteryresults แบบ pagination by betting_type_id
-router.get("/lotteryresults/by-betting-type/:betting_type_id", lotteryResultsController.getLotteryResultsByBettingType);
-
-// 5. ลบข้อมูลจากผู้เล่นที่ถูกรางวัล
-router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.deleteLotteryResultAndItems);
 
 
-// 6. ค้นหาผลถูกรางวัล by lottery_result_id
-router.get("/lotteryresults/winners/:lottery_result_id", lotteryResultsController.getLotteryWinners);
+
+
 
 // ค้นหาผู้ชนะตาม lottery set และ user_id
 router.get('/lotteryresults/winners/lottery-set/:lottery_set_id/:user_id', lotteryResultsController.getWinnersByLotterySetAndUser);
@@ -93,10 +79,25 @@ router.delete('/limited-numbers/:id', LotteryLimitedNumbersController.delete);
 // ดึงข้อมูลเลขที่มีการแทงสูงสุด by lotterySetId
 router.get('/limited-numbers/lottery-set/:lotterySetId/top-betting', LotteryLimitedNumbersController.getTopBettingNumbers);
 
+// รายละเอียดผู้ถูกรางวัล 
+router.get("/lotteryresults/winners/:lottery_result_id", lotteryWinnersController.getLotteryWinners);
 
 // winlotterywinners
 router.get('/winners', lotteryWinnersController.getAllWinners);
+router.get('/winners/:id', lotteryWinnersController.getWinnerById);
 
+//lotteryresults
+// 1. ดึงข้อมูล lotteryresults ทั้งหมด แบบ pagination
+router.get("/lotteryresults", lotteryResultsController.getAllLotteryResults);
 
-//
+// 2. ดึงข้อมูล lotteryresults แบบ pagination by id
+router.get("/lotteryresults/:id", lotteryResultsController.getLotteryResultById);
+// 3. ดึงข้อมูล lotteryresults แบบ pagination by lottery_result_id
+router.get("/lotteryresults/by-result/:lottery_result_id", lotteryResultsController.getLotteryResultsByResultId);
+
+// 4. ดึงข้อมูล lotteryresults แบบ pagination by betting_type_id
+router.get("/lotteryresults/by-betting-type/:betting_type_id", lotteryResultsController.getLotteryResultsByBettingType);
+
+// 5. ลบข้อมูลจากผู้เล่นที่ถูกรางวัล
+router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.deleteLotteryResultAndItems);
 module.exports = router;
