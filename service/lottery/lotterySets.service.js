@@ -296,8 +296,9 @@ async function createHuayFromAPI(lottery_set_id) {
     }
 
     const updatedHuayData = await renameHuayNamesAsync(huayData);
-    
+    console.log('สร้างผลหวยสำเร็จ');
     return await huayService.create(updatedHuayData, lottery_set_id);
+    
   } catch (error) {
     console.error("CreateHuay Error:", error.message);
     throw error;
