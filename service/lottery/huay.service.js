@@ -486,7 +486,7 @@ exports.getAllHuay = async (page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
 
-    const filterCodes = ["6d_top", "3d_front", "3d_bottom", "2d_bottom"];
+    const filterCodes = ["6d_top", "3d_front_2", "3d_bottom", "2d_bottom"];
 
     // Pipeline aggregation
     const pipeline = [
