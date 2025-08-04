@@ -167,7 +167,7 @@ class LotteryResultService {
             path: 'lottery_set_id',
             populate: {
               path: 'lottery_type_id',
-              select: 'name'
+              select: 'lottery_type'
             }
           })
           .sort({ createdAt: -1 })
@@ -185,17 +185,20 @@ class LotteryResultService {
           lottery_result_id: result._id,
           betting_type_id: '6d_top'
         }).select('numbers');
+        
+        const countwinner = await LotteryWinner.find({
+          lottery_set_id: result.lottery_set_id,
+        }).select('numbers');
 
         // แปลงสถานะให้เป็นข้อความที่ต้องการ
         const displayStatus = result.lottery_set_id.status === 'resulted' ? 'ออกรางวัลแล้ว' : 'ยังไม่ประกาศ';
 
         return {
           date: result.draw_date,
-          lottery_name: result.lottery_set_id.name,
-          lottery_type: result.lottery_set_id.lottery_type_id.lottery_type,
+          lottery_name: result.lottery_set_id.lottery_type_id.lottery_type,
           number: resultItems.length > 0 ? resultItems[0].numbers[0] : '',
           status: displayStatus,
-          winner_count: 0
+          winner_count: countwinner.length
         };
       });
 
