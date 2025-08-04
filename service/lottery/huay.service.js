@@ -432,14 +432,14 @@ exports.evaluateUserBetsByLotterySet = async function (
         ? "won"
         : "lost";
 
-
-      userBet.bets.forEach(bet => {
-        bet.numbers.forEach(num => {
+      userBet.bets.forEach((bet) => {
+        bet.numbers.forEach((num) => {
           // เช็คว่าเลขนี้ถูกรางวัลหรือไม่
-          const isWinner = winners.some(w => 
-            w.bet_id.toString() === userBet._id.toString() && 
-            w.matched_numbers.includes(num.number) && 
-            w.betting_type_id === bet.betting_type_id
+          const isWinner = winners.some(
+            (w) =>
+              w.bet_id.toString() === userBet._id.toString() &&
+              w.matched_numbers.includes(num.number) &&
+              w.betting_type_id === bet.betting_type_id
           );
           num.is_won = isWinner;
         });
@@ -485,63 +485,98 @@ exports.getLotteryResultItems = async (lottery_result_id) => {
 exports.getAllHuay = async (page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
-    const total = await huay.countDocuments();
-    const huays = await huay.find().skip(skip).limit(limit);
+
+    const filterCodes = ["6d_top", "3d_front", "3d_bottom", "2d_bottom"];
+
+    // Pipeline aggregation
+    const pipeline = [
+      {
+        $match: {
+          code: { $in: filterCodes },
+        },
+      },
+      {
+        $group: {
+          _id: "$lottery_set_id",
+          huays: {
+            $push: {
+              huay_name: "$huay_name",
+              code: "$code",
+              huay_number: "$huay_number",
+            },
+          },
+        },
+      },
+      {
+        $sort: { _id: -1 },
+      },
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limit }],
+          totalCount: [{ $count: "count" }],
+        },
+      },
+    ];
+
+    const result = await huay.aggregate(pipeline);
+    const huayGroups = result[0].data;
+    const totalCount = result[0].totalCount[0]?.count || 0;
+
     return {
-      huays,
+      huays: huayGroups,
       pagination: {
-        total,
+        total: totalCount,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(totalCount / limit),
       },
     };
   } catch (error) {
-    console.error("Failed to retrieve all Huay data:", error.message);
-    throw new Error("Error retrieving all Huay data: " + error.message);
+    console.error("Failed to aggregate Huay data:", error.message);
+    throw new Error("Error aggregating Huay data: " + error.message);
   }
 };
 
-exports.getLatestResultedHuay = async function() {
+exports.getLatestResultedHuay = async function () {
   try {
     // หา lottery_set ล่าสุดที่มีสถานะ resulted
     const latestResultedSet = await LotterySets.findOne({
-      status: "resulted"
+      status: "resulted",
     })
-    .sort({ result_time: -1 })
-    .select('_id name result_time');
+      .sort({ result_time: -1 })
+      .select("_id name result_time");
 
     if (!latestResultedSet) {
       throw new Error("ไม่พบข้อมูลหวยที่ออกผลล่าสุด");
     }
 
     // ดึงข้อมูลหวยจากงวดล่าสุด
-    const huayResults = await huay.find({
-      lottery_set_id: latestResultedSet._id
-    }).sort({ code: 1 }); // เรียงตาม code
+    const huayResults = await huay
+      .find({
+        lottery_set_id: latestResultedSet._id,
+      })
+      .sort({ code: 1 }); // เรียงตาม code
 
     if (!huayResults.length) {
       throw new Error("ไม่พบข้อมูลผลหวยในงวดล่าสุด");
     }
-    
+
     const huaythai = {
       lottery_set: latestResultedSet,
-      results: huayResults.map(result => ({
+      results: huayResults.map((result) => ({
         huay_name: result.huay_name,
         huay_number: result.huay_number,
-        code: result.code
-      }))
-    }
-
-    const huaylao ={
-
+        code: result.code,
+      })),
     };
+
+    const huaylao = {};
     return {
-        huaythai,
-        huaylao
+      huaythai,
+      huaylao,
     };
   } catch (error) {
-    console.error('Error getting latest resulted huay:', error.message);
+    console.error("Error getting latest resulted huay:", error.message);
     throw error;
   }
 };
