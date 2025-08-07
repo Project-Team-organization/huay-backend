@@ -9,6 +9,8 @@ const LotteryLimitedNumbersController = require('../controller/lottery/lottery_l
 const { isAdmin } = require("../middleware/authadmin.middleware");
 const lotteryWinnersController = require('../controller/lottery/lottery_winners.controller');
 const { handleError } = require("puppeteer");
+const { fetchLatestLaoLottery } = require('../controller/lottery/lottery_lao.controller');
+const { fetchLatestLaoExtraLottery } = require('../controller/lottery/lottery_lao_extra.controller');
 
 // Route to create a lottery Sets
 router.post("/createSets", lotterySetsController.createLotterySets);
@@ -100,4 +102,14 @@ router.get("/lotteryresults/by-betting-type/:betting_type_id", lotteryResultsCon
 
 // 5. ลบข้อมูลจากผู้เล่นที่ถูกรางวัล
 router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.deleteLotteryResultAndItems);
+
+
+
+//ดึง ผลหวยลาวหวยลาวพัฒนา
+router.get('/lao/latest', fetchLatestLaoLottery);
+
+//ดึง ผลหวยลาว Extra
+router.get('/lao-extra/latest', fetchLatestLaoExtraLottery);
+
+
 module.exports = router;
