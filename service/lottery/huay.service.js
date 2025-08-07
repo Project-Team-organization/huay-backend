@@ -508,11 +508,35 @@ exports.getAllHuay = async (page = 1, limit = 10) => {
         },
       },
       {
+        $lookup: {
+          from: "lotterysets",
+          localField: "_id",
+          foreignField: "_id",
+          as: "lottery_set_info",
+        },
+      },
+      {
+        $unwind: {
+          path: "$lottery_set_info",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $sort: { _id: -1 },
       },
       {
         $facet: {
-          data: [{ $skip: skip }, { $limit: limit }],
+          data: [
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $project: {
+                _id: 1,
+                lottery_set_name: "$lottery_set_info.name",
+                huays: 1,
+              },
+            },
+          ],
           totalCount: [{ $count: "count" }],
         },
       },
@@ -522,8 +546,14 @@ exports.getAllHuay = async (page = 1, limit = 10) => {
     const huayGroups = result[0].data;
     const totalCount = result[0].totalCount[0]?.count || 0;
 
+    const formattedHuays = huayGroups.map((item) => ({
+      _id: item._id,
+      lottery_set_name: item.lottery_set_name,
+      huays: item.huays,
+    }));
+
     return {
-      huays: huayGroups,
+      huays: formattedHuays,
       pagination: {
         total: totalCount,
         page,
