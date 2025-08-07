@@ -18,53 +18,62 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
     // ตรวจสอบเลขที่ถูกจำกัด type: full
     const limitedNumbersFull = await LotteryLimitedNumbers.find({
       lottery_set_id: lotterySet._id,
-      limit_type: "full" 
+      limit_type: "full",
     });
 
     // ตรวจสอบเลขที่ถูกจำกัด type: cap
     const limitedNumbersCap = await LotteryLimitedNumbers.find({
       lottery_set_id: lotterySet._id,
-      limit_type: "cap"
+      limit_type: "cap",
     });
 
     // ตรวจสอบแต่ละ bet ว่ามีเลขที่ถูกจำกัดหรือไม่
     for (const bet of bets) {
       // ตรวจสอบ limit_type: full
-      const limitedForBetTypeFull = limitedNumbersFull.filter(limit => 
-        limit.betting_type_id.toString() === bet.betting_type_id.toString()
+      const limitedForBetTypeFull = limitedNumbersFull.filter(
+        (limit) =>
+          limit.betting_type_id.toString() === bet.betting_type_id.toString()
       );
 
       if (limitedForBetTypeFull.length > 0) {
         for (const number of bet.numbers) {
-          const isLimited = limitedForBetTypeFull.some(limit => 
-            limit.number === number.number
+          const isLimited = limitedForBetTypeFull.some(
+            (limit) => limit.number === number.number
           );
           if (isLimited) {
-            throw new Error(`เลข ${number.number} ถูกจำกัดการแทงสำหรับประเภท ${bet.betting_type_id}`);
+            throw new Error(
+              `เลข ${number.number} ถูกจำกัดการแทงสำหรับประเภท ${bet.betting_type_id}`
+            );
           }
         }
       }
 
       // ตรวจสอบ limit_type: cap
-      const limitedForBetTypeCap = limitedNumbersCap.filter(limit => 
-        limit.betting_type_id.toString() === bet.betting_type_id.toString()
+      const limitedForBetTypeCap = limitedNumbersCap.filter(
+        (limit) =>
+          limit.betting_type_id.toString() === bet.betting_type_id.toString()
       );
 
       if (limitedForBetTypeCap.length > 0) {
         for (const number of bet.numbers) {
-          const limitCap = limitedForBetTypeCap.find(limit => 
-            limit.number === number.number
+          const limitCap = limitedForBetTypeCap.find(
+            (limit) => limit.number === number.number
           );
           if (limitCap && number.amount > limitCap.max_total_bet) {
-            throw new Error(`เลข ${number.number} แทงได้ไม่เกิน ${limitCap.max_total_bet} บาท สำหรับประเภท ${bet.betting_type_id}`);
+            throw new Error(
+              `เลข ${number.number} แทงได้ไม่เกิน ${limitCap.max_total_bet} บาท สำหรับประเภท ${bet.betting_type_id}`
+            );
           }
         }
       }
     }
 
     // คำนวณ bet_amount สำหรับแต่ละ bet
-    bets.forEach(bet => {
-      bet.bet_amount = bet.numbers.reduce((sum, number) => sum + number.amount, 0);
+    bets.forEach((bet) => {
+      bet.bet_amount = bet.numbers.reduce(
+        (sum, number) => sum + number.amount,
+        0
+      );
     });
 
     const bettingTypeMap = {};
@@ -72,7 +81,7 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
     const balance_before = user.credit;
 
     const total_bet_amount = bets.reduce((sum, bet) => sum + bet.bet_amount, 0);
-  
+
     //เช็ค เงินในเครดิต ว่าพอไหม?
     await validateUserCredit(user_id, total_bet_amount);
     //หักเงิน
@@ -95,7 +104,7 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
       balance_before,
       balance_after,
       ref_id: bet._id,
-      ref_model: 'UserBet',
+      ref_model: "UserBet",
       description: "แทงหวย",
       created_at: new Date(),
     });
@@ -122,7 +131,8 @@ exports.getUserBetsById = async function (user_id, lottery_set_id, status) {
       .select("-bets -created_at -updated_at -user_id")
       .populate({
         path: "lottery_set_id",
-      }).sort({ bet_date: -1 });
+      })
+      .sort({ bet_date: -1 });
     return bets;
   } catch (error) {
     console.error("❌ getUserBetsById error:", error.message);
@@ -277,7 +287,7 @@ exports.cancelUserBet = async function (user_id, bet_id) {
       balance_before,
       balance_after,
       ref_id: userBet._id,
-      ref_model: 'UserBet',
+      ref_model: "UserBet",
       description: "ยกเลิกการแทงหวยและคืนเครดิต",
       created_at: new Date(),
     });
@@ -301,31 +311,36 @@ exports.getUserBetByPk = async function (bet_id) {
         select: "name lottery_type_id",
         populate: {
           path: "lottery_type_id",
-          select: "lottery_type betting_types -_id",
+          select: "lottery_type betting_types -_id name",
         },
       });
-
-    console.log("🔍 bet:", bet);
 
     if (!bet) return null;
 
     const betObj = bet.toObject();
     const lotterySet = betObj.lottery_set_id;
     const lottery_type_name = lotterySet?.lottery_type_id?.lottery_type || null;
-    
+
     // แมพข้อมูล betting_types เป็น object เพื่อค้นหาได้ง่าย
-    const bettingTypesMap = lotterySet?.lottery_type_id?.betting_types?.reduce((acc, type) => {
-      acc[type.code] = type;
-      return acc;
-    }, {}) || {};
+    const bettingTypesMap =
+      lotterySet?.lottery_type_id?.betting_types?.reduce((acc, type) => {
+        acc[type.code] = type;
+        return acc;
+      }, {}) || {};
 
     // แมพข้อมูล bets กับ betting_types
-    const mappedBets = betObj.bets.map(bet => ({
-      ...bet,
-      payout_rate: bettingTypesMap[bet.betting_type_id]?.payout_rate || bet.betting_type_id,
-      numbers: bet.numbers,
-      bet_amount: bet.bet_amount,
-    }));
+    const mappedBets = betObj.bets.map((bet, index) => {
+      const bettingType = bettingTypesMap[bet.betting_type_id] || {};
+      return {
+        ...bet,
+        payout_rate:
+          bettingTypesMap[bet.betting_type_id]?.payout_rate ||
+          bet.betting_type_id,
+        betting_type_name: bettingType.name || null,
+        numbers: bet.numbers,
+        bet_amount: bet.bet_amount,
+      };
+    });
 
     const responseData = {
       _id: betObj._id,
