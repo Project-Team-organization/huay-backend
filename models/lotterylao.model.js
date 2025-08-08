@@ -26,25 +26,25 @@ const lotteryLaoSchema = new mongoose.Schema({
     required: true
   },
   results: {
-    number1: {
+    tail4 :{
       type: String,
-      required: true
+      default: ''
     },
-    number2: {
+    tail3: {
       type: String,
-      required: true
+      default: ''
     },
-    number3: {
+    tail2: {
       type: String,
-      required: true
+      default: ''
     },
-    number4: {
+    animal: {
       type: String,
-      required: true
+      default: ''
     },
-    number5: {
-      type: String,
-      required: true
+    development:{
+      type: Array,
+      default: []
     }
   }
 }, {

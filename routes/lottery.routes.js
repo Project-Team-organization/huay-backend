@@ -9,8 +9,8 @@ const LotteryLimitedNumbersController = require('../controller/lottery/lottery_l
 const { isAdmin } = require("../middleware/authadmin.middleware");
 const lotteryWinnersController = require('../controller/lottery/lottery_winners.controller');
 const { handleError } = require("puppeteer");
-const { fetchLatestLaoLottery } = require('../controller/lottery/lottery_lao.controller');
-const { fetchLatestLaoExtraLottery } = require('../controller/lottery/lottery_lao_extra.controller');
+const { fetchLatestLaoLottery, getAllLaoLottery } = require('../controller/lottery/lottery_lao.controller');
+const { fetchLatestLaoExtraLottery, getAllLaoExtraLottery } = require('../controller/lottery/lottery_lao_extra.controller');
 
 // Route to create a lottery Sets
 router.post("/createSets", lotterySetsController.createLotterySets);
@@ -105,11 +105,16 @@ router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.del
 
 
 
-//ดึง ผลหวยลาวหวยลาวพัฒนา
-router.get('/lao/latest', fetchLatestLaoLottery);
+//สร้างข้อมูลหวยลาว
+router.post('/lao/latest', fetchLatestLaoLottery);
 
-//ดึง ผลหวยลาว Extra
-router.get('/lao-extra/latest', fetchLatestLaoExtraLottery);
+//ดึงข้อมูลหวยลาวทั้งหมดแบบ pagination
+router.get('/lao', getAllLaoLottery);
 
+//สร้างข้อมูลหวยลาว Extra
+router.post('/lao-extra/latest', fetchLatestLaoExtraLottery);
+
+//ดึงข้อมูลหวยลาว Extra ทั้งหมดแบบ pagination
+router.get('/lao-extra', getAllLaoExtraLottery);
 
 module.exports = router;

@@ -22,25 +22,25 @@ const lotteryLaoExtraSchema = new mongoose.Schema({
     required: true
   },
   results: {
-    number1: {
+    digit5: {
       type: String,
-      required: true
+      default: ''
     },
-    number2: {
+    digit4: {
       type: String,
-      required: true
+      default: ''
     },
-    number3: {
+    digit3: {
       type: String,
-      required: true
+      default: ''
     },
-    number4: {
+    digit2_top: {
       type: String,
-      required: true
+      default: ''
     },
-    number5: {
+    digit2_bottom: {
       type: String,
-      required: true
+      default: ''
     }
   }
 }, {
