@@ -33,10 +33,10 @@ app.get("/check", (req, res) => {
 app.use("/api", routes);
 
 // ออกผลหวย 
-// cron.schedule('* * * * *', async () => {
-//   // console.log('Running lottery sets check...');
-//   await checkLotterySetResults();
-// });
+cron.schedule('* * * * *', async () => {
+  // console.log('Running lottery sets check...');
+  await checkLotterySetResults();
+});
 
 
 

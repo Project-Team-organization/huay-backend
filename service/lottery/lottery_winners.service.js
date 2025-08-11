@@ -17,7 +17,7 @@ exports.getAllWinners = async function(query) {
 
     // ดึงข้อมูลผู้ชนะตาม filter และ pagination
     const winners = await LotteryWinner.find(filter)
-      .populate('user_id', 'username')
+      .populate('user_id', 'full_name')
       .populate('lottery_set_id', 'name result_time')
       .sort({ createdAt: -1 })
       .skip((parseInt(page) - 1) * parseInt(limit))
