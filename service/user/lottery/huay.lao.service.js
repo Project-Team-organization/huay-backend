@@ -13,19 +13,19 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
     // ถ้ามีการระบุประเภท
     if (lottory_type) {
       let Model;
-      let kind = '';
+      let kind = "";
 
-      if (lottory_type === 'lao') {
+      if (lottory_type === "lao") {
         Model = LotteryLao;
-        kind = 'lao';
-      } else if (lottory_type === 'lao-extra') {
+        kind = "lao";
+      } else if (lottory_type === "lao-extra") {
         Model = LotteryLaoExtra;
-        kind = 'lao-extra';
-      } else if (lottory_type === 'lao-stars') {
+        kind = "lao-extra";
+      } else if (lottory_type === "lao-stars") {
         Model = LotteryLaoStars;
-        kind = 'lao-stars';
+        kind = "lao-stars";
       } else {
-        throw new Error('Unknown "lottory_type": ไม่รู้จักประเภทหวยที่ระบุ');
+        return [];
       }
 
       const doc = await Model.findOne({ lotto_date })
@@ -43,13 +43,13 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
     ]);
 
     const results = [];
-    if (lao) results.push({ kind: 'lao', ...lao });
-    if (extra) results.push({ kind: 'lao-extra', ...extra });
-    if (stars) results.push({ kind: 'lao-stars', ...stars });
+    if (lao) results.push({ kind: "lao", ...lao });
+    if (extra) results.push({ kind: "lao-extra", ...extra });
+    if (stars) results.push({ kind: "lao-stars", ...stars });
 
     return results;
   } catch (err) {
-    console.error('Error in fetchLotteryByDateAndType:', err.message);
+    console.error("Error in fetchLotteryByDateAndType:", err.message);
     throw err;
   }
 };
