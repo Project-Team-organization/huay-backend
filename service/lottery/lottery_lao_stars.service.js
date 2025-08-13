@@ -1,24 +1,29 @@
-const axios = require('axios');
-const LotteryLaoStars = require('../../models/lotterylao.stars.model');
+const axios = require("axios");
+const LotteryLaoStars = require("../../models/lotterylao.stars.model");
 
 const fetchAndSaveLaoStarsLottery = async () => {
   try {
     // เช็คถ้าวันนี้อัพเดทแล้วไม่ต้องอัพอีก
-    const today = new Date().toISOString().split('T')[0];
-    const existingLottery = await LotteryLaoStars.findOne({ lotto_date: today });
-    
+    const today = new Date().toISOString().split("T")[0];
+    const existingLottery = await LotteryLaoStars.findOne({
+      lotto_date: today,
+    });
+
     if (existingLottery) {
       return existingLottery;
     }
 
-    const response = await axios.get('https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars/latest');
+    const response = await axios.get(
+      "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars/latest"
+    );
+    console.log("Fetched Lao Stars lottery data:", response.data);
 
     const { data } = response?.data;
 
-
     const lotteryData = {
-      name: 'lao-stars',
-      url: 'https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars/latest',
+      name: data.name,
+      url: "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars/latest",
+      lottery_name: data.lotteryName,
       lotto_date: data.lotto_date,
       start_spin: new Date(data.start_spin),
       show_result: new Date(data.show_result),
@@ -27,22 +32,29 @@ const fetchAndSaveLaoStarsLottery = async () => {
         digit4: data.results.digit4,
         digit3: data.results.digit3,
         digit2_top: data.results.digit2_top,
-        digit2_bottom: data.results.digit2_bottom
-      }
+        digit2_bottom: data.results.digit2_bottom,
+      },
     };
 
     const lottery = new LotteryLaoStars(lotteryData);
     await lottery.save();
     return lottery;
   } catch (error) {
-    throw new Error(`Failed to fetch and save Lao Stars lottery: ${error.message}`);
+    throw new Error(
+      `Failed to fetch and save Lao Stars lottery: ${error.message}`
+    );
   }
 };
 
-const getAllLaoStarsLottery = async ({ page = 1, limit = 10, startDate, endDate }) => {
+const getAllLaoStarsLottery = async ({
+  page = 1,
+  limit = 10,
+  startDate,
+  endDate,
+}) => {
   try {
     const query = {};
-    
+
     // Add date range filter if provided
     if (startDate || endDate) {
       query.createdAt = {};
@@ -68,15 +80,15 @@ const getAllLaoStarsLottery = async ({ page = 1, limit = 10, startDate, endDate 
 
     return {
       data,
-      total
+      total,
     };
   } catch (error) {
-    console.error('Error in getAllLaoStarsLottery service:', error);
-    throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูลหวยลาวสตาร์');
+    console.error("Error in getAllLaoStarsLottery service:", error);
+    throw new Error("เกิดข้อผิดพลาดในการดึงข้อมูลหวยลาวสตาร์");
   }
 };
 
 module.exports = {
   fetchAndSaveLaoStarsLottery,
-  getAllLaoStarsLottery
-}; 
+  getAllLaoStarsLottery,
+};

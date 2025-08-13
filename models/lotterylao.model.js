@@ -17,6 +17,10 @@ const lotteryLaoSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+    lottery_name: {
+    type: String,
+    default: ''
+  },
   start_spin: {
     type: Date,
     required: true

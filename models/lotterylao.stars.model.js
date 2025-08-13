@@ -21,6 +21,10 @@ const lotteryLaoStarsSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+    lottery_name: {
+    type: String,
+    default: ''
+  },
   results: {
     digit5: {
       type: String,
