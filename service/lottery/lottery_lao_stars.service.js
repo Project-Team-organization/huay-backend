@@ -22,6 +22,7 @@ const fetchAndSaveLaoStarsLottery = async () => {
 
     const lotteryData = {
       name: data.name,
+      url: "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars/latest",
       lottery_name: data.lotteryName,
       lotto_date: data.lotto_date,
       start_spin: new Date(data.start_spin),
