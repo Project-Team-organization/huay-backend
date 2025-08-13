@@ -4,6 +4,7 @@ const userController = require("../controller/user/user.controller");
 const betController = require("../controller/user/bet/user.bet.controller");
 const authmiddleware = require("../middleware/authadmin.middleware");
 const lotteryController = require("../controller/user/lottery/lottery.controller");
+const lotteryLaoController = require("../controller/user/lottery/huay.lao.controller");
 
 // ค้นหา user สำหรับ select search
 router.get("/search", userController.searchUsers);
@@ -42,6 +43,11 @@ router.get("/bet", authmiddleware.isUser, betController.getUserBetsById);
 router.get("/bet/:id", betController.getUserBetByPk);
 router.get("/bet/find/all", authmiddleware.isUser, betController.getUserBetAll);
 
+
+
+
+//ดึงผลหวยลาวล่าสุด
+router.get("/lottery/huayLao", lotteryLaoController.getLotteryByDateAndType);
 
 // user ดูเลขหวย
 router.get("/huay", lotteryController.getAllHuay); // Get Huay A;;
