@@ -1,59 +1,54 @@
 const LotteryLao = require("../../../models/lotterylao.model");
 const LotteryLaoExtra = require("../../../models/lotterylao.extra.model");
 const LotteryLaoStars = require("../../../models/lotterylao.stars.model");
+const Huay = require("../../../models/huay.model");
 
 const isValidDateString = (dateStr) => /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
 
+const isValidYYYYMMDD = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
 exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
-  console.log(
-    "Fetching lottery by date:",
-    lotto_date,
-    "and type:",
-    lottory_type
-  );
   try {
-    if (!isValidDateString(lotto_date)) {
+    if (!lotto_date || !lottory_type) {
+      throw new Error('ต้องส่ง "lotto_date" และ "lottory_type"');
+    }
+    if (!isValidYYYYMMDD(lotto_date)) {
       throw new Error('Invalid "lotto_date": ต้องอยู่ในรูปแบบ YYYY-MM-DD');
     }
 
-    const formatData = (doc) => {
-      if (!doc) return null;
-      const { url, ...rest } = doc;
-      return {
-        ...rest,
-        name: "lao-lottery",
-      };
-    };
+    const format = (doc, name) => (doc ? { ...doc, name } : null);
 
-    // ดึงจากทุกตาราง ถ้า type เป็น lao-lottery หรือไม่ได้ส่ง
-    if (lottory_type === "lao-lottery" || !lottory_type) {
+    if (lottory_type === "lao-lottery") {
       const [lao, extra, stars] = await Promise.all([
         LotteryLao.findOne({ lotto_date }).sort({ createdAt: -1 }).lean(),
         LotteryLaoExtra.findOne({ lotto_date }).sort({ createdAt: -1 }).lean(),
         LotteryLaoStars.findOne({ lotto_date }).sort({ createdAt: -1 }).lean(),
       ]);
 
-      const results = [];
-      if (lao) results.push(formatData(lao));
-      if (extra) results.push(formatData(extra));
-      if (stars) results.push(formatData(stars));
-
-      return results;
+      return [
+        format(lao, "lao"),
+        format(extra, "lao-extra"),
+        format(stars, "lao-stars"),
+      ].filter(Boolean);
     }
 
-    // ดึงเฉพาะประเภทเดียว
-    let Model = null;
-    if (lottory_type === "lao") Model = LotteryLao;
-    else if (lottory_type === "lao-extra") Model = LotteryLaoExtra;
-    else if (lottory_type === "lao-stars") Model = LotteryLaoStars;
+    if (lottory_type === "thai-lottery") {
+      // ค้นจาก Huay ด้วยช่วงเวลาของวันนั้น (ตาม createdAt)
+      const start = new Date(lotto_date);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
 
-    if (!Model) return [];
+      const huay = await Huay.findOne({
+        createdAt: { $gte: start, $lt: end },
+      })
+        .sort({ createdAt: -1 })
+        .lean();
 
-    const doc = await Model.findOne({ lotto_date })
-      .sort({ createdAt: -1 })
-      .lean();
+      return huay ? [format(huay, "thai-lottery")] : [];
+    }
 
-    return doc ? [formatData(doc)] : [];
+    // ถ้า type ไม่ตรงที่เรารองรับ
+    return [];
   } catch (err) {
     console.error("Error in fetchLotteryByDateAndType:", err.message);
     throw err;

@@ -47,7 +47,7 @@ router.get("/bet/find/all", authmiddleware.isUser, betController.getUserBetAll);
 
 
 //ดึงผลหวยลาวล่าสุด
-router.get("/lottery/huayLao", lotteryLaoController.getLotteryByDateAndType);
+router.get("/lottery/all/huay", lotteryLaoController.getLotteryByDateAndType);
 
 // user ดูเลขหวย
 router.get("/huay", lotteryController.getAllHuay); // Get Huay A;;
