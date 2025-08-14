@@ -9,6 +9,7 @@ const huaySchema = new mongoose.Schema(
     },
     huay_name: { type: String, default: "" },
     code: { type: String, default: "" },
+    name: { type: String, default: "thai-lottery" },
     huay_number: { type: Array, default: [] },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },

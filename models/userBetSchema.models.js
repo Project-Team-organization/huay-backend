@@ -16,6 +16,7 @@ const userBetSchema = new mongoose.Schema({
   bets: [
     {
       betting_type_id: { type: String, required: true },
+      betting_name: { type: String, required: true },
       numbers: [
         {
           is_won: { type: Boolean, default: null },
