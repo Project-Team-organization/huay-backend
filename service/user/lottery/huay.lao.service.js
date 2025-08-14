@@ -3,8 +3,6 @@ const LotteryLaoExtra = require("../../../models/lotterylao.extra.model");
 const LotteryLaoStars = require("../../../models/lotterylao.stars.model");
 const Huay = require("../../../models/huay.model");
 
-const isValidDateString = (dateStr) => /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
-
 const isValidYYYYMMDD = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
@@ -20,9 +18,18 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
 
     if (lottory_type === "lao-lottery") {
       const [lao, extra, stars] = await Promise.all([
-        LotteryLao.findOne({ lotto_date }).sort({ createdAt: -1 }).lean(),
-        LotteryLaoExtra.findOne({ lotto_date }).sort({ createdAt: -1 }).lean(),
-        LotteryLaoStars.findOne({ lotto_date }).sort({ createdAt: -1 }).lean(),
+        LotteryLao.findOne({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url")
+          .lean(),
+        LotteryLaoExtra.findOne({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url")
+          .lean(),
+        LotteryLaoStars.findOne({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url")
+          .lean(),
       ]);
 
       return [
@@ -33,21 +40,18 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
     }
 
     if (lottory_type === "thai-lottery") {
-      // ค้นจาก Huay ด้วยช่วงเวลาของวันนั้น (ตาม createdAt)
-      const start = new Date(lotto_date);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 1);
+      const start = new Date(`${lotto_date}T00:00:00.000Z`);
+      const end = new Date(`${lotto_date}T23:59:59.999Z`);
 
-      const huay = await Huay.findOne({
-        createdAt: { $gte: start, $lt: end },
+      const huayList = await Huay.find({
+        createdAt: { $gte: start, $lte: end },
       })
         .sort({ createdAt: -1 })
         .lean();
 
-      return huay ? [format(huay, "thai-lottery")] : [];
+      return huayList.map((doc) => format(doc, "thai-lottery"));
     }
 
-    // ถ้า type ไม่ตรงที่เรารองรับ
     return [];
   } catch (err) {
     console.error("Error in fetchLotteryByDateAndType:", err.message);
