@@ -241,7 +241,7 @@ async function createHuayFromAPI(lottery_set_id) {
         ...getTopThreeFromFirstPrize(prizeFirst, lottery_set_id),
         ...getOneTopFromFirstPrize(prizeFirst, lottery_set_id)
       );
-    }
+    } 
 
     const prizeFrontThree = data.prizes.find(
       (prize) => prize.id === "prizeFrontThree"

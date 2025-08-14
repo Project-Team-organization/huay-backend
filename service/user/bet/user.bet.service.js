@@ -4,6 +4,7 @@ const LotterySet = require("../../../models/lotterySets.model");
 const UserTransaction = require("../../../models/user.transection.model");
 const BettingType = require("../../../models/bettingTypes.model");
 const LotteryLimitedNumbers = require("../../../models/lottery_limited_numbers.model");
+const LotteryType = require("../../../models/lotteryType.model");
 const mongoose = require("mongoose");
 
 exports.createUserBet = async function (user_id, lottery_set_id, bets) {
@@ -14,7 +15,8 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
 
     // ดู set หวย
     const lotterySet = await validateLotterySet(lottery_set_id);
-
+    const lotteryType = await LotteryType.findById(lotterySet.lottery_type_id);
+    const bettingTypes = lotteryType.betting_types;
     // ตรวจสอบเลขที่ถูกจำกัด type: full
     const limitedNumbersFull = await LotteryLimitedNumbers.find({
       lottery_set_id: lotterySet._id,
@@ -70,6 +72,9 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
 
     // คำนวณ bet_amount สำหรับแต่ละ bet
     bets.forEach((bet) => {
+      bet.betting_name = bettingTypes.find(
+        (type) => type.code === bet.betting_type_id
+      ).name;
       bet.bet_amount = bet.numbers.reduce(
         (sum, number) => sum + number.amount,
         0
@@ -169,6 +174,12 @@ exports.getAllUserBets = async function (page = 1, limit = 10) {
 async function validateLotterySet(lottery_set_id) {
   const lotterySet = await LotterySet.findById(lottery_set_id);
   if (!lotterySet) throw new Error("ไม่พบชุดหวยชุดนี้");
+  if (lotterySet.status == "resulted" || lotterySet.status == "closed") {
+    throw new Error("หมดเวลาการแทงหวย");
+  }
+  if (lotterySet.status == "scheduled") {
+    throw new Error("ยังไม่ถึงแทงหวย");
+  }
   return lotterySet;
 }
 
