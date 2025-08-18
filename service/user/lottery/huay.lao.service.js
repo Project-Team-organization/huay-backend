@@ -42,16 +42,32 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
     if (lottory_type === "thai-lottery") {
       const start = new Date(`${lotto_date}T00:00:00.000Z`);
       const end = new Date(`${lotto_date}T23:59:59.999Z`);
+
       const codesToShow = ["6d_top", "3d_front_2", "3d_bottom", "2d_bottom"];
 
       const huayList = await Huay.find({
         createdAt: { $gte: start, $lte: end },
-         code: { $in: codesToShow }
+        code: { $in: codesToShow },
       })
         .sort({ createdAt: -1 })
         .lean();
 
-      return huayList.map((doc) => format(doc, "thai-lottery"));
+      const grouped = huayList.reduce((acc, doc) => {
+        const setId = doc.lottery_set_id.toString();
+        if (!acc[setId]) {
+          acc[setId] = {
+            lottery_set_id: setId,
+            name: "thai-lottery",
+            numbers: {},
+            createdAt: doc.createdAt,
+            updatedAt: doc.updatedAt,
+          };
+        }
+        acc[setId].numbers[doc.code] = doc.huay_number;
+        return acc;
+      }, {});
+
+      return Object.values(grouped);
     }
 
     return [];
