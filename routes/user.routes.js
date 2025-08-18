@@ -35,6 +35,7 @@ router.put(
 
 // ส่วนของ lottery user
 router.get("/lottery", lotteryController.getLotteryUserSets);
+router.get("/all/huay", lotteryLaoController.getLotteryByDateAndType);
 
 // ส่วนของ user bet
 router.post("/bet", authmiddleware.isUser, betController.createUserBet);
@@ -42,12 +43,6 @@ router.post("/cancel/:id", authmiddleware.isUser, betController.cancelUserBet);
 router.get("/bet", authmiddleware.isUser, betController.getUserBetsById);
 router.get("/bet/:id", betController.getUserBetByPk);
 router.get("/bet/find/all", authmiddleware.isUser, betController.getUserBetAll);
-
-
-
-
-//ดึงผลหวยลาวล่าสุด
-router.get("/lottery/all/huay", lotteryLaoController.getLotteryByDateAndType);
 
 // user ดูเลขหวย
 router.get("/huay", lotteryController.getAllHuay); // Get Huay A;;

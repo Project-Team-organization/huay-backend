@@ -42,9 +42,11 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
     if (lottory_type === "thai-lottery") {
       const start = new Date(`${lotto_date}T00:00:00.000Z`);
       const end = new Date(`${lotto_date}T23:59:59.999Z`);
+      const codesToShow = ["6d_top", "3d_front_2", "3d_bottom", "2d_bottom"];
 
       const huayList = await Huay.find({
         createdAt: { $gte: start, $lte: end },
+         code: { $in: codesToShow }
       })
         .sort({ createdAt: -1 })
         .lean();
