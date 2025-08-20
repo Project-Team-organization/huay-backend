@@ -48,6 +48,13 @@ const lotteryLaoStarsSchema = new mongoose.Schema(
         default: "",
       },
     },
+    betting_types: [
+      {
+        code: { type: String, default: "" },
+        name: { type: String, default: "" },
+        digit: { type: String, default: "" },
+      },
+    ],
   },
   {
     timestamps: true,

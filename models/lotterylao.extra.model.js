@@ -1,56 +1,69 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const lotteryLaoExtraSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    default: ''
-  },
-  url: {
-    type: String,
-    default: ''
-  },
-  lotto_date: {
-    type: String,
-    required: true
-  },
-  start_spin: {
-    type: Date,
-    required: true
-  },
-  show_result: {
-    type: Date,
-    required: true
-  },
-  lottery_name: {
-    type: String,
-    default: ''
-  },
-  results: {
-    digit5: {
+const lotteryLaoExtraSchema = new mongoose.Schema(
+  {
+    name: {
       type: String,
-      default: ''
+      default: "",
     },
-    digit4: {
+    url: {
       type: String,
-      default: ''
+      default: "",
     },
-    digit3: {
+    lotto_date: {
       type: String,
-      default: ''
+      required: true,
     },
-    digit2_top: {
-      type: String,
-      default: ''
+    start_spin: {
+      type: Date,
+      required: true,
     },
-    digit2_bottom: {
+    show_result: {
+      type: Date,
+      required: true,
+    },
+    lottery_name: {
       type: String,
-      default: ''
-    }
+      default: "",
+    },
+    results: {
+      digit5: {
+        type: String,
+        default: "",
+      },
+      digit4: {
+        type: String,
+        default: "",
+      },
+      digit3: {
+        type: String,
+        default: "",
+      },
+      digit2_top: {
+        type: String,
+        default: "",
+      },
+      digit2_bottom: {
+        type: String,
+        default: "",
+      },
+    },
+    betting_types: [
+      {
+        code: { type: String, default: "" },
+        name: { type: String, default: "" },
+        digit: { type: String, default: "" },
+      },
+    ],
+  },
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
-const LotteryLaoExtra = mongoose.model('LotteryLaoExtra', lotteryLaoExtraSchema);
+const LotteryLaoExtra = mongoose.model(
+  "LotteryLaoExtra",
+  lotteryLaoExtraSchema
+);
 
-module.exports = LotteryLaoExtra; 
+module.exports = LotteryLaoExtra;
