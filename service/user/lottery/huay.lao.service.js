@@ -14,31 +14,44 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
       throw new Error('Invalid "lotto_date": ต้องอยู่ในรูปแบบ YYYY-MM-DD');
     }
 
-    const format = (doc, name) => (doc ? { ...doc, name } : null);
-
+    // 📌 Lao lottery
     if (lottory_type === "lao-lottery") {
+      const start = new Date(`${lotto_date}T00:00:00.000Z`);
+      const end = new Date(`${lotto_date}T23:59:59.999Z`);
+
       const [lao, extra, stars] = await Promise.all([
-        LotteryLao.findOne({ lotto_date })
+        LotteryLao.find({ show_result: { $gte: start, $lte: end } })
           .sort({ createdAt: -1 })
-          .select("-url")
+          .select("-url -betting_types -__v")
           .lean(),
-        LotteryLaoExtra.findOne({ lotto_date })
+        LotteryLaoExtra.find({ lotto_date })
           .sort({ createdAt: -1 })
-          .select("-url")
+          .select("-url -betting_types -__v")
           .lean(),
-        LotteryLaoStars.findOne({ lotto_date })
+        LotteryLaoStars.find({ lotto_date })
           .sort({ createdAt: -1 })
-          .select("-url")
+          .select("-url -betting_types -__v")
           .lean(),
       ]);
 
-      return [
-        format(lao, "lao"),
-        format(extra, "lao-extra"),
-        format(stars, "lao-stars"),
-      ].filter(Boolean);
+      const data = [...lao, ...extra, ...stars];
+
+      if (!data.length) {
+        return {
+          success: false,
+          message: "ไม่พบข้อมูลตามวันที่และประเภทที่ระบุ",
+          data: [],
+        };
+      }
+
+      return {
+        success: true,
+        message: "ดึงข้อมูลสำเร็จ",
+        data,
+      };
     }
 
+    // 📌 Thai lottery
     if (lottory_type === "thai-lottery") {
       const start = new Date(`${lotto_date}T00:00:00.000Z`);
       const end = new Date(`${lotto_date}T23:59:59.999Z`);
@@ -67,10 +80,19 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
         return acc;
       }, {});
 
-      return Object.values(grouped);
+      return {
+        success: true,
+        message: "ดึงข้อมูลสำเร็จ",
+        data: Object.values(grouped),
+      };
     }
 
-    return [];
+    // 📌 Default
+    return {
+      success: false,
+      message: "ไม่พบข้อมูลตามวันที่และประเภทที่ระบุ",
+      data: [],
+    };
   } catch (err) {
     console.error("Error in fetchLotteryByDateAndType:", err.message);
     throw err;

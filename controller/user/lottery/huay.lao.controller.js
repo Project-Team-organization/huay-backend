@@ -17,14 +17,13 @@ exports.getLotteryByDateAndType = async (req, res) => {
       lottory_type
     );
 
-    if (!lotteries.length) {
+    if (!lotteries || lotteries.length === 0) {
       return res.status(404).json({
         success: false,
         message: "ไม่พบข้อมูลตามวันที่และประเภทที่ระบุ",
         data: [],
       });
     }
-
     return res.status(200).json({
       success: true,
       message: "ดึงข้อมูลสำเร็จ",

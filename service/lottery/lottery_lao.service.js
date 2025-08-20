@@ -21,6 +21,7 @@ const fetchAndSaveLaoLottery = async () => {
       "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-lottery/latest"
     );
     const { data } = response.data;
+    console.log("Fetched Lao lottery data:", data);
 
     // ถ้า numbers
     if (data.numbers.tail4 == "xxxx") {
@@ -38,9 +39,11 @@ const fetchAndSaveLaoLottery = async () => {
       start_spin: new Date(),
       show_result: new Date(),
       results: {
-        tail4: data.numbers.tail4,
-        tail3: data.numbers.tail3,
-        tail2: data.numbers.tail2,
+        digit5: data.numbers.digit5,
+        digit4: data.numbers.digit4,
+        digit3: data.numbers.digit3,
+        digit2_top: data.numbers.digit2_top,
+        digit2_bottom: data.numbers.digit2_bottom,
         animal: data.numbers.animal,
         development: data.numbers.development,
       },
