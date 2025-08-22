@@ -42,18 +42,10 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
       const data = [...lao, ...extra, ...stars, ...union];
 
       if (!data.length) {
-        return {
-          success: false,
-          message: "ไม่พบข้อมูลตามวันที่และประเภทที่ระบุ",
-          data: [],
-        };
+        return [];
       }
 
-      return {
-        success: true,
-        message: "ดึงข้อมูลสำเร็จ",
-        data,
-      };
+      return data;
     }
 
     // 📌 Thai lottery
@@ -85,19 +77,11 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
         return acc;
       }, {});
 
-      return {
-        success: true,
-        message: "ดึงข้อมูลสำเร็จ",
-        data: Object.values(grouped),
-      };
+      return Object.values(grouped);
     }
 
     // 📌 Default
-    return {
-      success: false,
-      message: "ไม่พบข้อมูลตามวันที่และประเภทที่ระบุ",
-      data: [],
-    };
+    return [];
   } catch (err) {
     console.error("Error in fetchLotteryByDateAndType:", err.message);
     throw err;
