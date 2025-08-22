@@ -43,18 +43,11 @@ const lotteryLaoUnionSchema = new mongoose.Schema(
         type: String,
         default: null
       },
-      digit1: {
-        type: String,
-        default: null
-      },
       digit2_bottom: {
         type: String,
         default: null
       },
-      digit2_special: {
-        type: String,
-        default: null
-      }
+
     },
     betting_types: [
       {

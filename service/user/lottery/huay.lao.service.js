@@ -1,6 +1,7 @@
 const LotteryLao = require("../../../models/lotterylao.model");
 const LotteryLaoExtra = require("../../../models/lotterylao.extra.model");
 const LotteryLaoStars = require("../../../models/lotterylao.stars.model");
+const LotteryLaoUnion = require("../../../models/lotterylao.union.model");
 const Huay = require("../../../models/huay.model");
 
 const isValidYYYYMMDD = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -19,7 +20,7 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
       const start = new Date(`${lotto_date}T00:00:00.000Z`);
       const end = new Date(`${lotto_date}T23:59:59.999Z`);
 
-      const [lao, extra, stars] = await Promise.all([
+      const [lao, extra, stars, union] = await Promise.all([
         LotteryLao.find({ show_result: { $gte: start, $lte: end } })
           .sort({ createdAt: -1 })
           .select("-url -betting_types -__v")
@@ -32,9 +33,13 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
           .sort({ createdAt: -1 })
           .select("-url -betting_types -__v")
           .lean(),
+        LotteryLaoUnion.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v")
+          .lean(),
       ]);
 
-      const data = [...lao, ...extra, ...stars];
+      const data = [...lao, ...extra, ...stars, ...union];
 
       if (!data.length) {
         return {
