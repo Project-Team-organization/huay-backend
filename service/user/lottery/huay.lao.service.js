@@ -27,7 +27,19 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
       const start = new Date(`${lotto_date}T00:00:00.000Z`);
       const end = new Date(`${lotto_date}T23:59:59.999Z`);
 
-      const [lao, extra, stars, starsVip, union, redcross, thakhek5d, thakhekVip, tv, vip, hd] = await Promise.all([
+      const [
+        lao,
+        extra,
+        stars,
+        starsVip,
+        union,
+        redcross,
+        thakhek5d,
+        thakhekVip,
+        tv,
+        vip,
+        hd,
+      ] = await Promise.all([
         LotteryLao.find({ show_result: { $gte: start, $lte: end } })
           .sort({ createdAt: -1 })
           .select("-url -betting_types -__v")
@@ -50,31 +62,43 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
           .lean(),
         LotteryLaoRedcross.find({ lotto_date })
           .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
+          .select("-url -betting_types -__v -scraper -scrapedAt")
           .lean(),
         LotteryLaoThakhek5d.find({ lotto_date })
           .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
+          .select("-url -betting_types -__v -scraper -scrapedAt")
           .lean(),
         LotteryLaoThakhekVip.find({ lotto_date })
           .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
+          .select("-url -betting_types -__v -scraper -scrapedAt")
           .lean(),
         LotteryLaoTv.find({ lotto_date })
           .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
+          .select("-url -betting_types -__v -scraper -scrapedAt")
           .lean(),
         LotteryLaoVip.find({ lotto_date })
           .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
+          .select("-url -betting_types -__v -scraper -scrapedAt")
           .lean(),
         LotteryLaoHd.find({ lotto_date })
           .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
+          .select("-url -betting_types -__v -scraper -scrapedAt")
           .lean(),
       ]);
 
-      const data = [...lao, ...extra, ...stars, ...starsVip, ...union, ...redcross, ...thakhek5d, ...thakhekVip, ...tv, ...vip, ...hd];
+      const data = [
+        ...lao,
+        ...extra,
+        ...stars,
+        ...starsVip,
+        ...union,
+        ...redcross,
+        ...thakhek5d,
+        ...thakhekVip,
+        ...tv,
+        ...vip,
+        ...hd,
+      ];
 
       if (!data.length) {
         return [];
