@@ -1,7 +1,14 @@
 const LotteryLao = require("../../../models/lotterylao.model");
 const LotteryLaoExtra = require("../../../models/lotterylao.extra.model");
 const LotteryLaoStars = require("../../../models/lotterylao.stars.model");
+const LotteryLaoStarsVip = require("../../../models/lottery_lao_stars_vip.model");
 const LotteryLaoUnion = require("../../../models/lotterylao.union.model");
+const LotteryLaoRedcross = require("../../../models/lottery_lao_redcross.model");
+const LotteryLaoThakhek5d = require("../../../models/lottery_lao_thakhek_5d.model");
+const LotteryLaoThakhekVip = require("../../../models/lottery_lao_thakhek_vip.model");
+const LotteryLaoTv = require("../../../models/lottery_lao_tv.model");
+const LotteryLaoVip = require("../../../models/lottery_lao_vip.model");
+const LotteryLaoHd = require("../../../models/lottery_lao_hd.model");
 const Huay = require("../../../models/huay.model");
 
 const isValidYYYYMMDD = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -20,7 +27,7 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
       const start = new Date(`${lotto_date}T00:00:00.000Z`);
       const end = new Date(`${lotto_date}T23:59:59.999Z`);
 
-      const [lao, extra, stars, union] = await Promise.all([
+      const [lao, extra, stars, starsVip, union, redcross, thakhek5d, thakhekVip, tv, vip, hd] = await Promise.all([
         LotteryLao.find({ show_result: { $gte: start, $lte: end } })
           .sort({ createdAt: -1 })
           .select("-url -betting_types -__v")
@@ -33,13 +40,41 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
           .sort({ createdAt: -1 })
           .select("-url -betting_types -__v")
           .lean(),
+        LotteryLaoStarsVip.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v")
+          .lean(),
         LotteryLaoUnion.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v")
+          .lean(),
+        LotteryLaoRedcross.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v")
+          .lean(),
+        LotteryLaoThakhek5d.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v")
+          .lean(),
+        LotteryLaoThakhekVip.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v")
+          .lean(),
+        LotteryLaoTv.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v")
+          .lean(),
+        LotteryLaoVip.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v")
+          .lean(),
+        LotteryLaoHd.find({ lotto_date })
           .sort({ createdAt: -1 })
           .select("-url -betting_types -__v")
           .lean(),
       ]);
 
-      const data = [...lao, ...extra, ...stars, ...union];
+      const data = [...lao, ...extra, ...stars, ...starsVip, ...union, ...redcross, ...thakhek5d, ...thakhekVip, ...tv, ...vip, ...hd];
 
       if (!data.length) {
         return [];
