@@ -12,6 +12,13 @@ const { handleError } = require("puppeteer");
 const { fetchLatestLaoLottery, getAllLaoLottery } = require('../controller/lottery/lottery_lao.controller');
 const { fetchLatestLaoExtraLottery, getAllLaoExtraLottery } = require('../controller/lottery/lottery_lao_extra.controller');
 const { fetchLatestLaoStarsLottery, getAllLaoStarsLottery } = require('../controller/lottery/lottery_lao_stars.controller');
+const { fetchLatestLaoStarsVipLottery, getAllLaoStarsVipLottery } = require('../controller/lottery/lottery_lao_stars_vip.controller');
+const { fetchLatestLaoRedcrossLottery, getAllLaoRedcrossLottery } = require('../controller/lottery/lottery_lao_redcross.controller');
+const { fetchLatestLaoThakhekVipLottery, getAllLaoThakhekVipLottery } = require('../controller/lottery/lottery_lao_thakhek_vip.controller');
+const { fetchLatestLaoThakhek5dLottery, getAllLaoThakhek5dLottery } = require('../controller/lottery/lottery_lao_thakhek_5d.controller');
+const { fetchLatestLaoTvLottery, getAllLaoTvLottery } = require('../controller/lottery/lottery_lao_tv.controller');
+const { fetchLatestLaoVipLottery, getAllLaoVipLottery } = require('../controller/lottery/lottery_lao_vip.controller');
+const { fetchLatestLaoHdLottery, getAllLaoHdLottery } = require('../controller/lottery/lottery_lao_hd.controller');
 const lotteryLaoUnionController = require('../controller/lottery/lottery_lao_union.controller');
 
 // Route to create a lottery Sets
@@ -128,6 +135,48 @@ router.get('/lao-stars', getAllLaoStarsLottery);
 // Lao Union Lottery Routes
 router.post('/lao-union/latest', lotteryLaoUnionController.fetchLatestResult);
 router.get('/lao-union', lotteryLaoUnionController.getLatestResult);
-// router.get('/lao-union/date/:date', lotteryLaoUnionController.getResultByDate);
+
+//สร้างข้อมูลหวยลาวสตาร์ VIP
+router.post('/lao-stars-vip/latest', fetchLatestLaoStarsVipLottery);
+
+//ดึงข้อมูลหวยลาวสตาร์ VIP ทั้งหมดแบบ pagination
+router.get('/lao-stars-vip', getAllLaoStarsVipLottery);
+
+//สร้างข้อมูลหวยลาวกาชาด
+router.post('/lao-redcross/latest', fetchLatestLaoRedcrossLottery);
+
+//ดึงข้อมูลหวยลาวกาชาดทั้งหมดแบบ pagination
+router.get('/lao-redcross', getAllLaoRedcrossLottery);
+
+//สร้างข้อมูลหวยลาวท่าแขก VIP
+router.post('/lao-thakhek-vip/latest', fetchLatestLaoThakhekVipLottery);
+
+//ดึงข้อมูลหวยลาวท่าแขก VIP ทั้งหมดแบบ pagination
+router.get('/lao-thakhek-vip', getAllLaoThakhekVipLottery);
+
+//สร้างข้อมูลหวยลาวท่าแขก 5D
+router.post('/lao-thakhek-5d/latest', fetchLatestLaoThakhek5dLottery);
+
+//ดึงข้อมูลหวยลาวท่าแขก 5D ทั้งหมดแบบ pagination
+router.get('/lao-thakhek-5d', getAllLaoThakhek5dLottery);
+
+//สร้างข้อมูลหวยลาว TV
+router.post('/lao-tv/latest', fetchLatestLaoTvLottery);
+
+//ดึงข้อมูลหวยลาว TV ทั้งหมดแบบ pagination
+router.get('/lao-tv', getAllLaoTvLottery);
+
+//สร้างข้อมูลหวยลาว VIP
+router.post('/lao-vip/latest', fetchLatestLaoVipLottery);
+
+//ดึงข้อมูลหวยลาว VIP ทั้งหมดแบบ pagination
+router.get('/lao-vip', getAllLaoVipLottery);
+
+//สร้างข้อมูลหวยลาว HD
+router.post('/lao-hd/latest', fetchLatestLaoHdLottery);
+
+//ดึงข้อมูลหวยลาว HD ทั้งหมดแบบ pagination
+router.get('/lao-hd', getAllLaoHdLottery);
+
 
 module.exports = router;
