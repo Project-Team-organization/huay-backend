@@ -20,6 +20,10 @@ const { fetchLatestLaoTvLottery, getAllLaoTvLottery } = require('../controller/l
 const { fetchLatestLaoVipLottery, getAllLaoVipLottery } = require('../controller/lottery/lottery_lao_vip.controller');
 const { fetchLatestLaoHdLottery, getAllLaoHdLottery } = require('../controller/lottery/lottery_lao_hd.controller');
 const lotteryLaoUnionController = require('../controller/lottery/lottery_lao_union.controller');
+const { fetchLatestThaiSavingsLottery, getAllThaiSavingsLottery } = require('../controller/lottery/lottery_thai_savings.controller');
+const { fetchLatestThaiGsbLottery, getAllThaiGsbLottery } = require('../controller/lottery/lottery_thai_gsb.controller');
+const { fetchLatestMagnum4dLottery, getAllMagnum4dLottery } = require('../controller/lottery/lottery_magnum_4d.controller');
+const { fetchLatestSingapore4dLottery, getAllSingapore4dLottery } = require('../controller/lottery/lottery_singapore_4d.controller');
 
 // Route to create a lottery Sets
 router.post("/createSets", lotterySetsController.createLotterySets);
@@ -177,6 +181,30 @@ router.post('/lao-hd/latest', fetchLatestLaoHdLottery);
 
 //ดึงข้อมูลหวยลาว HD ทั้งหมดแบบ pagination
 router.get('/lao-hd', getAllLaoHdLottery);
+
+//สร้างข้อมูลหวยออมสิน
+router.post('/thai-savings/latest', fetchLatestThaiSavingsLottery);
+
+//ดึงข้อมูลหวยออมสินทั้งหมดแบบ pagination
+router.get('/thai-savings', getAllThaiSavingsLottery);
+
+//สร้างข้อมูลหวย ธกส
+router.post('/thai-gsb/latest', fetchLatestThaiGsbLottery);
+
+//ดึงข้อมูลหวย ธกส ทั้งหมดแบบ pagination
+router.get('/thai-gsb', getAllThaiGsbLottery);
+
+//สร้างข้อมูลหวย Magnum 4D
+router.post('/magnum-4d/latest', fetchLatestMagnum4dLottery);
+
+//ดึงข้อมูลหวย Magnum 4D ทั้งหมดแบบ pagination
+router.get('/magnum-4d', getAllMagnum4dLottery);
+
+//สร้างข้อมูลหวย Singapore 4D
+router.post('/singapore-4d/latest', fetchLatestSingapore4dLottery);
+
+//ดึงข้อมูลหวย Singapore 4D ทั้งหมดแบบ pagination
+router.get('/singapore-4d', getAllSingapore4dLottery);
 
 
 module.exports = router;
