@@ -18,53 +18,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Build the Docker image with specified tag
-      - name: Build Docker image
-        run: |
-          docker build -t huay-backend:1.0.0 .
+      # Log in to GitHub Container Registry
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Export the Docker image to a tar file for transfer
-      - name: Save Docker image to tar
-        run: |
-          docker save -o huay-backend.tar huay-backend:1.0.0
-
-      # Transfer the Docker image tar file to the deployment server
-      - name: Copy tar to server using SCP
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
-          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
-        run: |
-          # Install sshpass for password authentication
-          sudo apt-get update && sudo apt-get install -y sshpass
-          # Test connection first
-          echo "Testing connection to $SERVER_HOST..."
-          ping -c 1 $SERVER_HOST || (echo "Cannot reach server" && exit 1)
-          # Copy file
-          sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null huay-backend.tar $SERVER_USERNAME@$SERVER_HOST:/tmp/huay-backend.tar
-
-      # Deploy the application on the remote server
-      - name: Deploy to server
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
-          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
-        run: |
-          sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $SERVER_USERNAME@$SERVER_HOST << 'EOF'
-            # Load the Docker image from tar file
-            docker load -i /tmp/huay-backend.tar
-            # Clean up the transferred tar file
-            rm /tmp/huay-backend.tar
-            # Navigate to the application directory
-            cd /home/huay-backend
-            # Stop existing containers and remove orphaned containers
-            docker compose down --remove-orphans || true
-            # Start the application in detached mode
-            docker compose up --no-build -d
-          EOF
-
-      # Clean up build artifacts locally
-      - name: Clean up local tar
-        run: |
-          # Remove the local Docker image tar file to free up space and avoid clutter
-          rm -f huay-backend.tar
+      # Build and push Docker image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
