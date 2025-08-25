@@ -35,8 +35,13 @@ jobs:
           SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
           SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
         run: |
+          # Install sshpass for password authentication
           sudo apt-get update && sudo apt-get install -y sshpass
-          sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no huay-backend.tar $SERVER_USERNAME@$SERVER_HOST:/tmp/huay-backend.tar
+          # Test connection first
+          echo "Testing connection to $SERVER_HOST..."
+          ping -c 1 $SERVER_HOST || (echo "Cannot reach server" && exit 1)
+          # Copy file
+          sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null huay-backend.tar $SERVER_USERNAME@$SERVER_HOST:/tmp/huay-backend.tar
 
       # Deploy the application on the remote server
       - name: Deploy to server
@@ -45,7 +50,7 @@ jobs:
           SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
           SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST << 'EOF'
+          sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $SERVER_USERNAME@$SERVER_HOST << 'EOF'
             # Load the Docker image from tar file
             docker load -i /tmp/huay-backend.tar
             # Clean up the transferred tar file
@@ -53,7 +58,7 @@ jobs:
             # Navigate to the application directory
             cd /home/huay-backend
             # Stop existing containers and remove orphaned containers
-            docker compose down --remove-orphans
+            docker compose down --remove-orphans || true
             # Start the application in detached mode
             docker compose up --no-build -d
           EOF
