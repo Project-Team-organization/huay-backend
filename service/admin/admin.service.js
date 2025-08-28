@@ -5,6 +5,8 @@ const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const PasswordHistory = require("../../models/history.chang.password.model");
 const UserTransaction = require("../../models/user.transection.model");
 const bcrypt = require("bcrypt");
+const LotterySets = require("../../models/lotterySets.model");
+const LotteryType = require("../../models/lotteryType.model");
 
 // create admin
 exports.createAdmin = async (username, password, phone, role) => {
@@ -285,15 +287,50 @@ exports.disactiveadmin = async (id) => {
 
 exports.getAllUserBets = async function (page = 1, limit = 10) {
   try {
+    console.log("getAllUserBets");
     const skip = (page - 1) * limit;
     const total = await UserBet.countDocuments();
-    const bets = await UserBet.find()
+    let bets = await UserBet.find()
       .populate("lottery_set_id")
-      .populate("user_id","full_name")
+      .populate("user_id", "full_name")
       .sort({ bet_date: -1 })
       .skip(skip)
       .limit(limit);
 
+    const lotterySetIds = [...new Set(bets.map(bet => bet.lottery_set_id?._id).filter(id => id))];
+    
+    const lotterySets = await LotterySets.find({
+      _id: { $in: lotterySetIds }
+    }).populate("lottery_type_id");
+
+    const lotterySetMap = {};
+    lotterySets.forEach(set => {
+      lotterySetMap[set._id.toString()] = set;
+    });
+
+    bets = bets.map(bet => {
+      const betObj = bet.toObject();
+      const lotterySet = betObj.lottery_set_id ? lotterySetMap[betObj.lottery_set_id._id.toString()] : null;
+      
+      if (lotterySet && lotterySet.lottery_type_id) {
+        const lotteryType = lotterySet.lottery_type_id;
+        
+        betObj.bets = betObj.bets.map(betDetail => {
+
+          const matchingBettingType = lotteryType.betting_types.find(
+            bt => bt.code === betDetail.betting_type_id
+          );
+          
+          return {
+            ...betDetail,
+            payout_rate: matchingBettingType ? matchingBettingType.payout_rate : null
+          };
+        });
+      }
+      return betObj;
+    });
+
+    console.log("bets", bets);
     return {
       bets,
       pagination: {
@@ -340,11 +377,11 @@ exports.getUserBetById = async function (id) {
 
     const bet = await UserBet.findById(id)
       .select("-bets -created_at -updated_at -user_id")
-      .populate("user_id","full_name")
+      .populate("user_id", "full_name")
       .populate({
         path: "lottery_set_id",
       });
-      
+
 
     if (!bet) {
       throw new Error("ไม่พบข้อมูลการแทงหวยตาม id ที่ระบุ");
@@ -358,10 +395,10 @@ exports.getUserBetById = async function (id) {
 };
 
 
-exports.getUserTransactions = async function ( { page = 1, limit = 10, type, startDate, endDate } = {}) {
+exports.getUserTransactions = async function ({ page = 1, limit = 10, type, startDate, endDate } = {}) {
   try {
     const skip = (page - 1) * limit;
-    
+
     // สร้าง query object
     let query = {};
 
@@ -373,11 +410,11 @@ exports.getUserTransactions = async function ( { page = 1, limit = 10, type, sta
     // เพิ่มเงื่อนไขการค้นหาตามช่วงวันที่
     if (startDate || endDate) {
       query.created_at = {};
-      
+
       if (startDate) {
         query.created_at.$gte = new Date(startDate + "T00:00:00.000Z");
       }
-      
+
       if (endDate) {
         query.created_at.$lte = new Date(endDate + "T23:59:59.999Z");
       }
@@ -461,7 +498,7 @@ exports.getUserTransactionById = async function (transactionId) {
 exports.getUserTransactionsByUserId = async function (userId, { page = 1, limit = 10, type, startDate, endDate } = {}) {
   try {
     const skip = (page - 1) * limit;
-    
+
     // สร้าง query object
     let query = { user_id: userId };
 
@@ -473,11 +510,11 @@ exports.getUserTransactionsByUserId = async function (userId, { page = 1, limit 
     // เพิ่มเงื่อนไขการค้นหาตามช่วงวันที่
     if (startDate || endDate) {
       query.created_at = {};
-      
+
       if (startDate) {
         query.created_at.$gte = new Date(startDate + "T00:00:00.000Z");
       }
-      
+
       if (endDate) {
         query.created_at.$lte = new Date(endDate + "T23:59:59.999Z");
       }

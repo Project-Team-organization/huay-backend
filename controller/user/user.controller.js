@@ -289,3 +289,16 @@ exports.searchUsers = async (req, res) => {
     return res.status(response.status).json(response);
   }
 };
+
+// Get users referred by the authenticated user
+exports.getUsersReferredByUser = async (req, res) => {
+  try {
+    // Get the authenticated user's ID from the token
+    const userId = req.user._id;
+    const result = await userService.getUsersReferredByUser(userId);
+    return res.status(result.status).json(result);
+  } catch (error) {
+    const response = await handleError(error);
+    return res.status(response.status).json(response);
+  }
+};

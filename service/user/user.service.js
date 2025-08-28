@@ -413,5 +413,34 @@ exports.searchUsers = async (searchTerm) => {
   }
 };
 
+// Get users referred by the authenticated user
+exports.getUsersReferredByUser = async (userId) => {
+  try {
+    if (!userId) {
+      return handleError(null, "กรุณาระบุ User ID", 400);
+    }
 
-// 
+    // Find the authenticated user to get their referral code
+    const authenticatedUser = await User.findById(userId);
+    if (!authenticatedUser) {
+      return handleError(null, "ไม่พบผู้ใช้งาน", 404);
+    }
+
+    // Find users who were referred by this user (using their referral_code)
+    const users = await User.find({ referral_by: authenticatedUser.referral_code })
+      .select("-password -username -phone -profile_picture -referral_amount -referral_status -referral_date -referral_expire_date -referral_withdraw_date -referral_withdraw_amount -referral_withdraw_status -referral_withdraw_date -referral_withdraw_expire_date -referral_withdraw -role -credit -active -created_at -updated_at -deleted_at -__v -bank_name -bank_account_number -bank_account_name -referral_link -bank_number")
+      .populate({
+        path: "referral_user_id",
+        select: "full_name"
+      })
+      .sort({ createdAt: -1 });
+
+    if (users.length === 0) {
+      return handleSuccess([], "ไม่พบผู้ใช้งานที่คุณแนะนำ", 200);
+    }
+
+    return handleSuccess(users, "ดึงข้อมูล User ที่คุณแนะนำสำเร็จ", 200);
+  } catch (error) {
+    return handleError(error);
+  }
+};
