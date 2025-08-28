@@ -350,12 +350,33 @@ async function checkLotterySetResults() {
     }
 
     // ออกผลหวย
-    const readyLotterySets = await LotterySets.find({
-      result_time: { $lte: serverTime },
-      status: { 
-        $nin: ["resulted", "cancelled"] // ไม่เอาสถานะ resulted และ cancelled
+    const readyLotterySets = await LotterySets.aggregate([
+      {
+        $lookup: {
+          from: "lotterytypes",
+          localField: "lottery_type_id",
+          foreignField: "_id",
+          as: "lottery_type_info"
+        }
+      },
+      {
+        $unwind: "$lottery_type_info"
+      },
+      {
+        $match: {
+          result_time: { $lte: serverTime },
+          "lottery_type_info.lottery_type": "หวยไทย",
+          status: { 
+            $nin: ["resulted", "cancelled"] // ไม่เอาสถานะ resulted และ cancelled
+          }
+        }
+      },
+      {
+        $addFields: {
+          lottery_type_id: "$lottery_type_info"
+        }
       }
-    }).populate('lottery_type_id');
+    ]);
 
     if (readyLotterySets.length > 0) {
       const user_id = '685d483a2144647be58f9312';
