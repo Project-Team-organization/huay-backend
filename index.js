@@ -163,7 +163,7 @@ cron.schedule('* * * * *', async () => {
 
 // หวยลาว TEST ทุกวัน เวลา 12:35 น.
 
-cron.schedule('35 12 * * *', async () => {
+cron.schedule('40 12 * * *', async () => {
   console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] CRON TEST Triggered`);
 }, { timezone: "Asia/Bangkok" });
 
