@@ -157,6 +157,7 @@ cron.schedule('30 23 * * *', async () => {
 
 // ออกผลหวย ทุกนาที (สำหรับตรวจสอบผลหวยอื่นๆ)
 cron.schedule('* * * * *', async () => {
+  console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ออกผลหวย ทุกนาที...`);
   await checkLotterySetResults();
 }, { timezone: "Asia/Bangkok" });
 
