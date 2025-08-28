@@ -45,8 +45,11 @@ router.get("/bet/:id", betController.getUserBetByPk);
 router.get("/bet/find/all", authmiddleware.isUser, betController.getUserBetAll);
 
 // user ดูเลขหวย
-router.get("/huay", lotteryController.getAllHuay); // Get Huay A;;
+router.get("/huay", lotteryController.getAllHuay); // Get Huay A;；
 router.get("/huay/set/:id", lotteryController.getHuay); // Get Huay By Lotter Set
 router.get("/huay/:id", lotteryController.getHuayById); // Get Huay by ID 
+
+// Get users referred by the authenticated user
+router.get("/referral", authmiddleware.isUser, userController.getUsersReferredByUser);
 
 module.exports = router;
