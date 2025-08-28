@@ -147,15 +147,50 @@ exports.getUserBetsById = async function (user_id, lottery_set_id, status) {
 
 exports.getAllUserBets = async function (page = 1, limit = 10) {
   try {
+    console.log("getAllUserBets");
     const skip = (page - 1) * limit;
     const total = await UserBet.countDocuments();
-    const bets = await UserBet.find()
+    let bets = await UserBet.find()
       .populate("lottery_set_id")
-      // .populate("bets.betting_option_id")
+      .populate("user_id", "full_name")
       .sort({ bet_date: -1 })
       .skip(skip)
       .limit(limit);
 
+    const lotterySetIds = [...new Set(bets.map(bet => bet.lottery_set_id?._id).filter(id => id))];
+
+    const lotterySets = await LotterySet.find({
+      _id: { $in: lotterySetIds }
+    }).populate("lottery_type_id");
+
+    const lotterySetMap = {};
+    lotterySets.forEach(set => {
+      lotterySetMap[set._id.toString()] = set;
+    });
+
+    bets = bets.map(bet => {
+      const betObj = bet.toObject();
+      const lotterySet = betObj.lottery_set_id ? lotterySetMap[betObj.lottery_set_id._id.toString()] : null;
+
+      if (lotterySet && lotterySet.lottery_type_id) {
+        const lotteryType = lotterySet.lottery_type_id;
+
+        betObj.bets = betObj.bets.map(betDetail => {
+
+          const matchingBettingType = lotteryType.betting_types.find(
+            bt => bt.code === betDetail.betting_type_id
+          );
+
+          return {
+            ...betDetail,
+            payout_rate: matchingBettingType ? matchingBettingType.payout_rate : null
+          };
+        });
+      }
+      return betObj;
+    });
+
+    console.log("bets", bets);
     return {
       bets,
       pagination: {
@@ -322,7 +357,7 @@ exports.getUserBetByPk = async function (bet_id) {
         select: "name lottery_type_id",
         populate: {
           path: "lottery_type_id",
-          select: "lottery_type betting_types -_id name",
+          select: "lottery_type betting_types -_id",
         },
       });
 
@@ -330,8 +365,7 @@ exports.getUserBetByPk = async function (bet_id) {
 
     const betObj = bet.toObject();
     const lotterySet = betObj.lottery_set_id;
-    const lottery_type_name = lotterySet?.lottery_type_id?.lottery_type || null;
-
+    
     // แมพข้อมูล betting_types เป็น object เพื่อค้นหาได้ง่าย
     const bettingTypesMap =
       lotterySet?.lottery_type_id?.betting_types?.reduce((acc, type) => {
@@ -339,24 +373,20 @@ exports.getUserBetByPk = async function (bet_id) {
         return acc;
       }, {}) || {};
 
-    // แมพข้อมูล bets กับ betting_types
-    const mappedBets = betObj.bets.map((bet, index) => {
-      const bettingType = bettingTypesMap[bet.betting_type_id] || {};
+    // แมพข้อมูล bets กับ betting_types เพื่อเพิ่ม payout_rate
+    const mappedBets = betObj.bets.map((betDetail) => {
+      const bettingType = bettingTypesMap[betDetail.betting_type_id] || {};
       return {
-        ...bet,
-        payout_rate:
-          bettingTypesMap[bet.betting_type_id]?.payout_rate ||
-          bet.betting_type_id,
+        ...betDetail,
+        payout_rate: bettingType.payout_rate || null,
         betting_type_name: bettingType.name || null,
-        numbers: bet.numbers,
-        bet_amount: bet.bet_amount,
       };
     });
 
     const responseData = {
       _id: betObj._id,
       name: lotterySet.name,
-      lottery_type_name,
+      lottery_type_name: lotterySet?.lottery_type_id?.lottery_type || null,
       bet_date: betObj.bet_date,
       total_bet_amount: betObj.total_bet_amount,
       status: betObj.status,
