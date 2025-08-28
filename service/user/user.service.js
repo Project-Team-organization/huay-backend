@@ -431,7 +431,7 @@ exports.getUsersReferredByUser = async (userId) => {
       .select("-password -username -phone -profile_picture -referral_amount -referral_status -referral_date -referral_expire_date -referral_withdraw_date -referral_withdraw_amount -referral_withdraw_status -referral_withdraw_date -referral_withdraw_expire_date -referral_withdraw -role -credit -active -created_at -updated_at -deleted_at -__v -bank_name -bank_account_number -bank_account_name -referral_link -bank_number")
       .populate({
         path: "referral_user_id",
-        select: "full_name username phone credit createdAt"
+        select: "full_name"
       })
       .sort({ createdAt: -1 });
 
