@@ -58,6 +58,7 @@ router.get(
 
 // Route to create a Huay ยังไม่ได้เริ่มใช้งาน
 router.post("/createHuay", huayController.createHuay); //Create Huay Manual //รอเเก้ไข
+router.post("/createManualHuay", huayController.createManualHuay); // Create Manual Huay with auto-generation
 router.post("/createHuayAPI", huayController.createHuayAPI); // Create Huay from API
 router.get("/huay", huayController.getAllHuay); // Get Huay A;;
 router.get("/huay/set/:id", huayController.getHuay); // Get Huay By Lotter Set
@@ -116,6 +117,8 @@ router.get("/lotteryresults/by-betting-type/:betting_type_id", lotteryResultsCon
 // 5. ลบข้อมูลจากผู้เล่นที่ถูกรางวัล
 router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.deleteLotteryResultAndItems);
 
+// 6. lotteryresultitems   by lottery_set_id
+router.get("/lotteryresultitems/lottery-set/:lottery_set_id", lotteryResultsController.getLotteryResultItemsByLotterySetId);
 
 
 //สร้างข้อมูลหวยลาว

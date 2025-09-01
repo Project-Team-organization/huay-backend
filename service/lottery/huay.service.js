@@ -33,6 +33,286 @@ exports.create = async (data, lottery_set_id) => {
   }
 };
 
+// ฟังก์ชันใหม่สำหรับสร้างผลหวยแบบกรอกมือหวย
+exports.createManualHuay = async (huays, lottery_set_id) => {
+  try {
+    const set = await LotterySets.findById(lottery_set_id);
+    if (!set) {
+      throw new Error("Invalid lottery_set_id : set not found.");
+    }
+
+    // สร้างข้อมูลหวยทั้งหมดที่จะบันทึก
+    const allHuayData = [];
+
+    for (const huay of huays) {
+      const { code, number, huay_name } = huay;
+      
+      // แปลงเลขเป็น string และตรวจสอบความยาว
+      const numberStr = number.toString();
+      
+      // สร้างเลขหวยตามประเภท (code)
+      let huayNumbers = [];
+      
+      switch (code) {
+        case "6d_top":
+          // รางวัลที่ 1 (6 หลัก)
+          huayNumbers = [numberStr];
+          break;
+          
+        case "5d_top":
+          // 5 ตัวบน (5 หลักท้าย)
+          if (numberStr.length >= 5) {
+            huayNumbers = [numberStr.slice(-5)];
+          }
+          break;
+          
+        case "4d_top":
+          // 4 ตัวบน (4 หลักท้าย)
+          if (numberStr.length >= 4) {
+            huayNumbers = [numberStr.slice(-4)];
+          }
+          break;
+          
+        case "3d_top":
+          // 3 ตัวบน (3 หลักท้าย)
+          if (numberStr.length >= 3) {
+            huayNumbers = [numberStr.slice(-3)];
+          }
+          break;
+          
+        case "2d_top":
+          // 2 ตัวบน (2 หลักท้าย)
+          if (numberStr.length >= 2) {
+            huayNumbers = [numberStr.slice(-2)];
+          }
+          break;
+          
+        case "3d_front":
+          // 3 ตัวหน้า (3 หลักแรก)
+          if (numberStr.length >= 3) {
+            huayNumbers = [numberStr.slice(0, 3)];
+          }
+          break;
+          
+        case "3d_front_2":
+          // 3 ตัวหน้าเพิ่มเติม (สร้างจากเลขหน้า)
+          if (numberStr.length >= 3) {
+            const front3 = numberStr.slice(0, 3);
+            // สร้างเลข 3 ตัวหน้าแบบโต๊ด
+            const digits = front3.split('');
+            const permutations = [];
+            for (let i = 0; i < digits.length; i++) {
+              for (let j = 0; j < digits.length; j++) {
+                for (let k = 0; k < digits.length; k++) {
+                  if (i !== j && i !== k && j !== k) {
+                    permutations.push(digits[i] + digits[j] + digits[k]);
+                  }
+                }
+              }
+            }
+            huayNumbers = [...new Set(permutations)];
+          }
+          break;
+          
+        case "3d_bottom":
+          // 3 ตัวล่าง (สร้างจากเลขท้าย)
+          if (numberStr.length >= 3) {
+            const bottom3 = numberStr.slice(-3);
+            // สร้างเลข 3 ตัวล่างแบบโต๊ด
+            const digits = bottom3.split('');
+            const permutations = [];
+            for (let i = 0; i < digits.length; i++) {
+              for (let j = 0; j < digits.length; j++) {
+                for (let k = 0; k < digits.length; k++) {
+                  if (i !== j && i !== k && j !== k) {
+                    permutations.push(digits[i] + digits[j] + digits[k]);
+                  }
+                }
+              }
+            }
+            huayNumbers = [...new Set(permutations)];
+          }
+          break;
+          
+        case "2d_bottom":
+          // 2 ตัวล่าง (2 หลักท้าย)
+          if (numberStr.length >= 2) {
+            huayNumbers = [numberStr.slice(-2)];
+          }
+          break;
+          
+        case "3d_toot":
+          // 3 ตัวโต๊ดหลังรางวัลที่ 1
+          if (numberStr.length >= 3) {
+            const bottom3 = numberStr.slice(-3);
+            const digits = bottom3.split('');
+            const permutations = [];
+            for (let i = 0; i < digits.length; i++) {
+              for (let j = 0; j < digits.length; j++) {
+                for (let k = 0; k < digits.length; k++) {
+                  if (i !== j && i !== k && j !== k) {
+                    permutations.push(digits[i] + digits[j] + digits[k]);
+                  }
+                }
+              }
+            }
+            huayNumbers = [...new Set(permutations)];
+          }
+          break;
+          
+        case "4d_toot":
+          // 4 ตัวโต๊ด
+          if (numberStr.length >= 4) {
+            const bottom4 = numberStr.slice(-4);
+            const digits = bottom4.split('');
+            const permutations = [];
+            for (let i = 0; i < digits.length; i++) {
+              for (let j = 0; j < digits.length; j++) {
+                for (let k = 0; k < digits.length; k++) {
+                  for (let l = 0; l < digits.length; l++) {
+                    if (i !== j && i !== k && i !== l && j !== k && j !== l && k !== l) {
+                      permutations.push(digits[i] + digits[j] + digits[k] + digits[l]);
+                    }
+                  }
+                }
+              }
+            }
+            huayNumbers = [...new Set(permutations)];
+          }
+          break;
+          
+        case "3d_front_toot":
+          // 3 ตัวโต๊ดหน้ารางวัลที่ 1
+          if (numberStr.length >= 3) {
+            const front3 = numberStr.slice(0, 3);
+            const digits = front3.split('');
+            const permutations = [];
+            for (let i = 0; i < digits.length; i++) {
+              for (let j = 0; j < digits.length; j++) {
+                for (let k = 0; k < digits.length; k++) {
+                  if (i !== j && i !== k && j !== k) {
+                    permutations.push(digits[i] + digits[j] + digits[k]);
+                  }
+                }
+              }
+            }
+            huayNumbers = [...new Set(permutations)];
+          }
+          break;
+          
+        case "3d_front_toot_2":
+          // 3 ตัวโต๊ดหน้าเพิ่มเติม
+          if (numberStr.length >= 3) {
+            const front3 = numberStr.slice(0, 3);
+            const digits = front3.split('');
+            const permutations = [];
+            for (let i = 0; i < digits.length; i++) {
+              for (let j = 0; j < digits.length; j++) {
+                for (let k = 0; k < digits.length; k++) {
+                  if (i !== j && i !== k && j !== k) {
+                    permutations.push(digits[i] + digits[j] + digits[k]);
+                  }
+                }
+              }
+            }
+            huayNumbers = [...new Set(permutations)];
+          }
+          break;
+          
+        case "3d_bottom_toot":
+          // 3 ตัวโต๊ดล่าง
+          if (numberStr.length >= 3) {
+            const bottom3 = numberStr.slice(-3);
+            const digits = bottom3.split('');
+            const permutations = [];
+            for (let i = 0; i < digits.length; i++) {
+              for (let j = 0; j < digits.length; j++) {
+                for (let k = 0; k < digits.length; k++) {
+                  if (i !== j && i !== k && j !== k) {
+                    permutations.push(digits[i] + digits[j] + digits[k]);
+                  }
+                }
+              }
+            }
+            huayNumbers = [...new Set(permutations)];
+          }
+          break;
+          
+        case "1top":
+          // วิ่งบน (เลขเดี่ยวจาก 3 หลักท้าย)
+          if (numberStr.length >= 3) {
+            const bottom3 = numberStr.slice(-3);
+            huayNumbers = bottom3.split('');
+          }
+          break;
+          
+        case "1bottom":
+          // วิ่งล่าง (เลขเดี่ยวจาก 2 หลักท้าย)
+          if (numberStr.length >= 2) {
+            const bottom2 = numberStr.slice(-2);
+            huayNumbers = bottom2.split('');
+          }
+          break;
+          
+        default:
+          // กรณีอื่นๆ ให้ใช้เลขที่กรอกโดยตรง
+          huayNumbers = [numberStr];
+      }
+
+      // สร้างข้อมูลหวยสำหรับแต่ละประเภท
+      if (huayNumbers.length > 0) {
+        const huayData = {
+          lottery_set_id: lottery_set_id,
+          huay_name: huay_name || getHuayNameByCode(code),
+          code: code,
+          name: "thai-lottery",
+          huay_number: huayNumbers,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        allHuayData.push(huayData);
+      }
+    }
+
+    // บันทึกข้อมูลหวยทั้งหมด
+    if (allHuayData.length > 0) {
+      const result = await huay.insertMany(allHuayData);
+      return result;
+    } else {
+      throw new Error("No valid huay data to create");
+    }
+
+  } catch (error) {
+    console.error("Failed to create Manual Huay data:", error.message);
+    throw new Error("Error creating Manual Huay data: " + error.message);
+  }
+};
+
+// ฟังก์ชันช่วยสำหรับสร้างชื่อหวยตาม code
+function getHuayNameByCode(code) {
+  const codeNames = {
+    "6d_top": "รางวัลที่ 1",
+    "5d_top": "5 ตัวบน",
+    "4d_top": "4 ตัวบน",
+    "3d_top": "3 ตัวบน",
+    "2d_top": "2 ตัวบน",
+    "3d_front": "3 ตัวหน้ารางวัลที่ 1",
+    "3d_front_2": "3 ตัวหน้า",
+    "3d_bottom": "3 ตัวล่าง",
+    "2d_bottom": "2 ตัวล่าง",
+    "3d_toot": "3 ตัวโต๊ดหลังรางวัลที่ 1",
+    "4d_toot": "4 ตัวโต๊ด",
+    "3d_front_toot": "3 ตัวโต๊ดหน้ารางวัลที่ 1",
+    "3d_front_toot_2": "3 ตัวโต๊ดหน้า",
+    "3d_bottom_toot": "3 ตัวโต๊ดล่าง",
+    "1top": "วิ่งบน",
+    "1bottom": "วิ่งล่าง"
+  };
+  
+  return codeNames[code] || code;
+}
+
 exports.getHuay = async (lottery_set_id) => {
   try {
     if (!lottery_set_id) {

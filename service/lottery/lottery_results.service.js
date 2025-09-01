@@ -191,11 +191,11 @@ class LotteryResultService {
         }).select('numbers');
 
         // แปลงสถานะให้เป็นข้อความที่ต้องการ
-        const displayStatus = result.lottery_set_id.status === 'resulted' ? 'ออกรางวัลแล้ว' : 'ยังไม่ประกาศ';
+        const displayStatus = result.lottery_set_id && result.lottery_set_id.status === 'resulted' ? 'ออกรางวัลแล้ว' : 'ยังไม่ประกาศ';
 
         return {
           date: result.draw_date,
-          lottery_name: result.lottery_set_id.lottery_type_id.lottery_type,
+          lottery_name: result.lottery_set_id && result.lottery_set_id.lottery_type_id ? result.lottery_set_id.lottery_type_id.lottery_type : 'ไม่ระบุ',
           number: resultItems.length > 0 ? resultItems[0].numbers[0] : '',
           status: displayStatus,
           winner_count: countwinner.length
@@ -365,6 +365,46 @@ class LotteryResultService {
           limit
         }
       };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 6. ดึงข้อมูล lotteryresultitems ตาม lottery_set_id
+  async getLotteryResultItemsByLotterySetId(lottery_set_id) {
+    try {
+      // หา lottery_result_id จาก lottery_set_id
+      const lotteryResults = await LotteryResult.find({ lottery_set_id });
+      const lotteryResultIds = lotteryResults.map(result => result._id);
+
+      if (lotteryResultIds.length === 0) {
+        return [];
+      }
+
+      const items = await LotteryResultItem.find({ 
+        lottery_result_id: { $in: lotteryResultIds } 
+      })
+        .populate('lottery_result_id', 'draw_date status')
+        .populate('betting_type_id', 'name')
+        .sort({ createdAt: -1 });
+
+      // แปลงข้อมูลให้อยู่ในรูปแบบที่ต้องการ
+      const formattedItems = items.map(item => ({
+        id: item._id,
+        lottery_result_id: item.lottery_result_id._id,
+        draw_date: item.lottery_result_id.draw_date,
+        status: item.lottery_result_id.status,
+        betting_type_id: item.betting_type_id,
+        betting_type_name: item.betting_type_id?.name || item.name,
+        name: item.name,
+        reward: item.reward,
+        numbers: item.numbers,
+        winner_count: item.winner_count,
+        created_at: item.createdAt,
+        updated_at: item.updatedAt
+      }));
+
+      return formattedItems;
     } catch (error) {
       throw error;
     }

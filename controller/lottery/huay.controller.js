@@ -41,6 +41,44 @@ exports.createHuay = async (req, res) => {
   }
 };
 
+// ฟังก์ชันใหม่สำหรับสร้างผลหวยแบบกรอกมือหวย
+exports.createManualHuay = async (req, res) => {
+  try {
+    const { lottery_item_id, huays } = req.body;
+
+    if (!lottery_item_id || !Array.isArray(huays) || !huays.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing lottery_item_id or huay data.",
+      });
+    }
+
+    // ตรวจสอบว่า huays มี code และ number หรือไม่
+    const hasRequiredFields = huays.every(huay => huay.code && huay.number);
+    if (!hasRequiredFields) {
+      return res.status(400).json({
+        success: false,
+        message: "Each huay must have code and number fields.",
+      });
+    }
+
+    const result = await huayService.createManualHuay(huays, lottery_item_id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Manual Huay data created successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("CreateManualHuay Error:", error.message);
+    return res.status(400).json({
+      success: false,
+      message: "Unable to create Manual Huay data.",
+      error: error.message,ป
+    });
+  }
+};
+
 exports.createHuayAPI = async (req, res) => {
   try {
     const { lottery_set_id } = req.body;

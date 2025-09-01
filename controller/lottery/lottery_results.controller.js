@@ -213,4 +213,25 @@ exports.getWinnersByLotterySetAndUser = async (req, res) => {
     const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผู้ชนะได้');
     return res.status(response.status).json(response);
   }
+};
+
+// 6. ดึงข้อมูล lotteryresultitems ตาม lottery_set_id
+exports.getLotteryResultItemsByLotterySetId = async (req, res) => {
+  try {
+    const { lottery_set_id } = req.params;
+
+    const result = await lotteryResultService.getLotteryResultItemsByLotterySetId(
+      lottery_set_id
+    );
+
+    const response = await handleSuccess(
+      result,
+      'ดึงข้อมูลผลรางวัลตาม lottery set สำเร็จ',
+      200
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผลรางวัลได้');
+    return res.status(response.status).json(response);
+  }
 }; 
