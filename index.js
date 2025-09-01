@@ -9,6 +9,7 @@ const routes = require("./routes");
 
 // Import cron job functions
 require('./cronjob/huay.lao');
+require('./cronjob/huay.thai');
 
 const app = express();
 
