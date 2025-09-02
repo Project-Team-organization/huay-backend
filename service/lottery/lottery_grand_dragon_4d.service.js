@@ -28,76 +28,6 @@ const fetchAndSaveGrandDragon4dLottery = async () => {
       );
     }
 
-    // ➤ หา 3 ตัวบน (จาก first prize)
-    let threeTop = "";
-    if (data.results.first_prize) {
-      // เอาเฉพาะตัวเลขจาก "(C) 6000" → "6000" → "000"
-      const firstPrizeDigits = data.results.first_prize.match(/\d+/);
-      if (firstPrizeDigits && firstPrizeDigits[0].length >= 3) {
-        threeTop = firstPrizeDigits[0].slice(-3); // เอา 3 ตัวท้าย
-      }
-    }
-    
-    // ➤ หา 3 ตัวโต๊ด
-    let threeToad = [];
-    if (threeTop) {
-      const digits = threeTop.split("");
-      const perms = new Set();
-
-      const permute = (arr, m = []) => {
-        if (arr.length === 0) {
-          perms.add(m.join(""));
-        } else {
-          for (let i = 0; i < arr.length; i++) {
-            const curr = arr.slice();
-            const next = curr.splice(i, 1);
-            permute(curr.slice(), m.concat(next));
-          }
-        }
-      };
-
-      permute(digits);
-      threeToad = [...perms];
-    }
-
-    // ➤ หา 2 ตัวบน (จาก first prize)
-    let twoTop = "";
-    if (data.results.first_prize) {
-      const firstPrizeDigits = data.results.first_prize.match(/\d+/);
-      if (firstPrizeDigits && firstPrizeDigits[0].length >= 2) {
-        twoTop = firstPrizeDigits[0].slice(-2); // เอา 2 ตัวท้าย
-      }
-    }
-
-    // ➤ หา 2 ตัวล่าง (จาก second prize)
-    let twoBottom = "";
-    if (data.results.second_prize) {
-      const secondPrizeDigits = data.results.second_prize.match(/\d+/);
-      if (secondPrizeDigits && secondPrizeDigits[0].length >= 2) {
-        twoBottom = secondPrizeDigits[0].slice(-2); // เอา 2 ตัวท้าย
-      }
-    }
-    
-    // ➤ 1 ตัวบน (วิ่งบน จาก first prize)
-    let oneTop = "";
-    if (data.results.first_prize) {
-      const firstPrizeDigits = data.results.first_prize.match(/\d+/);
-      if (firstPrizeDigits && firstPrizeDigits[0].length >= 3) {
-        const digits = firstPrizeDigits[0].slice(-3).split("");
-        oneTop = digits.join(","); // เช่น "000" → "0,0,0"
-      }
-    }
-
-    // ➤ 1 ตัวล่าง (วิ่งล่าง จาก second prize)
-    let oneBottom = "";
-    if (data.results.second_prize) {
-      const secondPrizeDigits = data.results.second_prize.match(/\d+/);
-      if (secondPrizeDigits && secondPrizeDigits[0].length >= 2) {
-        const digits = secondPrizeDigits[0].slice(-2).split("");
-        oneBottom = digits.join(","); // เช่น "06" → "0,6"
-      }
-    }
-
     const lotteryData = {
       name: data.name,
       url: data.url,
@@ -118,34 +48,43 @@ const fetchAndSaveGrandDragon4dLottery = async () => {
       },
       betting_types: [
         {
-          code: "3top",
+          code: "a1_4d",
+          name: "4 ตัวบน",
+          digit: data.results.first_prize ? data.results.first_prize.match(/\d+/)?.[0] || "" : "",
+        },
+        {
+          code: "b1_4d",
+          name: "4 ตัวล่าง",
+          digit: data.results.second_prize ? data.results.second_prize.match(/\d+/)?.[0] || "" : "",
+        },
+        {
+          code: "c1_4d",
+          name: "4 ตัวล่าง",
+          digit: data.results.third_prize ? data.results.third_prize.match(/\d+/)?.[0] || "" : "",
+        },
+        {
+          code: "b_3d",
           name: "3 ตัวบน",
-          digit: threeTop,
+          digit: data.results.first_prize ? (data.results.first_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
         },
         {
-          code: "3toad",
-          name: "3 ตัวโต๊ด",
-          digit: threeToad.join(","),
+          code: "c_3d",
+          name: "3 ตัวล่าง",
+          digit: data.results.second_prize ? (data.results.second_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
         },
         {
-          code: "2top",
-          name: "2 ตัวบน",
-          digit: twoTop,
+          code: "abc_n_3d",
+          name: "3 ตัวล่าง",
+          digit: data.results.third_prize ? (data.results.third_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
         },
         {
-          code: "2bottom",
-          name: "2 ตัวล่าง",
-          digit: twoBottom,
-        },
-        {
-          code: "1top",
-          name: "วิ่งบน",
-          digit: oneTop,
-        },
-        {
-          code: "1bottom",
-          name: "วิ่งล่าง",
-          digit: oneBottom,
+          code: "a_3d",
+          name: "3 ตัวรวม",
+          digit: [
+            data.results.first_prize ? (data.results.first_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
+            data.results.second_prize ? (data.results.second_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
+            data.results.third_prize ? (data.results.third_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
+          ].filter(digit => digit !== "").join(","),
         },
       ],
     };

@@ -5,10 +5,12 @@ const responseHandler = require("../../utils/responseHandler");
 const fetchLatestGrandDragon4dLottery = async (req, res) => {
   try {
     const result = await lotteryGrandDragon4dService.fetchAndSaveGrandDragon4dLottery();
-    return responseHandler.success(res, "ดึงข้อมูลหวย Grand Dragon 4D ล่าสุดสำเร็จ", result);
+    const response = await responseHandler.handleSuccess(result, "ดึงข้อมูลหวย Grand Dragon 4D ล่าสุดสำเร็จ");
+    return res.status(200).json(response);
   } catch (error) {
-    console.error("Error in getLatestGrandDragon4dLottery controller:", error);
-    return responseHandler.error(res, error.message);
+    console.error("Error in fetchLatestGrandDragon4dLottery controller:", error);
+    const response = await responseHandler.handleError(error, error.message);
+    return res.status(500).json(response);
   }
 };
 
@@ -24,10 +26,12 @@ const getAllGrandDragon4dLottery = async (req, res) => {
       endDate,
     });
     
-    return responseHandler.success(res, "ดึงข้อมูลหวย Grand Dragon 4D สำเร็จ", result);
+    const response = await responseHandler.handleSuccess(result, "ดึงข้อมูลหวย Grand Dragon 4D สำเร็จ");
+    return res.status(200).json(response);
   } catch (error) {
     console.error("Error in getAllGrandDragon4dLottery controller:", error);
-    return responseHandler.error(res, error.message);
+    const response = await responseHandler.handleError(error, error.message);
+    return res.status(500).json(response);
   }
 };
 
@@ -37,19 +41,23 @@ const getGrandDragon4dLotteryById = async (req, res) => {
     const { id } = req.params;
     
     if (!id) {
-      return responseHandler.error(res, "กรุณาระบุ ID ของหวย Grand Dragon 4D");
+      const response = await responseHandler.handleError(null, "กรุณาระบุ ID ของหวย Grand Dragon 4D");
+      return res.status(400).json(response);
     }
 
     const result = await lotteryGrandDragon4dService.getGrandDragon4dLotteryById(id);
     
     if (!result) {
-      return responseHandler.error(res, "ไม่พบข้อมูลหวย Grand Dragon 4D ที่ระบุ");
+      const response = await responseHandler.handleError(null, "ไม่พบข้อมูลหวย Grand Dragon 4D ที่ระบุ");
+      return res.status(404).json(response);
     }
     
-    return responseHandler.success(res, "ดึงข้อมูลหวย Grand Dragon 4D สำเร็จ", result);
+    const response = await responseHandler.handleSuccess(result, "ดึงข้อมูลหวย Grand Dragon 4D สำเร็จ");
+    return res.status(200).json(response);
   } catch (error) {
     console.error("Error in getGrandDragon4dLotteryById controller:", error);
-    return responseHandler.error(res, error.message);
+    const response = await responseHandler.handleError(error, error.message);
+    return res.status(500).json(response);
   }
 };
 
@@ -59,19 +67,23 @@ const deleteGrandDragon4dLottery = async (req, res) => {
     const { id } = req.params;
     
     if (!id) {
-      return responseHandler.error(res, "กรุณาระบุ ID ของหวย Grand Dragon 4D ที่ต้องการลบ");
+      const response = await responseHandler.handleError(null, "กรุณาระบุ ID ของหวย Grand Dragon 4D ที่ต้องการลบ");
+      return res.status(400).json(response);
     }
 
     const result = await lotteryGrandDragon4dService.deleteGrandDragon4dLottery(id);
     
     if (!result) {
-      return responseHandler.error(res, "ไม่พบข้อมูลหวย Grand Dragon 4D ที่ต้องการลบ");
+      const response = await responseHandler.handleError(null, "ไม่พบข้อมูลหวย Grand Dragon 4D ที่ต้องการลบ");
+      return res.status(404).json(response);
     }
     
-    return responseHandler.success(res, "ลบข้อมูลหวย Grand Dragon 4D สำเร็จ", result);
+    const response = await responseHandler.handleSuccess(result, "ลบข้อมูลหวย Grand Dragon 4D สำเร็จ");
+    return res.status(200).json(response);
   } catch (error) {
     console.error("Error in deleteGrandDragon4dLottery controller:", error);
-    return responseHandler.error(res, error.message);
+    const response = await responseHandler.handleError(error, error.message);
+    return res.status(500).json(response);
   }
 };
 
@@ -82,19 +94,23 @@ const updateGrandDragon4dLottery = async (req, res) => {
     const updateData = req.body;
     
     if (!id) {
-      return responseHandler.error(res, "กรุณาระบุ ID ของหวย Grand Dragon 4D ที่ต้องการอัพเดท");
+      const response = await responseHandler.handleError(null, "กรุณาระบุ ID ของหวย Grand Dragon 4D ที่ต้องการอัพเดท");
+      return res.status(400).json(response);
     }
 
     const result = await lotteryGrandDragon4dService.updateGrandDragon4dLottery(id, updateData);
     
     if (!result) {
-      return responseHandler.error(res, "ไม่พบข้อมูลหวย Grand Dragon 4D ที่ต้องการอัพเดท");
+      const response = await responseHandler.handleError(null, "ไม่พบข้อมูลหวย Grand Dragon 4D ที่ต้องการอัพเดท");
+      return res.status(404).json(response);
     }
     
-    return responseHandler.success(res, "อัพเดทข้อมูลหวย Grand Dragon 4D สำเร็จ", result);
+    const response = await responseHandler.handleSuccess(result, "อัพเดทข้อมูลหวย Grand Dragon 4D สำเร็จ");
+    return res.status(200).json(response);
   } catch (error) {
     console.error("Error in updateGrandDragon4dLottery controller:", error);
-    return responseHandler.error(res, error.message);
+    const response = await responseHandler.handleError(error, error.message);
+    return res.status(500).json(response);
   }
 };
 
@@ -105,21 +121,20 @@ const createGrandDragon4dLottery = async (req, res) => {
     
     const result = await lotteryGrandDragon4dService.createGrandDragon4dLottery(lotteryData);
     
-    return responseHandler.success(res, "สร้างข้อมูลหวย Grand Dragon 4D สำเร็จ", result);
+    const response = await responseHandler.handleSuccess(result, "สร้างข้อมูลหวย Grand Dragon 4D สำเร็จ");
+    return res.status(201).json(response);
   } catch (error) {
     console.error("Error in createGrandDragon4dLottery controller:", error);
-    return responseHandler.error(res, error.message);
+    const response = await responseHandler.handleError(error, error.message);
+    return res.status(500).json(response);
   }
 };
 
-// Function สำหรับ routes (ตามรูปแบบของตัวอื่นๆ)
-
-
 module.exports = {
+  fetchLatestGrandDragon4dLottery,
   getAllGrandDragon4dLottery,
   getGrandDragon4dLotteryById,
   deleteGrandDragon4dLottery,
   updateGrandDragon4dLottery,
   createGrandDragon4dLottery,
-  fetchLatestGrandDragon4dLottery, // เพิ่ม function นี้เพื่อให้ routes ใช้งานได้
 };
