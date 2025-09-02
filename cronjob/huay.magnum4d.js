@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const { fetchAndSaveMagnum4dLottery } = require('../service/lottery/lottery_magnum_4d.service');
+const { fetchAndSaveSingapore4dLottery } = require('../service/lottery/lottery_singapore_4d.service');
 
 // Cronjob สำหรับหวย Magnum 4D - รันวันพุธ วันเสาร์ และวันอาทิตย์ เวลา 19:00 น. (เวลาไทย)
 // มี Special Draw วันอังคาร เวลา 19:00 น.
@@ -50,4 +51,47 @@ cron.schedule('0 19 * * 2,3,6,0', async () => {
 }, {
   timezone: "Asia/Bangkok"
 });
+
+// Cronjob สำหรับหวยสิงคโปร์ 4D - รันวันพุธ วันเสาร์ และวันอาทิตย์ เวลา 18:00 น. (เวลาประเทศไทย)
+cron.schedule('0 18 * * 3,6,0', async () => {
+  try {
+    console.log('🕐 Starting Singapore 4D lottery cronjob at:', new Date().toLocaleString('th-TH'));
+    
+    // Retry mechanism - ลอง 3 ครั้ง
+    let result = null;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries && !result) {
+      try {
+        console.log(`🔄 Attempt ${retryCount + 1}/${maxRetries} to fetch Singapore 4D lottery data...`);
+        result = await fetchAndSaveSingapore4dLottery();
+        break; // ถ้าสำเร็จให้ออกจาก loop
+      } catch (error) {
+        retryCount++;
+        console.log(`⚠️ Attempt ${retryCount} failed: ${error.message}`);
+        
+        if (retryCount < maxRetries) {
+          // รอ 5 นาทีก่อนลองใหม่
+          console.log(`⏳ Waiting 5 minutes before retry...`);
+          await new Promise(resolve => setTimeout(resolve, 5 * 60 * 1000));
+        }
+      }
+    }
+    
+    if (result) {
+      console.log('✅ Singapore 4D lottery data fetched and saved successfully');
+      console.log('📅 Lottery date:', result.lotto_date);
+      console.log('🎯 Results:', result.results);
+    } else {
+      console.error('❌ All retry attempts failed for Singapore 4D lottery');
+    }
+  } catch (error) {
+    console.error('❌ Error in Singapore 4D lottery cronjob:', error.message);
+  }
+}, {
+  timezone: "Asia/Bangkok"
+});
+
+
 
