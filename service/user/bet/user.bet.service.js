@@ -16,7 +16,7 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
     // ดู set หวย
     const lotterySet = await validateLotterySet(lottery_set_id);
     const lotteryType = await LotteryType.findById(lotterySet.lottery_type_id);
-    const bettingTypes = lotteryType.betting_types;
+    const bettingTypes = lotteryType?.betting_types || [];
     // ตรวจสอบเลขที่ถูกจำกัด type: full
     const limitedNumbersFull = await LotteryLimitedNumbers.find({
       lottery_set_id: lotterySet._id,
@@ -71,10 +71,15 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
     }
 
     // คำนวณ bet_amount สำหรับแต่ละ bet
+    
+
     bets.forEach((bet) => {
-      bet.betting_name = bettingTypes.find(
+      console.log("🔍 bettingTypes", bettingTypes);
+      console.log("🔍 bet", bet.betting_type_id);
+      const foundBettingType = bettingTypes.find(
         (type) => type.code === bet.betting_type_id
-      ).name;
+      );
+      bet.betting_name = foundBettingType?.name || `Unknown Type (${bet.betting_type_id})`;
       bet.bet_amount = bet.numbers.reduce(
         (sum, number) => sum + number.amount,
         0

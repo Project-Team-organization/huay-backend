@@ -125,17 +125,17 @@ async function validateInput(data, lotteryId = null) {
   }
 
   // ตรวจสอบชื่อซ้ำ
-  if (data.name) {
-    const query = { name: data.name };
-    // ถ้าเป็นการอัพเดท ไม่เช็คกับข้อมูลของตัวเอง
-    if (lotteryId) {
-      query._id = { $ne: lotteryId };
-    }
-    const existingLottery = await LotterySets.findOne(query);
-    if (existingLottery) {
-      throw new Error("ชื่อนี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น");
-    }
-  }
+  // if (data.name) {
+  //   const query = { name: data.name };
+  //   // ถ้าเป็นการอัพเดท ไม่เช็คกับข้อมูลของตัวเอง
+  //   if (lotteryId) {
+  //     query._id = { $ne: lotteryId };
+  //   }
+  //   const existingLottery = await LotterySets.findOne(query);
+  //   if (existingLottery) {
+  //     throw new Error("ชื่อนี้ถูกใช้งานแล้ว กรุณาใช้ชื่ออื่น");
+  //   }
+  // }
 
   // ตรวจสอบเวลา
   if (data.openTime && data.closeTime) {
