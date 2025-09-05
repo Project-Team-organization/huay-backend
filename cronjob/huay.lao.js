@@ -45,7 +45,7 @@ cron.schedule('50 13 * * *', async () => {
     } catch (error) {
         console.error('Error fetching Lao HD lottery data:', error.message);
     }
-}, { timezone: "Asia/Bangkok" });
+}, { timezone: "Asia/Bangkok" }); 
 
 // หวยลาวสตาร์ ทุกวัน เวลา 15:45 น.
 cron.schedule('45 15 * * *', async () => {
