@@ -38,7 +38,7 @@ cron.schedule('30 10 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาว HD ทุกวัน เวลา 13:50 น.
-cron.schedule('50 13 * * *', async () => {
+cron.schedule('00 14 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao HD lottery data...`);
     try {
         await huaylaohd();
