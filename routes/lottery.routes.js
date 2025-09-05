@@ -24,6 +24,7 @@ const { fetchLatestThaiSavingsLottery, getAllThaiSavingsLottery } = require('../
 const { fetchLatestThaiGsbLottery, getAllThaiGsbLottery } = require('../controller/lottery/lottery_thai_gsb.controller');
 const { fetchLatestMagnum4dLottery, getAllMagnum4dLottery } = require('../controller/lottery/lottery_magnum_4d.controller');
 const { fetchLatestSingapore4dLottery, getAllSingapore4dLottery } = require('../controller/lottery/lottery_singapore_4d.controller');
+const { fetchLatestGrandDragon4dLottery, getAllGrandDragon4dLottery } = require('../controller/lottery/lottery_grand_dragon_4d.controller');
 
 // Route to create a lottery Sets
 router.post("/createSets", lotterySetsController.createLotterySets);
@@ -208,6 +209,12 @@ router.post('/singapore-4d/latest', fetchLatestSingapore4dLottery);
 
 //ดึงข้อมูลหวย Singapore 4D ทั้งหมดแบบ pagination
 router.get('/singapore-4d', getAllSingapore4dLottery);
+
+//สร้างข้อมูลหวย Grand Dragon 4D
+router.post('/grand-dragon-4d/latest', fetchLatestGrandDragon4dLottery);
+
+//ดึงข้อมูลหวย Grand Dragon 4D ทั้งหมดแบบ pagination
+router.get('/grand-dragon-4d', getAllGrandDragon4dLottery);
 
 
 module.exports = router;
