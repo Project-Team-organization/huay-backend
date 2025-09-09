@@ -75,8 +75,8 @@ const lotteryGrandDragon4dSchema = new mongoose.Schema(
           required: true,
         },
         digit: {
-          type: String,
-          required: true,
+          type: [String],
+          default: [],
         },
       },
     ],

@@ -7,7 +7,7 @@ const bettingTypesSchema = new mongoose.Schema(
       {
         code: { type: String, required: true },
         name: { type: String, required: true },
-        digit: { type: Number, required: true },
+        digit: { type: Number, required: false, default: null },
         payout_rate: { type: Number, default: null },
         min_bet: { type: Number, default: null },
         max_bet: { type: Number, default: null },

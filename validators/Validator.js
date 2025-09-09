@@ -86,8 +86,7 @@ exports.createBettingTypeSchema = (data) => {
       "any.required": `"Name" is required.`,
       "string.empty": `"Name" cannot be empty.`,
     }),
-    digit: Joi.number().required().label("Digit").messages({
-      "any.required": `"Digit" is required.`,
+    digit: Joi.number().optional().allow(null).label("Digit").messages({
       "number.base": `"Digit" must be a number.`,
     }),
     payout_rate: Joi.number()
@@ -144,8 +143,7 @@ exports.validateCreateLotteryType = (data) => {
       "any.required": `"Name" is required.`,
       "string.empty": `"Name" cannot be empty.`,
     }),
-    digit: Joi.number().required().label("Digit").messages({
-      "any.required": `"Digit" is required.`,
+    digit: Joi.number().optional().allow(null).label("Digit").messages({
       "number.base": `"Digit" must be a number.`,
     }),
     payout_rate: Joi.number()

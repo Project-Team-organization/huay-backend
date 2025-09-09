@@ -20,13 +20,28 @@ const fetchAndSaveGrandDragon4dLottery = async () => {
       "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/grand-dragon-4d/latest"
     );
     const { data } = response.data;
-    
+
     // ถ้า results ยังไม่ออก
     if (!data.results.first_prize || data.results.first_prize === "xxxx") {
       throw new Error(
         `Failed to fetch and save Grand Dragon 4D lottery: หวย Grand Dragon 4D วันนี้ยังไม่ออกผล`
       );
     }
+
+    const firstPrize = data.results.first_prize?.match(/\d+/)?.[0] || "";
+    const secondPrize = data.results.second_prize?.match(/\d+/)?.[0] || "";
+    const thirdPrize = data.results.third_prize?.match(/\d+/)?.[0] || "";
+
+    const firstPrize3d = firstPrize.slice(-3);
+    const secondPrize3d = secondPrize.slice(-3);
+    const thirdPrize3d = thirdPrize.slice(-3);
+
+    const firstPrize2d = firstPrize.slice(-2);
+    const secondPrize2d = secondPrize.slice(-2);
+    const thirdPrize2d = thirdPrize.slice(-2);
+
+    const specialPrizes = data.results.special_prizes || [];
+    const consolationPrizes = data.results.consolation_prizes || [];
 
     const lotteryData = {
       name: data.name,
@@ -43,48 +58,70 @@ const fetchAndSaveGrandDragon4dLottery = async () => {
         first_prize: data.results.first_prize,
         second_prize: data.results.second_prize,
         third_prize: data.results.third_prize,
-        special_prizes: data.results.special_prizes,
-        consolation_prizes: data.results.consolation_prizes,
+        special_prizes: specialPrizes,
+        consolation_prizes: consolationPrizes,
       },
       betting_types: [
         {
           code: "a1_4d",
           name: "4 ตัวบน",
-          digit: data.results.first_prize ? data.results.first_prize.match(/\d+/)?.[0] || "" : "",
+          digit: firstPrize ? [firstPrize] : [],
         },
         {
           code: "b1_4d",
           name: "4 ตัวล่าง",
-          digit: data.results.second_prize ? data.results.second_prize.match(/\d+/)?.[0] || "" : "",
+          digit: secondPrize ? [secondPrize] : [],
         },
         {
           code: "c1_4d",
           name: "4 ตัวล่าง",
-          digit: data.results.third_prize ? data.results.third_prize.match(/\d+/)?.[0] || "" : "",
+          digit: thirdPrize ? [thirdPrize] : [],
         },
         {
           code: "b_3d",
           name: "3 ตัวบน",
-          digit: data.results.first_prize ? (data.results.first_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
+          digit: firstPrize3d ? [firstPrize3d] : [],
         },
         {
           code: "c_3d",
           name: "3 ตัวล่าง",
-          digit: data.results.second_prize ? (data.results.second_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
+          digit: secondPrize3d ? [secondPrize3d] : [],
         },
         {
           code: "abc_n_3d",
           name: "3 ตัวล่าง",
-          digit: data.results.third_prize ? (data.results.third_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
+          digit: thirdPrize3d ? [thirdPrize3d] : [],
         },
         {
           code: "a_3d",
           name: "3 ตัวรวม",
+          digit: [firstPrize3d, secondPrize3d, thirdPrize3d].filter(digit => digit !== ""),
+        },
+        {
+          code: "small_4d",
+          name: "เล็ก",
+          digit: [firstPrize, secondPrize, thirdPrize].filter(digit => digit !== ""),
+        },
+        {
+          code: "big_4d",
+          name: "ใหญ่",
+          digit: [firstPrize, secondPrize, thirdPrize, ...specialPrizes, ...consolationPrizes].filter(digit => digit !== ""),
+        },
+        {
+          code: "pack_5",
+          name: "5 เด้ง",
           digit: [
-            data.results.first_prize ? (data.results.first_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
-            data.results.second_prize ? (data.results.second_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
-            data.results.third_prize ? (data.results.third_prize.match(/\d+/)?.[0] || "").slice(-3) : "",
-          ].filter(digit => digit !== "").join(","),
+            // small_4d
+            firstPrize, secondPrize, thirdPrize,
+            // big_4d
+            firstPrize, secondPrize, thirdPrize, ...specialPrizes, ...consolationPrizes,
+            // abc_n_3d
+            thirdPrize3d,
+            // a1_4d
+            firstPrize,
+            // a_3d
+            firstPrize3d, secondPrize3d, thirdPrize3d,
+          ].filter(digit => digit !== ""),
         },
       ],
     };

@@ -2,6 +2,7 @@ const lotteryMagnum4dService = require('../../service/lottery/lottery_magnum_4d.
 const { handleSuccess, handleError } = require('../../utils/responseHandler');
 
 const fetchLatestMagnum4dLottery = async (req, res) => {
+  console.log('fetchLatestMagnum4dLottery');
   try {
     const lottery = await lotteryMagnum4dService.fetchAndSaveMagnum4dLottery();
     const response = await handleSuccess(lottery);
