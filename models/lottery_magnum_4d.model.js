@@ -60,7 +60,7 @@ const lotteryMagnum4dSchema = new mongoose.Schema(
       {
         code: { type: String, default: "" },
         name: { type: String, default: "" },
-        digit: { type: String, default: "" },
+        digit: { type: [String], default: [] },
       },
     ],
   },

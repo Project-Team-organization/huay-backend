@@ -28,72 +28,20 @@ const fetchAndSaveMagnum4dLottery = async () => {
       );
     }
 
-    // ➤ รวมรางวัลทั้งหมดเพื่อใช้ในการสร้าง betting types
-    const allPrizes = [
-      data.results.first_prize,
-      data.results.second_prize,
-      data.results.third_prize,
-      ...data.results.special_prizes,
-      ...data.results.consolation_prizes
-    ];
+    const firstPrize = data.results.first_prize?.match(/\d+/)?.[0] || "";
+    const secondPrize = data.results.second_prize?.match(/\d+/)?.[0] || "";
+    const thirdPrize = data.results.third_prize?.match(/\d+/)?.[0] || "";
 
-    // ➤ หา 4 ตัว (จากรางวัลที่ 1)
-    let fourDigit = "";
-    if (data.results.first_prize) {
-      fourDigit = data.results.first_prize;
-    }
+    const firstPrize3d = firstPrize.slice(-3);
+    const secondPrize3d = secondPrize.slice(-3);
+    const thirdPrize3d = thirdPrize.slice(-3);
 
-    // ➤ หา 3 ตัวบน (3 หลักท้ายของรางวัลที่ 1)
-    let threeTop = "";
-    if (data.results.first_prize && data.results.first_prize.length >= 3) {
-      threeTop = data.results.first_prize.slice(-3);
-    }
-    
-    // ➤ หา 3 ตัวโต๊ด
-    let threeToad = [];
-    if (threeTop) {
-      const digits = threeTop.split("");
-      const perms = new Set();
+    const firstPrize2d = firstPrize.slice(-2);
+    const secondPrize2d = secondPrize.slice(-2);
+    const thirdPrize2d = thirdPrize.slice(-2);
 
-      const permute = (arr, m = []) => {
-        if (arr.length === 0) {
-          perms.add(m.join(""));
-        } else {
-          for (let i = 0; i < arr.length; i++) {
-            const curr = arr.slice();
-            const next = curr.splice(i, 1);
-            permute(curr.slice(), m.concat(next));
-          }
-        }
-      };
-
-      permute(digits);
-      threeToad = [...perms];
-    }
-
-    // ➤ หา 2 ตัวบน (2 หลักท้ายของรางวัลที่ 1)
-    let twoTop = "";
-    if (data.results.first_prize && data.results.first_prize.length >= 2) {
-      twoTop = data.results.first_prize.slice(-2);
-    }
-
-    // ➤ หา 2 ตัวล่าง (2 หลักหน้าของรางวัลที่ 1)
-    let twoBottom = "";
-    if (data.results.first_prize && data.results.first_prize.length >= 2) {
-      twoBottom = data.results.first_prize.slice(0, 2);
-    }
-    
-    // ➤ 1 ตัวบน (วิ่งบน จาก 3 ตัวบน)
-    let oneTop = "";
-    if (threeTop && threeTop.length === 3) {
-      oneTop = threeTop.split("").join(","); // เช่น "676" → "6,7,6"
-    }
-
-    // ➤ 1 ตัวล่าง (วิ่งล่าง จาก 2 ตัวล่าง)
-    let oneBottom = "";
-    if (twoBottom && twoBottom.length === 2) {
-      oneBottom = twoBottom.split("").join(","); // เช่น "26" → "2,6"
-    }
+    const specialPrizes = data.results.special_prizes || [];
+    const consolationPrizes = data.results.consolation_prizes || [];
 
     const lotteryData = {
       name: data.name,
@@ -113,39 +61,65 @@ const fetchAndSaveMagnum4dLottery = async () => {
       },
       betting_types: [
         {
-          code: "4digit",
-          name: "4 ตัว",
-          digit: fourDigit,
+          code: "a1_4d",
+          name: "4 ตัวบน",
+          digit: firstPrize ? [firstPrize] : [],
         },
         {
-          code: "3top",
+          code: "b1_4d",
+          name: "4 ตัวล่าง",
+          digit: secondPrize ? [secondPrize] : [],
+        },
+        {
+          code: "c1_4d",
+          name: "4 ตัวล่าง",
+          digit: thirdPrize ? [thirdPrize] : [],
+        },
+        {
+          code: "b_3d",
           name: "3 ตัวบน",
-          digit: threeTop,
+          digit: firstPrize3d ? [firstPrize3d] : [],
         },
         {
-          code: "3toad",
-          name: "3 ตัวโต๊ด",
-          digit: threeToad.join(","),
+          code: "c_3d",
+          name: "3 ตัวล่าง",
+          digit: secondPrize3d ? [secondPrize3d] : [],
         },
         {
-          code: "2top",
-          name: "2 ตัวบน",
-          digit: twoTop,
+          code: "abc_n_3d",
+          name: "3 ตัวล่าง",
+          digit: thirdPrize3d ? [thirdPrize3d] : [],
         },
         {
-          code: "2bottom",
-          name: "2 ตัวล่าง",
-          digit: twoBottom,
+          code: "a_3d",
+          name: "3 ตัวรวม",
+          digit: [firstPrize3d, secondPrize3d, thirdPrize3d].filter(digit => digit !== ""),
         },
         {
-          code: "1top",
-          name: "วิ่งบน",
-          digit: oneTop,
+          code: "small_4d",
+          name: "เล็ก",
+          digit: [firstPrize, secondPrize, thirdPrize].filter(digit => digit !== ""),
         },
         {
-          code: "1bottom",
-          name: "วิ่งล่าง",
-          digit: oneBottom,
+          code: "big_4d",
+          name: "ใหญ่",
+          digit: [firstPrize, secondPrize, thirdPrize, ...specialPrizes, ...consolationPrizes].filter(digit => digit !== ""),
+        },
+        {
+          code: "pack_5",
+          name: "5 เด้ง",
+          digit: [
+            // small_4d
+            firstPrize, secondPrize, thirdPrize,
+            // big_4d
+            firstPrize, secondPrize, thirdPrize, ...specialPrizes, ...consolationPrizes,
+            // abc_n_3d
+            thirdPrize3d,
+            // a1_4d
+            firstPrize,
+            // a_3d
+            firstPrize3d, secondPrize3d, thirdPrize3d,
+          ].filter(digit => digit !== ""),
         },
       ],
     };
