@@ -21,6 +21,22 @@ const lotteryLaoThakhekVip = require("../../models/lottery_lao_thakhek_vip.model
 const lotteryLaoThakhek5d = require("../../models/lottery_lao_thakhek_5d.model");
 const lotteryLaoTv = require("../../models/lottery_lao_tv.model");
 const lotteryLaoVip = require("../../models/lottery_lao_vip.model");
+const lotteryThaiSavings = require("../../models/lottery_thai_savings.model");
+const lotteryThaiGsb = require("../../models/lottery_thai_gsb.model");
+const lotteryMagnum4d = require("../../models/lottery_magnum_4d.model");
+const lotterySingapore4d = require("../../models/lottery_singapore_4d.model");
+const lotteryGrandDragon4d = require("../../models/lottery_grand_dragon_4d.model");
+const lotteryHanoiAsean = require("../../models/lottery_hanoi_asean.model");
+const lotteryHanoiHd = require("../../models/lottery_hanoi_hd.model");
+const lotteryHanoiStar = require("../../models/lottery_hanoi_star.model");
+const lotteryHanoiTv = require("../../models/lottery_hanoi_tv.model");
+const lotteryHanoiSpecial = require("../../models/lottery_hanoi_special.model");
+const lotteryHanoiRedcross = require("../../models/lottery_hanoi_redcross.model");
+const lotteryHanoiSpecialApi = require("../../models/lottery_hanoi_special_api.model");
+const lotteryHanoi = require("../../models/lottery_hanoi.model");
+const lotteryHanoiDevelop = require("../../models/lottery_hanoi_develop.model");
+const lotteryHanoiVip = require("../../models/lottery_hanoi_vip.model");
+const lotteryHanoiExtra = require("../../models/lottery_hanoi_extra.model");
 
 exports.create = async (data, lottery_set_id) => {
   try {
@@ -556,6 +572,70 @@ exports.evaluateUserBetsByLotterySet = async function (
     }else if(lottery_set.name === "หวยลาว VIP"){
       console.log("🇱🇦 ประมวลผลหวยลาว VIP");
       const result = await processlotterylao_vip(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยออมสิน"){
+      console.log("🇹🇭 ประมวลผลหวยออมสิน");
+      const result = await processlottery_thai_savings(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวย ธกส"){
+      console.log("🇹🇭 ประมวลผลหวย ธกส");
+      const result = await processlottery_thai_gsb(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวย Magnum 4D"){
+      console.log("🎲 ประมวลผลหวย Magnum 4D");
+      const result = await processlottery_magnum_4d(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวย Singapore 4D"){
+      console.log("🎲 ประมวลผลหวย Singapore 4D");
+      const result = await processlottery_singapore_4d(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวย Grand Dragon 4D"){
+      console.log("🎲 ประมวลผลหวย Grand Dragon 4D");
+      const result = await processlottery_grand_dragon_4d(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอยอาเซียน"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอยอาเซียน");
+      const result = await processlottery_hanoi_asean(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอย HD"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอย HD");
+      const result = await processlottery_hanoi_hd(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอยสตาร์"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอยสตาร์");
+      const result = await processlottery_hanoi_star(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอย TV"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอย TV");
+      const result = await processlottery_hanoi_tv(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอยเฉพาะกิจ"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอยเฉพาะกิจ");
+      const result = await processlottery_hanoi_special(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอยกาชาด"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอยกาชาด");
+      const result = await processlottery_hanoi_redcross(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอยพิเศษ"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอยพิเศษ");
+      const result = await processlottery_hanoi_special_api(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอย"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอย");
+      const result = await processlottery_hanoi(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอยพัฒนา"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอยพัฒนา");
+      const result = await processlottery_hanoi_develop(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอย VIP"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอย VIP");
+      const result = await processlottery_hanoi_vip(lottery_set_id, createdBy, lottery_set, lottery_type);
+      return result;
+    }else if(lottery_set.name === "หวยฮานอย EXTRA"){
+      console.log("🇻🇳 ประมวลผลหวยฮานอย EXTRA");
+      const result = await processlottery_hanoi_extra(lottery_set_id, createdBy, lottery_set, lottery_type);
       return result;
     }
     else{
@@ -1710,6 +1790,742 @@ async function processlotterylao_vip(lottery_set_id, createdBy, lottery_set, lot
     };
   } catch (error) {
     console.error("❌ processlotterylao_vip error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยออมสิน
+async function processlottery_thai_savings(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇹🇭 เริ่มประมวลผลหวยออมสิน");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryThaiSavings.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยออมสิน");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_thai_savings error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวย ธกส
+async function processlottery_thai_gsb(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇹🇭 เริ่มประมวลผลหวย ธกส");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryThaiGsb.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวย ธกส");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_thai_gsb error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวย Magnum 4D
+async function processlottery_magnum_4d(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🎲 เริ่มประมวลผลหวย Magnum 4D");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryMagnum4d.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวย Magnum 4D");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_magnum_4d error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวย Singapore 4D
+async function processlottery_singapore_4d(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🎲 เริ่มประมวลผลหวย Singapore 4D");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotterySingapore4d.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวย Singapore 4D");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_singapore_4d error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวย Grand Dragon 4D
+async function processlottery_grand_dragon_4d(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🎲 เริ่มประมวลผลหวย Grand Dragon 4D");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryGrandDragon4d.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวย Grand Dragon 4D");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_grand_dragon_4d error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอยอาเซียน
+async function processlottery_hanoi_asean(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอยอาเซียน");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiAsean.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอยอาเซียน");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_asean error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอย HD
+async function processlottery_hanoi_hd(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอย HD");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiHd.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอย HD");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_hd error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอยสตาร์
+async function processlottery_hanoi_star(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอยสตาร์");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiStar.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอยสตาร์");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_star error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอย TV
+async function processlottery_hanoi_tv(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอย TV");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiTv.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอย TV");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_tv error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอยเฉพาะกิจ
+async function processlottery_hanoi_special(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอยเฉพาะกิจ");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiSpecial.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอยเฉพาะกิจ");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_special error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอยกาชาด
+async function processlottery_hanoi_redcross(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอยกาชาด");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiRedcross.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอยกาชาด");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_redcross error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอยพิเศษ
+async function processlottery_hanoi_special_api(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอยพิเศษ");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiSpecialApi.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอยพิเศษ");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_special_api error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอย
+async function processlottery_hanoi(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอย");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoi.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอย");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอยพัฒนา
+async function processlottery_hanoi_develop(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอยพัฒนา");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiDevelop.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอยพัฒนา");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_develop error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอย VIP
+async function processlottery_hanoi_vip(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอย VIP");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiVip.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอย VIP");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_vip error:", error.message);
+    throw error;
+  }
+}
+
+// ฟังก์ชันสำหรับหวยฮานอย EXTRA
+async function processlottery_hanoi_extra(lottery_set_id, createdBy, lottery_set, lottery_type){
+  try {
+    console.log("🇻🇳 เริ่มประมวลผลหวยฮานอย EXTRA");
+    console.log("🔍 lottery_set structure:", JSON.stringify(lottery_set, null, 2));
+
+    const resulthuay = await lotteryHanoiExtra.findOne({}).sort({ createdAt: -1 });
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    const betting_types = resulthuay.betting_types;
+    const processedBettingTypes = betting_types.map(bettingType => {
+      return {
+        ...bettingType._doc || bettingType,
+        digit: bettingType.digit.includes(',') 
+          ? bettingType.digit.split(',').map(d => d.trim())
+          : [bettingType.digit.trim()]
+      };
+    });
+    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    const winners = await processLotteryWinners(pendingBets, resultItems, lottery_set_id, "หวยฮานอย EXTRA");
+
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ processlottery_hanoi_extra error:", error.message);
     throw error;
   }
 }
