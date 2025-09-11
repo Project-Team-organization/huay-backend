@@ -25,6 +25,17 @@ const { fetchLatestThaiGsbLottery, getAllThaiGsbLottery } = require('../controll
 const { fetchLatestMagnum4dLottery, getAllMagnum4dLottery } = require('../controller/lottery/lottery_magnum_4d.controller');
 const { fetchLatestSingapore4dLottery, getAllSingapore4dLottery } = require('../controller/lottery/lottery_singapore_4d.controller');
 const { fetchLatestGrandDragon4dLottery, getAllGrandDragon4dLottery } = require('../controller/lottery/lottery_grand_dragon_4d.controller');
+const { fetchLatestHanoiAseanLottery, getAllHanoiAseanLottery } = require('../controller/lottery/lottery_hanoi_asean.controller');
+const { fetchLatestHanoiHdLottery, getAllHanoiHdLottery } = require('../controller/lottery/lottery_hanoi_hd.controller');
+const { fetchLatestHanoiStarLottery, getAllHanoiStarLottery } = require('../controller/lottery/lottery_hanoi_star.controller');
+const { fetchLatestHanoiTvLottery, getAllHanoiTvLottery } = require('../controller/lottery/lottery_hanoi_tv.controller');
+const { fetchLatestHanoiSpecialLottery, getAllHanoiSpecialLottery } = require('../controller/lottery/lottery_hanoi_special.controller');
+const { fetchLatestHanoiRedcrossLottery, getAllHanoiRedcrossLottery } = require('../controller/lottery/lottery_hanoi_redcross.controller');
+const { fetchLatestHanoiSpecialApiLottery, getAllHanoiSpecialApiLottery } = require('../controller/lottery/lottery_hanoi_special_api.controller');
+const { fetchLatestHanoiLottery, getAllHanoiLottery } = require('../controller/lottery/lottery_hanoi.controller');
+const { fetchLatestHanoiDevelopLottery, getAllHanoiDevelopLottery } = require('../controller/lottery/lottery_hanoi_develop.controller');
+const { fetchLatestHanoiVipLottery, getAllHanoiVipLottery } = require('../controller/lottery/lottery_hanoi_vip.controller');
+const { fetchLatestHanoiExtraLottery, getAllHanoiExtraLottery } = require('../controller/lottery/lottery_hanoi_extra.controller');
 
 // Route to create a lottery Sets
 router.post("/createSets", lotterySetsController.createLotterySets);
@@ -215,6 +226,72 @@ router.post('/grand-dragon-4d/latest', fetchLatestGrandDragon4dLottery);
 
 //ดึงข้อมูลหวย Grand Dragon 4D ทั้งหมดแบบ pagination
 router.get('/grand-dragon-4d', getAllGrandDragon4dLottery);
+
+//สร้างข้อมูลหวยฮานอยอาเซียน
+router.post('/hanoi-asean/latest', fetchLatestHanoiAseanLottery);
+
+//ดึงข้อมูลหวยฮานอยอาเซียนทั้งหมดแบบ pagination
+router.get('/hanoi-asean', getAllHanoiAseanLottery);
+
+//สร้างข้อมูลหวยฮานอย HD
+router.post('/hanoi-hd/latest', fetchLatestHanoiHdLottery);
+
+//ดึงข้อมูลหวยฮานอย HD ทั้งหมดแบบ pagination
+router.get('/hanoi-hd', getAllHanoiHdLottery);
+
+//สร้างข้อมูลหวยฮานอยสตาร์
+router.post('/hanoi-star/latest', fetchLatestHanoiStarLottery);
+
+//ดึงข้อมูลหวยฮานอยสตาร์ทั้งหมดแบบ pagination
+router.get('/hanoi-star', getAllHanoiStarLottery);
+
+//สร้างข้อมูลหวยฮานอย TV
+router.post('/hanoi-tv/latest', fetchLatestHanoiTvLottery);
+
+//ดึงข้อมูลหวยฮานอย TV ทั้งหมดแบบ pagination
+router.get('/hanoi-tv', getAllHanoiTvLottery);
+
+//สร้างข้อมูลหวยฮานอยเฉพาะกิจ
+router.post('/hanoi-special/latest', fetchLatestHanoiSpecialLottery);
+
+//ดึงข้อมูลหวยฮานอยเฉพาะกิจทั้งหมดแบบ pagination
+router.get('/hanoi-special', getAllHanoiSpecialLottery);
+
+//สร้างข้อมูลหวยฮานอยกาชาด
+router.post('/hanoi-redcross/latest', fetchLatestHanoiRedcrossLottery);
+
+//ดึงข้อมูลหวยฮานอยกาชาดทั้งหมดแบบ pagination
+router.get('/hanoi-redcross', getAllHanoiRedcrossLottery);
+
+//สร้างข้อมูลหวยฮานอยพิเศษ
+router.post('/hanoi-special-api/latest', fetchLatestHanoiSpecialApiLottery);
+
+//ดึงข้อมูลหวยฮานอยพิเศษทั้งหมดแบบ pagination
+router.get('/hanoi-special-api', getAllHanoiSpecialApiLottery);
+
+//สร้างข้อมูลหวยฮานอย
+router.post('/hanoi/latest', fetchLatestHanoiLottery);
+
+//ดึงข้อมูลหวยฮานอยทั้งหมดแบบ pagination
+router.get('/hanoi', getAllHanoiLottery);
+
+//สร้างข้อมูลหวยฮานอยพัฒนา
+router.post('/hanoi-develop/latest', fetchLatestHanoiDevelopLottery);
+
+//ดึงข้อมูลหวยฮานอยพัฒนาทั้งหมดแบบ pagination
+router.get('/hanoi-develop', getAllHanoiDevelopLottery);
+
+//สร้างข้อมูลหวยฮานอย VIP
+router.post('/hanoi-vip/latest', fetchLatestHanoiVipLottery);
+
+//ดึงข้อมูลหวยฮานอย VIP ทั้งหมดแบบ pagination
+router.get('/hanoi-vip', getAllHanoiVipLottery);
+
+//สร้างข้อมูลหวยฮานอย EXTRA
+router.post('/hanoi-extra/latest', fetchLatestHanoiExtraLottery);
+
+//ดึงข้อมูลหวยฮานอย EXTRA ทั้งหมดแบบ pagination
+router.get('/hanoi-extra', getAllHanoiExtraLottery);
 
 
 module.exports = router;
