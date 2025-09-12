@@ -43,8 +43,12 @@ const checkIncompleteResults = (results) => {
 const checkLaoLotteryData = async () => {
     console.log(`\n🔍 [${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] เริ่มตรวจสอบข้อมูลหวยลาว...`);
     
+    const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    
+    // ตรวจสอบว่าตอนนี้เป็นเวลากลางคืนหรือไม่ (หลัง 23:00)
+    const isNightTime = now.getHours() >= 23;
     
     const incompleteLotteries = [];
     
@@ -201,15 +205,33 @@ const checkLaoLotteryData = async () => {
             });
             
             // ยิงเช็คข้อมูลหวยที่ไม่ครบถ้วน
-            console.log(`\n🔄 เริ่มยิงเช็คข้อมูลหวยที่ไม่ครบถ้วน...`);
+            if (isNightTime) {
+                console.log(`\n🌙 เวลากลางคืน (หลัง 23:00) - ยิง function จริงๆ ของหวยแต่ละตัว...`);
+            } else {
+                console.log(`\n🔄 เริ่มยิงเช็คข้อมูลหวยที่ไม่ครบถ้วน...`);
+            }
             
             for (const lottery of incompleteLotteries) {
                 try {
-                    console.log(`\n📡 ยิงเช็ค ${lottery.name}...`);
+                    if (isNightTime) {
+                        console.log(`\n🌙 ยิง function จริงๆ ของ ${lottery.name}...`);
+                    } else {
+                        console.log(`\n📡 ยิงเช็ค ${lottery.name}...`);
+                    }
+                    
                     await lottery.function();
-                    console.log(`✅ เสร็จสิ้นการเช็ค ${lottery.name}`);
+                    
+                    if (isNightTime) {
+                        console.log(`✅ เสร็จสิ้นการยิง function จริงๆ ของ ${lottery.name}`);
+                    } else {
+                        console.log(`✅ เสร็จสิ้นการเช็ค ${lottery.name}`);
+                    }
                 } catch (error) {
-                    console.error(`❌ เกิดข้อผิดพลาดในการเช็ค ${lottery.name}:`, error.message);
+                    if (isNightTime) {
+                        console.error(`❌ เกิดข้อผิดพลาดในการยิง function จริงๆ ของ ${lottery.name}:`, error.message);
+                    } else {
+                        console.error(`❌ เกิดข้อผิดพลาดในการเช็ค ${lottery.name}:`, error.message);
+                    }
                 }
             }
             
@@ -224,42 +246,11 @@ const checkLaoLotteryData = async () => {
 
 // ===== CRONJOB สำหรับตรวจสอบข้อมูลหวยลาว =====
 
-// 🧪 ทดสอบ: ตรวจสอบข้อมูลหวยลาวทุกนาที
+// ตรวจสอบข้อมูลหวยลาวทุกนาทีตลอด 24 ชั่วโมง
 cron.schedule('* * * * *', async () => {
-    console.log(`\n🧪 [${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ทดสอบ Monitor - ตรวจสอบทุกนาที`);
-    await checkLaoLotteryData();
-}, { timezone: "Asia/Bangkok" });
-
-// ตรวจสอบข้อมูลหวยลาวทุก 30 นาที
-cron.schedule('*/30 * * * *', async () => {
-    await checkLaoLotteryData();
-}, { timezone: "Asia/Bangkok" });
-
-// ตรวจสอบข้อมูลหวยลาวทุก 2 ชั่วโมง
-cron.schedule('0 */2 * * *', async () => {
-    await checkLaoLotteryData();
-}, { timezone: "Asia/Bangkok" });
-
-// ตรวจสอบข้อมูลหวยลาวทุกวันเวลา 06:00 น.
-cron.schedule('0 6 * * *', async () => {
-    await checkLaoLotteryData();
-}, { timezone: "Asia/Bangkok" });
-
-// ตรวจสอบข้อมูลหวยลาวทุกวันเวลา 12:00 น.
-cron.schedule('0 12 * * *', async () => {
-    await checkLaoLotteryData();
-}, { timezone: "Asia/Bangkok" });
-
-// ตรวจสอบข้อมูลหวยลาวทุกวันเวลา 18:00 น.
-cron.schedule('0 18 * * *', async () => {
-    await checkLaoLotteryData();
-}, { timezone: "Asia/Bangkok" });
-
-// ตรวจสอบข้อมูลหวยลาวทุกวันเวลา 23:59 น.
-cron.schedule('59 23 * * *', async () => {
+    console.log(`\n🔍 [${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Monitor - ตรวจสอบทุกนาที`);
     await checkLaoLotteryData();
 }, { timezone: "Asia/Bangkok" });
 
 console.log('🚀 Lao Lottery Monitor Cronjob Started!');
-console.log('🧪 ทดสอบ: ทุกนาที');
-console.log('📅 Schedule: Every minute, Every 30 minutes, Every 2 hours, and Daily at 06:00, 12:00, 18:00, 23:59');
+console.log('📅 Schedule: ทุกนาทีตลอด 24 ชั่วโมง');
