@@ -5,7 +5,7 @@ const apiUrl = 'https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao
 
 const fetchAndSaveLaoThakhekVipLottery = async () => {
   try {
-    // เช็คถ้าวันนี้อัพเดทแล้วไม่ต้องอัพอีก
+    // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date();
     // ถ้าเวลาเป็น 00:00:00 ก็ต้องหาในวันก่อนหน้า
     const existingLottery = await LotteryLaoThakhekVip.findOne({
@@ -15,8 +15,21 @@ const fetchAndSaveLaoThakhekVipLottery = async () => {
       },
     });
 
-    if (existingLottery) {
-      return existingLottery;
+    // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxx") ให้ return ข้อมูลเดิม
+    if (existingLottery && existingLottery.results) {
+      const hasIncompleteResults = Object.values(existingLottery.results).some(value => {
+        if (typeof value === 'string') {
+          return value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+        }
+        return value === null || value === undefined;
+      });
+      
+      if (!hasIncompleteResults) {
+        console.log(`✅ หวยลาวท่าแขก VIP วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
+        return existingLottery;
+      }
+      
+      console.log(`⏳ หวยลาวท่าแขก VIP วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
     }
 
     const response = await axios.get(
@@ -133,8 +146,20 @@ const fetchAndSaveLaoThakhekVipLottery = async () => {
       scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
     };
 
-    const lottery = new LotteryLaoThakhekVip(lotteryData);
-    await lottery.save();
+    // ถ้ามีข้อมูลเดิมอยู่แล้ว ให้อัพเดท ถ้าไม่มีให้สร้างใหม่
+    let lottery;
+    if (existingLottery) {
+      lottery = await LotteryLaoThakhekVip.findByIdAndUpdate(
+        existingLottery._id,
+        lotteryData,
+        { new: true }
+      );
+      console.log(`🔄 อัพเดทข้อมูลหวยลาวท่าแขก VIP วันนี้`);
+    } else {
+      lottery = new LotteryLaoThakhekVip(lotteryData);
+      await lottery.save();
+      console.log(`💾 บันทึกข้อมูลหวยลาวท่าแขก VIP วันนี้ใหม่`);
+    }
     return lottery;
   } catch (error) {
     throw new Error(`Failed to fetch and save Lao Thakhek VIP lottery: ${error.message}`);

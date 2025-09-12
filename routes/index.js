@@ -13,6 +13,7 @@ const promotionRoutes = require("./promotion.routes");
 const withdrawalRoutes = require("./withdrawal.routes");
 const { authenticate } = require("../middleware/authadmin.middleware");
 
+
 router.get("/check", (req, res) => {
   console.log("Response  check");
   res.status(200).json({
@@ -50,5 +51,7 @@ router.use("/promotion", promotionRoutes);
 
 // ส่วนของการถอนเงิน
 router.use("/withdrawal", withdrawalRoutes);
+
+
 
 module.exports = router;

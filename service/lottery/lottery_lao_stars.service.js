@@ -3,14 +3,27 @@ const LotteryLaoStars = require("../../models/lotterylao.stars.model");
 
 const fetchAndSaveLaoStarsLottery = async () => {
   try {
-    // เช็คถ้าวันนี้อัพเดทแล้วไม่ต้องอัพอีก
+    // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date().toISOString().split("T")[0];
     const existingLottery = await LotteryLaoStars.findOne({
       lotto_date: today,
     });
 
-    if (existingLottery) {
-      return existingLottery;
+    // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxx") ให้ return ข้อมูลเดิม
+    if (existingLottery && existingLottery.results) {
+      const hasIncompleteResults = Object.values(existingLottery.results).some(value => {
+        if (typeof value === 'string') {
+          return value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+        }
+        return value === null || value === undefined;
+      });
+      
+      if (!hasIncompleteResults) {
+        console.log(`✅ หวยลาวสตาร์วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
+        return existingLottery;
+      }
+      
+      console.log(`⏳ หวยลาวสตาร์วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
     }
 
     const response = await axios.get(
@@ -117,8 +130,20 @@ const fetchAndSaveLaoStarsLottery = async () => {
       ],
     };
 
-    const lottery = new LotteryLaoStars(lotteryData);
-    await lottery.save();
+    // ถ้ามีข้อมูลเดิมอยู่แล้ว ให้อัพเดท ถ้าไม่มีให้สร้างใหม่
+    let lottery;
+    if (existingLottery) {
+      lottery = await LotteryLaoStars.findByIdAndUpdate(
+        existingLottery._id,
+        lotteryData,
+        { new: true }
+      );
+      console.log(`🔄 อัพเดทข้อมูลหวยลาวสตาร์วันนี้`);
+    } else {
+      lottery = new LotteryLaoStars(lotteryData);
+      await lottery.save();
+      console.log(`💾 บันทึกข้อมูลหวยลาวสตาร์วันนี้ใหม่`);
+    }
     return lottery;
   } catch (error) {
     throw new Error(

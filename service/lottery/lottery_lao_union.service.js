@@ -106,13 +106,33 @@ const fetchLatestResult = async () => {
 
             // บันทึกหรืออัพเดทผลหวย
             const existingResult = await LotteryLaoUnion.findOne({ lotto_date: data.lotto_date });
-            if (existingResult) {
-                await LotteryLaoUnion.findByIdAndUpdate(existingResult._id, lotteryData);
-            } else {
-                await LotteryLaoUnion.create(lotteryData);
+            
+            // ถ้ามีข้อมูลเดิมอยู่แล้ว และผลหวยออกครบแล้ว (ไม่มี "xxx") ให้ return ข้อมูลเดิม
+            if (existingResult && existingResult.results) {
+                const hasIncompleteResults = Object.values(existingResult.results).some(value => {
+                    if (typeof value === 'string') {
+                        return value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+                    }
+                    return value === null || value === undefined;
+                });
+                
+                if (!hasIncompleteResults) {
+                    console.log(`✅ หวยลาวสามัคคีวันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
+                    return { success: true, data: existingResult };
+                }
+                
+                console.log(`⏳ หวยลาวสามัคคีวันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
             }
-
-            return { success: true, data: lotteryData };
+            
+            if (existingResult) {
+                const updatedResult = await LotteryLaoUnion.findByIdAndUpdate(existingResult._id, lotteryData, { new: true });
+                console.log(`🔄 อัพเดทข้อมูลหวยลาวสามัคคีวันนี้`);
+                return { success: true, data: updatedResult };
+            } else {
+                const newResult = await LotteryLaoUnion.create(lotteryData);
+                console.log(`💾 บันทึกข้อมูลหวยลาวสามัคคีวันนี้ใหม่`);
+                return { success: true, data: newResult };
+            }
         }
         throw new Error('Failed to fetch lottery data');
     } catch (error) {
