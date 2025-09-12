@@ -62,7 +62,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาวพัฒนา',
                 function: huaylaocronjob,
-                data: laoData
+                data: laoData,
+                model: LotteryLao,
+                id: laoData._id
             });
         }
         
@@ -75,7 +77,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาว Extra',
                 function: huaylaoextracronjob,
-                data: laoExtraData
+                data: laoExtraData,
+                model: LotteryLaoExtra,
+                id: laoExtraData._id
             });
         }
         
@@ -88,7 +92,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาวสตาร์',
                 function: huaylaostarcronjob,
-                data: laoStarsData
+                data: laoStarsData,
+                model: LotteryLaoStars,
+                id: laoStarsData._id
             });
         }
         
@@ -101,7 +107,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาวสามัคคี',
                 function: huaylaounioncronjob,
-                data: laoUnionData
+                data: laoUnionData,
+                model: LotteryLaoUnion,
+                id: laoUnionData._id
             });
         }
         
@@ -114,7 +122,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาว HD',
                 function: huaylaohd,
-                data: laoHdData
+                data: laoHdData,
+                model: LotteryLaoHd,
+                id: laoHdData._id
             });
         }
         
@@ -127,7 +137,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาว VIP',
                 function: huaylaovip,
-                data: laoVipData
+                data: laoVipData,
+                model: LotteryLaoVip,
+                id: laoVipData._id
             });
         }
         
@@ -140,7 +152,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาวสตาร์ VIP',
                 function: huaylaostarvip,
-                data: laoStarsVipData
+                data: laoStarsVipData,
+                model: LotteryLaoStarsVip,
+                id: laoStarsVipData._id
             });
         }
         
@@ -153,7 +167,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาวกาชาด',
                 function: huylaogachad,
-                data: laoRedcrossData
+                data: laoRedcrossData,
+                model: LotteryLaoRedcross,
+                id: laoRedcrossData._id
             });
         }
         
@@ -166,7 +182,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาวท่าแขก 5D',
                 function: huaylaothakhek5d,
-                data: laoThakhek5dData
+                data: laoThakhek5dData,
+                model: LotteryLaoThakhek5d,
+                id: laoThakhek5dData._id
             });
         }
         
@@ -179,7 +197,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาวท่าแขก VIP',
                 function: huaylaothakhekvip,
-                data: laoThakhekVipData
+                data: laoThakhekVipData,
+                model: LotteryLaoThakhekVip,
+                id: laoThakhekVipData._id
             });
         }
         
@@ -192,7 +212,9 @@ const checkLaoLotteryData = async () => {
             incompleteLotteries.push({
                 name: 'หวยลาว TV',
                 function: huaylaotv,
-                data: laoTvData
+                data: laoTvData,
+                model: LotteryLaoTv,
+                id: laoTvData._id
             });
         }
         
@@ -219,7 +241,26 @@ const checkLaoLotteryData = async () => {
                         console.log(`\n📡 ยิงเช็ค ${lottery.name}...`);
                     }
                     
-                    await lottery.function();
+                    // ยิง function เพื่อดึงข้อมูลใหม่
+                    const newData = await lottery.function();
+                    
+                    // ตรวจสอบว่าข้อมูลใหม่ครบถ้วนหรือไม่
+                    if (newData && newData.results && !checkIncompleteResults(newData.results)) {
+                        console.log(`✅ ${lottery.name} ได้ข้อมูลใหม่ครบถ้วนแล้ว!`);
+                        
+                        // อัพเดทข้อมูลตัวเดิมในฐานข้อมูล
+                        try {
+                            await lottery.model.findByIdAndUpdate(lottery.id, {
+                                results: newData.results,
+                                updatedAt: new Date()
+                            });
+                            console.log(`🔄 อัพเดทข้อมูล ${lottery.name} ในฐานข้อมูลเรียบร้อย`);
+                        } catch (updateError) {
+                            console.error(`❌ เกิดข้อผิดพลาดในการอัพเดทข้อมูล ${lottery.name}:`, updateError.message);
+                        }
+                    } else {
+                        console.log(`⏳ ${lottery.name} ยังได้ข้อมูลไม่ครบถ้วน ยังมี "xxx" อยู่`);
+                    }
                     
                     if (isNightTime) {
                         console.log(`✅ เสร็จสิ้นการยิง function จริงๆ ของ ${lottery.name}`);
