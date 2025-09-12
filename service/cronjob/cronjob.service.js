@@ -56,10 +56,7 @@ const retryWithDelay = async (fn, delaySeconds = 5) => {
 // หวยลาวพัฒนา
 exports.huaylaocronjob = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoService.fetchAndSaveLaoLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoService.fetchAndSaveLaoLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -67,10 +64,7 @@ exports.huaylaocronjob = async function () {
 // หวยลาว Extra
 exports.huaylaoextracronjob = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoExtraService.fetchAndSaveLaoExtraLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoExtraService.fetchAndSaveLaoExtraLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -78,10 +72,7 @@ exports.huaylaoextracronjob = async function () {
 // หวยลาวสตาร์
 exports.huaylaostarcronjob = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoStarsService.fetchAndSaveLaoStarsLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoStarsService.fetchAndSaveLaoStarsLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -89,10 +80,7 @@ exports.huaylaostarcronjob = async function () {
 // หวยลาวสามัคคี
 exports.huaylaounioncronjob = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoUnionService.fetchLatestResult();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoUnionService.fetchLatestResult(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -100,10 +88,7 @@ exports.huaylaounioncronjob = async function () {
 // หวยลาว HD
 exports.huaylaohd = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoHdService.fetchAndSaveLaoHdLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoHdService.fetchAndSaveLaoHdLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -111,10 +96,7 @@ exports.huaylaohd = async function () {
 // หวยลาว VIP
 exports.huaylaovip = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoVipService.fetchAndSaveLaoVipLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoVipService.fetchAndSaveLaoVipLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -122,10 +104,7 @@ exports.huaylaovip = async function () {
 // หวยลาวสตาร์ VIP
 exports.huaylaostarvip = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoStarsVipService.fetchAndSaveLaoStarsVipLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoStarsVipService.fetchAndSaveLaoStarsVipLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -133,10 +112,7 @@ exports.huaylaostarvip = async function () {
 // หวยลาวกาชาด
 exports.huylaogachad = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoRedcrossService.fetchAndSaveLaoRedcrossLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoRedcrossService.fetchAndSaveLaoRedcrossLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -144,10 +120,7 @@ exports.huylaogachad = async function () {
 // หวยลาวทำเนียบ 5D
 exports.huaylaothakhek5d = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoThakhek5dService.fetchAndSaveLaoThakhek5dLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoThakhek5dService.fetchAndSaveLaoThakhek5dLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -155,10 +128,7 @@ exports.huaylaothakhek5d = async function () {
 // หวยลาวทำเนียบ VIP
 exports.huaylaothakhekvip = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoThakhekVipService.fetchAndSaveLaoThakhekVipLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoThakhekVipService.fetchAndSaveLaoThakhekVipLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
@@ -166,10 +136,7 @@ exports.huaylaothakhekvip = async function () {
 // หวยลาว TV
 exports.huaylaotv = async function () {
   return await retryWithDelay(
-    async () => {
-      const result = await lotteryLaoTvService.fetchAndSaveLaoTvLottery();
-      return result; // return ข้อมูลที่ได้จาก service
-    },
+    () => lotteryLaoTvService.fetchAndSaveLaoTvLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
