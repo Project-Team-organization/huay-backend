@@ -28,7 +28,7 @@ cron.schedule('30 8 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาว TV ทุกวัน เวลา 10:30 น.
-cron.schedule('30 10 * * *', async () => {
+cron.schedule('35 10 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao TV lottery data...`);
     try {
         await huaylaotv();
@@ -48,7 +48,7 @@ cron.schedule('00 14 * * *', async () => {
 }, { timezone: "Asia/Bangkok" }); 
 
 // หวยลาวสตาร์ ทุกวัน เวลา 15:45 น.
-cron.schedule('45 15 * * *', async () => {
+cron.schedule('50 15 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao Stars lottery data...`);
     try {
         await huaylaostarcronjob();
