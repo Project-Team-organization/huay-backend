@@ -22,11 +22,15 @@ const retryWithDelay = async (fn, delaySeconds = 5) => {
     try {
       const result = await fn();
       
-      // ตรวจสอบว่าผลหวยออกครบหรือยัง (ไม่มี "xxx")
+      // ตรวจสอบว่าผลหวยออกครบหรือยัง (ไม่มี "xxx", "xx", "xxxx", "xxxxx")
       if (result && result.results) {
-        const hasIncompleteResults = Object.values(result.results).some(value => 
-          value === "xxx" || value === "" || value === null || value === undefined
-        );
+        const hasIncompleteResults = Object.values(result.results).some(value => {
+          if (typeof value === 'string') {
+            // เช็ค "xxx", "xx", "xxxx", "xxxxx" หรือค่าว่าง
+            return value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+          }
+          return value === null || value === undefined;
+        });
         
         if (!hasIncompleteResults) {
           console.log(`✅ ผลหวยออกครบแล้ว หลังจากลอง ${attempt} ครั้ง`);
@@ -34,6 +38,7 @@ const retryWithDelay = async (fn, delaySeconds = 5) => {
         }
         
         console.log(`⏳ ผลหวยยังไม่ออกครบ (มี "xxx") ลองใหม่ใน ${delaySeconds} วินาที (ครั้งที่ ${attempt})`);
+        console.log(`📊 ผลปัจจุบัน:`, JSON.stringify(result.results, null, 2));
       }
       
       await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
