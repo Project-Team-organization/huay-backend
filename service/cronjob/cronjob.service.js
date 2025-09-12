@@ -14,138 +14,124 @@ const lotteryLaoThakhek5dService = require('../lottery/lottery_lao_thakhek_5d.se
 const lotteryLaoThakhekVipService = require('../lottery/lottery_lao_thakhek_vip.service');
 const lotteryLaoTvService = require('../lottery/lottery_lao_tv.service');
 
+// Helper function สำหรับ retry mechanism
+const retryWithDelay = async (fn, delaySeconds = 5) => {
+  let attempt = 1;
+  
+  while (true) {
+    try {
+      const result = await fn();
+      
+      // ตรวจสอบว่าผลหวยออกครบหรือยัง (ไม่มี "xxx")
+      if (result && result.results) {
+        const hasIncompleteResults = Object.values(result.results).some(value => 
+          value === "xxx" || value === "" || value === null || value === undefined
+        );
+        
+        if (!hasIncompleteResults) {
+          console.log(`✅ ผลหวยออกครบแล้ว หลังจากลอง ${attempt} ครั้ง`);
+          return result;
+        }
+        
+        console.log(`⏳ ผลหวยยังไม่ออกครบ (มี "xxx") ลองใหม่ใน ${delaySeconds} วินาที (ครั้งที่ ${attempt})`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+      attempt++;
+      
+    } catch (error) {
+      console.error(`❌ เกิดข้อผิดพลาดในการลองครั้งที่ ${attempt}:`, error.message);
+      console.log(`⏳ ลองใหม่ใน ${delaySeconds} วินาที`);
+      await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+      attempt++;
+    }
+  }
+}
+
 // หวยลาวพัฒนา
 exports.huaylaocronjob = async function () {
-  try {
-    // ดึงข้อมูลหวยลาวล่าสุด
-    const result = await lotteryLaoService.fetchAndSaveLaoLottery();
-    console.log('Lao lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoService.fetchAndSaveLaoLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาว Extra
 exports.huaylaoextracronjob = async function () {
-  try {
-    // ดึงข้อมูลหวยลาว Extra ล่าสุด
-    const result = await lotteryLaoExtraService.fetchAndSaveLaoExtraLottery();
-    console.log('Lao Extra lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao Extra lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoExtraService.fetchAndSaveLaoExtraLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาวสตาร์
 exports.huaylaostarcronjob = async function () {
-  try {
-    // ดึงข้อมูลหวยลาวสตาร์ล่าสุด
-    const result = await lotteryLaoStarsService.fetchAndSaveLaoStarsLottery();
-    console.log('Lao Stars lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao Stars lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoStarsService.fetchAndSaveLaoStarsLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาวสามัคคี
 exports.huaylaounioncronjob = async function () {
-  try {
-    // ดึงข้อมูลหวยลาวสามัคคีล่าสุด
-    const result = await lotteryLaoUnionService.fetchLatestResult();
-    console.log('Lao Union lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao Union lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoUnionService.fetchLatestResult(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาว HD
 exports.huaylaohd = async function () {
-  try {
-    const result = await lotteryLaoHdService.fetchAndSaveLaoHdLottery();
-    console.log('Lao HD lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao HD lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoHdService.fetchAndSaveLaoHdLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาว VIP
 exports.huaylaovip = async function () {
-  try {
-    const result = await lotteryLaoVipService.fetchAndSaveLaoVipLottery();
-    console.log('Lao VIP lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao VIP lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoVipService.fetchAndSaveLaoVipLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาวสตาร์ VIP
 exports.huaylaostarvip = async function () {
-  try {
-    const result = await lotteryLaoStarsVipService.fetchAndSaveLaoStarsVipLottery();
-    console.log('Lao Stars VIP lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao Stars VIP lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoStarsVipService.fetchAndSaveLaoStarsVipLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาวกาชาด
 exports.huylaogachad = async function () {
-  try {
-    const result = await lotteryLaoRedcrossService.fetchAndSaveLaoRedcrossLottery();
-    console.log('Lao Redcross lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao Redcross lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoRedcrossService.fetchAndSaveLaoRedcrossLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาวทำเนียบ 5D
 exports.huaylaothakhek5d = async function () {
-  try {
-    const result = await lotteryLaoThakhek5dService.fetchAndSaveLaoThakhek5dLottery();
-    console.log('Lao Thakhek 5D lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao Thakhek 5D lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoThakhek5dService.fetchAndSaveLaoThakhek5dLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาวทำเนียบ VIP
 exports.huaylaothakhekvip = async function () {
-  try {
-    const result = await lotteryLaoThakhekVipService.fetchAndSaveLaoThakhekVipLottery();
-    console.log('Lao Thakhek VIP lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao Thakhek VIP lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoThakhekVipService.fetchAndSaveLaoThakhekVipLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
 
 // หวยลาว TV
 exports.huaylaotv = async function () {
-  try {
-    const result = await lotteryLaoTvService.fetchAndSaveLaoTvLottery();
-    console.log('Lao TV lottery data fetched successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error fetching Lao TV lottery data:', error.message);
-    throw error;
-  }
+  return await retryWithDelay(
+    () => lotteryLaoTvService.fetchAndSaveLaoTvLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
 }
