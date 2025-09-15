@@ -3,7 +3,7 @@ const LotteryThaiGsb = require("../../models/lottery_thai_gsb.model");
 
 const fetchAndSaveThaiGsbLottery = async () => {
   try {
-    // เช็คถ้าวันนี้อัพเดทแล้วไม่ต้องอัพอีก
+    // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date();
     const existingLottery = await LotteryThaiGsb.findOne({
       createdAt: {
@@ -12,8 +12,21 @@ const fetchAndSaveThaiGsbLottery = async () => {
       },
     });
 
-    if (existingLottery) {
-      return existingLottery;
+    // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxxxxxx") ให้ return ข้อมูลเดิม
+    if (existingLottery && existingLottery.results) {
+      const hasIncompleteResults = Object.values(existingLottery.results).some(value => {
+        if (typeof value === 'string') {
+          return value.includes('xxxxxxx') || value.includes('xxxxxx') || value.includes('xxxxx') || value.includes('xxxx') || value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+        }
+        return value === null || value === undefined;
+      });
+      
+      if (!hasIncompleteResults) {
+        console.log(`✅ หวยไทย GSB วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
+        return existingLottery;
+      }
+      
+      console.log(`⏳ หวยไทย GSB วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
     }
 
     const response = await axios.get(
@@ -22,7 +35,7 @@ const fetchAndSaveThaiGsbLottery = async () => {
     const { data } = response.data;
     
     // ถ้า results ยังไม่ออก
-    if (data.results.digit7 == "xxxxxxx") {
+    if (!data.results.digit7) {
       throw new Error(
         `Failed to fetch and save Thai GSB lottery: หวยธกสวันนี้ยังไม่ออกผล`
       );
@@ -131,8 +144,20 @@ const fetchAndSaveThaiGsbLottery = async () => {
       ],
     };
 
-    const lottery = new LotteryThaiGsb(lotteryData);
-    await lottery.save();
+    // ถ้ามีข้อมูลเดิมอยู่แล้ว ให้อัพเดท ถ้าไม่มีให้สร้างใหม่
+    let lottery;
+    if (existingLottery) {
+      lottery = await LotteryThaiGsb.findByIdAndUpdate(
+        existingLottery._id,
+        lotteryData,
+        { new: true }
+      );
+      console.log(`🔄 อัพเดทข้อมูลหวยไทย GSB วันนี้`);
+    } else {
+      lottery = new LotteryThaiGsb(lotteryData);
+      await lottery.save();
+      console.log(`💾 บันทึกข้อมูลหวยไทย GSB วันนี้ใหม่`);
+    }
     return lottery;
   } catch (error) {
     throw new Error(`Failed to fetch and save Thai GSB lottery: ${error.message}`);

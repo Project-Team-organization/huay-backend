@@ -3,7 +3,7 @@ const LotteryThaiSavings = require("../../models/lottery_thai_savings.model");
 
 const fetchAndSaveThaiSavingsLottery = async () => {
   try {
-    // เช็คถ้าวันนี้อัพเดทแล้วไม่ต้องอัพอีก
+    // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date();
     const existingLottery = await LotteryThaiSavings.findOne({
       createdAt: {
@@ -12,8 +12,21 @@ const fetchAndSaveThaiSavingsLottery = async () => {
       },
     });
 
-    if (existingLottery) {
-      return existingLottery;
+    // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxxx") ให้ return ข้อมูลเดิม
+    if (existingLottery && existingLottery.results) {
+      const hasIncompleteResults = Object.values(existingLottery.results).some(value => {
+        if (typeof value === 'string') {
+          return value.includes('xxxx') || value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+        }
+        return value === null || value === undefined;
+      });
+      
+      if (!hasIncompleteResults) {
+        console.log(`✅ หวยไทยออมสิน วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
+        return existingLottery;
+      }
+      
+      console.log(`⏳ หวยไทยออมสิน วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
     }
 
     const response = await axios.get(
@@ -22,7 +35,7 @@ const fetchAndSaveThaiSavingsLottery = async () => {
     const { data } = response.data;
     
     // ถ้า results ยังไม่ออก
-    if (data.results.digit4_top == "xxxx") {
+    if (!data.results.digit4_top) {
       throw new Error(
         `Failed to fetch and save Thai Savings lottery: หวยออมสินวันนี้ยังไม่ออกผล`
       );
@@ -130,8 +143,20 @@ const fetchAndSaveThaiSavingsLottery = async () => {
       ],
     };
 
-    const lottery = new LotteryThaiSavings(lotteryData);
-    await lottery.save();
+    // ถ้ามีข้อมูลเดิมอยู่แล้ว ให้อัพเดท ถ้าไม่มีให้สร้างใหม่
+    let lottery;
+    if (existingLottery) {
+      lottery = await LotteryThaiSavings.findByIdAndUpdate(
+        existingLottery._id,
+        lotteryData,
+        { new: true }
+      );
+      console.log(`🔄 อัพเดทข้อมูลหวยไทยออมสิน วันนี้`);
+    } else {
+      lottery = new LotteryThaiSavings(lotteryData);
+      await lottery.save();
+      console.log(`💾 บันทึกข้อมูลหวยไทยออมสิน วันนี้ใหม่`);
+    }
     return lottery;
   } catch (error) {
     throw new Error(`Failed to fetch and save Thai Savings lottery: ${error.message}`);

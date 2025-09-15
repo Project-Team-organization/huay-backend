@@ -19,6 +19,10 @@ const lotteryMagnum4dService = require('../lottery/lottery_magnum_4d.service');
 const lotterySingapore4dService = require('../lottery/lottery_singapore_4d.service');
 const lotteryGrandDragon4dService = require('../lottery/lottery_grand_dragon_4d.service');
 
+// Import services สำหรับหวยไทย
+const lotteryThaiGsbService = require('../lottery/lottery_thai_gsb.service');
+const lotteryThaiSavingsService = require('../lottery/lottery_thai_savings.service');
+
 // Helper function สำหรับ retry mechanism
 const retryWithDelay = async (fn, delaySeconds = 5) => {
   let attempt = 1;
@@ -166,6 +170,22 @@ exports.huaysingapore4d = async function () {
 exports.huaygranddragon4d = async function () {
   return await retryWithDelay(
     () => lotteryGrandDragon4dService.fetchAndSaveGrandDragon4dLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยไทย GSB
+exports.huaythaigsb = async function () {
+  return await retryWithDelay(
+    () => lotteryThaiGsbService.fetchAndSaveThaiGsbLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยไทยออมสิน
+exports.huaythaisavings = async function () {
+  return await retryWithDelay(
+    () => lotteryThaiSavingsService.fetchAndSaveThaiSavingsLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }
