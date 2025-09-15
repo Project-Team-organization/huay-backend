@@ -78,8 +78,8 @@ cron.schedule('30 16 * * *', async () => {
   }
 }, { timezone: "Asia/Bangkok" });
 
-// Cronjob สำหรับหวยฮานอยกาชาด - ทุกวัน เวลา 16:30 น. (เวลาประเทศไทย)
-cron.schedule('30 16 * * *', async () => {
+// Cronjob สำหรับหวยฮานอยกาชาด - ทุกวัน เวลา 16:35 น. (เวลาประเทศไทย)
+cron.schedule('35 16 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi Redcross lottery data...`);
     
@@ -130,8 +130,8 @@ cron.schedule('30 19 * * *', async () => {
   }
 }, { timezone: "Asia/Bangkok" });
 
-// Cronjob สำหรับหวยฮานอย VIP - ทุกวัน เวลา 19:30 น. (เวลาประเทศไทย)
-cron.schedule('30 19 * * *', async () => {
+// Cronjob สำหรับหวยฮานอย VIP - ทุกวัน เวลา 19:35 น. (เวลาประเทศไทย)
+cron.schedule('35 19 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi VIP lottery data...`);
     
