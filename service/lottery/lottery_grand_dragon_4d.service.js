@@ -3,7 +3,7 @@ const LotteryGrandDragon4d = require("../../models/lottery_grand_dragon_4d.model
 
 const fetchAndSaveGrandDragon4dLottery = async () => {
   try {
-    // เช็คถ้าวันนี้อัพเดทแล้วไม่ต้องอัพอีก
+    // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date();
     const existingLottery = await LotteryGrandDragon4d.findOne({
       createdAt: {
@@ -12,8 +12,24 @@ const fetchAndSaveGrandDragon4dLottery = async () => {
       },
     });
 
-    if (existingLottery) {
-      return existingLottery;
+    // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxxx") ให้ return ข้อมูลเดิม
+    if (existingLottery && existingLottery.results) {
+      const hasIncompleteResults = Object.values(existingLottery.results).some(value => {
+        if (typeof value === 'string') {
+          return value.includes('xxxx') || value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+        }
+        if (Array.isArray(value)) {
+          return value.some(item => typeof item === 'string' && (item.includes('xxxx') || item.includes('xxx') || item.includes('xx')));
+        }
+        return value === null || value === undefined;
+      });
+      
+      if (!hasIncompleteResults) {
+        console.log(`✅ หวย Grand Dragon 4D วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
+        return existingLottery;
+      }
+      
+      console.log(`⏳ หวย Grand Dragon 4D วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
     }
 
     const response = await axios.get(
@@ -22,7 +38,7 @@ const fetchAndSaveGrandDragon4dLottery = async () => {
     const { data } = response.data;
 
     // ถ้า results ยังไม่ออก
-    if (!data.results.first_prize || data.results.first_prize === "xxxx") {
+    if (!data.results.first_prize) {
       throw new Error(
         `Failed to fetch and save Grand Dragon 4D lottery: หวย Grand Dragon 4D วันนี้ยังไม่ออกผล`
       );
@@ -126,8 +142,20 @@ const fetchAndSaveGrandDragon4dLottery = async () => {
       ],
     };
 
-    const lottery = new LotteryGrandDragon4d(lotteryData);
-    await lottery.save();
+    // ถ้ามีข้อมูลเดิมอยู่แล้ว ให้อัพเดท ถ้าไม่มีให้สร้างใหม่
+    let lottery;
+    if (existingLottery) {
+      lottery = await LotteryGrandDragon4d.findByIdAndUpdate(
+        existingLottery._id,
+        lotteryData,
+        { new: true }
+      );
+      console.log(`🔄 อัพเดทข้อมูลหวย Grand Dragon 4D วันนี้`);
+    } else {
+      lottery = new LotteryGrandDragon4d(lotteryData);
+      await lottery.save();
+      console.log(`💾 บันทึกข้อมูลหวย Grand Dragon 4D วันนี้ใหม่`);
+    }
     return lottery;
   } catch (error) {
     throw new Error(`Failed to fetch and save Grand Dragon 4D lottery: ${error.message}`);

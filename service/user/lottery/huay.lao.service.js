@@ -9,7 +9,12 @@ const LotteryLaoThakhekVip = require("../../../models/lottery_lao_thakhek_vip.mo
 const LotteryLaoTv = require("../../../models/lottery_lao_tv.model");
 const LotteryLaoVip = require("../../../models/lottery_lao_vip.model");
 const LotteryLaoHd = require("../../../models/lottery_lao_hd.model");
+const LotterySingapore4d = require("../../../models/lottery_singapore_4d.model");
+const LotteryMagnum4d = require("../../../models/lottery_magnum_4d.model");
+const LotteryGrandDragon4d = require("../../../models/lottery_grand_dragon_4d.model");
 const Huay = require("../../../models/huay.model");
+
+
 
 const isValidYYYYMMDD = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
@@ -39,6 +44,9 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
         tv,
         vip,
         hd,
+        singapore4d,
+        magnum4d,
+        grandDragon4d,
       ] = await Promise.all([
         LotteryLao.find({ show_result: { $gte: start, $lte: end } })
           .sort({ createdAt: -1 })
@@ -84,6 +92,18 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
           .sort({ createdAt: -1 })
           .select("-url -betting_types -__v -scraper -scrapedAt")
           .lean(),
+        LotterySingapore4d.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryMagnum4d.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryGrandDragon4d.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
       ]);
 
       const data = [
@@ -98,6 +118,9 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
         ...tv,
         ...vip,
         ...hd,
+        ...singapore4d,
+        ...magnum4d,
+        ...grandDragon4d,
       ];
 
       if (!data.length) {
