@@ -23,6 +23,19 @@ const lotteryGrandDragon4dService = require('../lottery/lottery_grand_dragon_4d.
 const lotteryThaiGsbService = require('../lottery/lottery_thai_gsb.service');
 const lotteryThaiSavingsService = require('../lottery/lottery_thai_savings.service');
 
+// Import services สำหรับหวยฮานอย
+const lotteryHanoiAseanService = require('../lottery/lottery_hanoi_asean.service');
+const lotteryHanoiHdService = require('../lottery/lottery_hanoi_hd.service');
+const lotteryHanoiStarService = require('../lottery/lottery_hanoi_star.service');
+const lotteryHanoiTvService = require('../lottery/lottery_hanoi_tv.service');
+const lotteryHanoiSpecialService = require('../lottery/lottery_hanoi_special.service');
+const lotteryHanoiRedcrossService = require('../lottery/lottery_hanoi_redcross.service');
+const lotteryHanoiSpecialApiService = require('../lottery/lottery_hanoi_special_api.service');
+const lotteryHanoiService = require('../lottery/lottery_hanoi.service');
+const lotteryHanoiDevelopService = require('../lottery/lottery_hanoi_develop.service');
+const lotteryHanoiVipService = require('../lottery/lottery_hanoi_vip.service');
+const lotteryHanoiExtraService = require('../lottery/lottery_hanoi_extra.service');
+
 // Helper function สำหรับ retry mechanism
 const retryWithDelay = async (fn, delaySeconds = 5) => {
   let attempt = 1;
@@ -186,6 +199,94 @@ exports.huaythaigsb = async function () {
 exports.huaythaisavings = async function () {
   return await retryWithDelay(
     () => lotteryThaiSavingsService.fetchAndSaveThaiSavingsLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอยอาเซียน
+exports.huayhanoiasean = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiAseanService.fetchAndSaveHanoiAseanLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอย HD
+exports.huayhanoihd = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiHdService.fetchAndSaveHanoiHdLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอยสตาร์
+exports.huayhanoistar = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiStarService.fetchAndSaveHanoiStarLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอย TV
+exports.huayhanoitv = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiTvService.fetchAndSaveHanoiTvLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอยเฉพาะกิจ
+exports.huayhanoispecial = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiSpecialService.fetchAndSaveHanoiSpecialLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอยกาชาด
+exports.huayhanoiredcross = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiRedcrossService.fetchAndSaveHanoiRedcrossLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอยพิเศษ
+exports.huayhanoispecialapi = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiSpecialApiService.fetchAndSaveHanoiSpecialApiLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอย
+exports.huayhanoi = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiService.fetchAndSaveHanoiLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอยพัฒนา
+exports.huayhanoidevelop = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiDevelopService.fetchAndSaveHanoiDevelopLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอย VIP
+exports.huayhanoivip = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiVipService.fetchAndSaveHanoiVipLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยฮานอย EXTRA
+exports.huayhanoiextra = async function () {
+  return await retryWithDelay(
+    () => lotteryHanoiExtraService.fetchAndSaveHanoiExtraLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }

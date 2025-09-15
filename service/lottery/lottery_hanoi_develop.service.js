@@ -3,7 +3,7 @@ const LotteryHanoiDevelop = require("../../models/lottery_hanoi_develop.model");
 
 const fetchAndSaveHanoiDevelopLottery = async () => {
   try {
-    // เช็คถ้าวันนี้อัพเดทแล้วไม่ต้องอัพอีก
+    // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date();
     const existingLottery = await LotteryHanoiDevelop.findOne({
       createdAt: {
@@ -12,8 +12,19 @@ const fetchAndSaveHanoiDevelopLottery = async () => {
       },
     });
 
-    if (existingLottery) {
-      return existingLottery;
+    // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxxx") ให้ return ข้อมูลเดิม
+    if (existingLottery && existingLottery.results) {
+      const hasIncompleteResults = Object.values(existingLottery.results).some(value => {
+        if (typeof value === 'string') {
+          return value.includes('xxxx') || value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+        }
+        return value === null || value === undefined;
+      });
+      if (!hasIncompleteResults) {
+        console.log(`✅ หวยฮานอยพัฒนา วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
+        return existingLottery;
+      }
+      console.log(`⏳ หวยฮานอยพัฒนา วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
     }
 
     const response = await axios.get(
@@ -21,12 +32,7 @@ const fetchAndSaveHanoiDevelopLottery = async () => {
     );
     const { data } = response.data;
     
-    // ถ้า results ยังไม่ออก
-    if (!data.results.prize_1st || data.results.prize_1st === "xxxx") {
-      throw new Error(
-        `Failed to fetch and save Hanoi Develop lottery: หวยฮานอยพัฒนา วันนี้ยังไม่ออกผล`
-      );
-    }
+    // ไม่ต้องเช็ค results ที่นี่ เพราะ retryWithDelay จะจัดการให้
 
     // Pre-calculate values for performance
     const prize1st = data.results.prize_1st || "";
@@ -157,8 +163,15 @@ const fetchAndSaveHanoiDevelopLottery = async () => {
       ],
     };
 
-    const lottery = new LotteryHanoiDevelop(lotteryData);
-    await lottery.save();
+    let lottery;
+    if (existingLottery) {
+      lottery = await LotteryHanoiDevelop.findByIdAndUpdate(existingLottery._id, lotteryData, { new: true });
+      console.log(`🔄 อัพเดทข้อมูลหวยฮานอยพัฒนาวันนี้`);
+    } else {
+      lottery = new LotteryHanoiDevelop(lotteryData);
+      await lottery.save();
+      console.log(`💾 บันทึกข้อมูลหวยฮานอยพัฒนาวันนี้ใหม่`);
+    }
     return lottery;
   } catch (error) {
     throw new Error(`Failed to fetch and save Hanoi Develop lottery: ${error.message}`);
