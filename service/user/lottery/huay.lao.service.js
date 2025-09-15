@@ -12,6 +12,17 @@ const LotteryLaoHd = require("../../../models/lottery_lao_hd.model");
 const LotterySingapore4d = require("../../../models/lottery_singapore_4d.model");
 const LotteryMagnum4d = require("../../../models/lottery_magnum_4d.model");
 const LotteryGrandDragon4d = require("../../../models/lottery_grand_dragon_4d.model");
+const LotteryHanoiAsean = require("../../../models/lottery_hanoi_asean.model");
+const LotteryHanoiHd = require("../../../models/lottery_hanoi_hd.model");
+const LotteryHanoiStar = require("../../../models/lottery_hanoi_star.model");
+const LotteryHanoiTv = require("../../../models/lottery_hanoi_tv.model");
+const LotteryHanoiSpecial = require("../../../models/lottery_hanoi_special.model");
+const LotteryHanoiRedcross = require("../../../models/lottery_hanoi_redcross.model");
+const LotteryHanoiSpecialApi = require("../../../models/lottery_hanoi_special_api.model");
+const LotteryHanoi = require("../../../models/lottery_hanoi.model");
+const LotteryHanoiDevelop = require("../../../models/lottery_hanoi_develop.model");
+const LotteryHanoiVip = require("../../../models/lottery_hanoi_vip.model");
+const LotteryHanoiExtra = require("../../../models/lottery_hanoi_extra.model");
 const Huay = require("../../../models/huay.model");
 
 
@@ -160,6 +171,88 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
       }, {});
 
       return Object.values(grouped);
+    }
+
+    // 📌 Hanoi lottery
+    if (lottory_type === "hanoi-lottery") {
+      const [
+        hanoiAsean,
+        hanoiHd,
+        hanoiStar,
+        hanoiTv,
+        hanoiSpecial,
+        hanoiRedcross,
+        hanoiSpecialApi,
+        hanoi,
+        hanoiDevelop,
+        hanoiVip,
+        hanoiExtra,
+      ] = await Promise.all([
+        LotteryHanoiAsean.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiHd.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiStar.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiTv.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiSpecial.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiRedcross.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiSpecialApi.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoi.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiDevelop.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiVip.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryHanoiExtra.find({ lotto_date })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+      ]);
+
+      const data = [
+        ...hanoiAsean,
+        ...hanoiHd,
+        ...hanoiStar,
+        ...hanoiTv,
+        ...hanoiSpecial,
+        ...hanoiRedcross,
+        ...hanoiSpecialApi,
+        ...hanoi,
+        ...hanoiDevelop,
+        ...hanoiVip,
+        ...hanoiExtra,
+      ];
+
+      if (!data.length) {
+        return [];
+      }
+
+      return data;
     }
 
     // 📌 Default
