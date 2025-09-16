@@ -35,6 +35,7 @@ const lotteryHanoiService = require('../lottery/lottery_hanoi.service');
 const lotteryHanoiDevelopService = require('../lottery/lottery_hanoi_develop.service');
 const lotteryHanoiVipService = require('../lottery/lottery_hanoi_vip.service');
 const lotteryHanoiExtraService = require('../lottery/lottery_hanoi_extra.service');
+const lotteryEgyptStockService = require('../lottery/lottery_egypt_stock.service');
 
 // Helper function สำหรับ retry mechanism
 const retryWithDelay = async (fn, delaySeconds = 5) => {
@@ -287,6 +288,14 @@ exports.huayhanoivip = async function () {
 exports.huayhanoiextra = async function () {
   return await retryWithDelay(
     () => lotteryHanoiExtraService.fetchAndSaveHanoiExtraLottery(),
+    5    // รอ 5 วินาทีระหว่างการลอง
+  );
+}
+
+// หวยหุ้นอิยิปต์
+exports.huayegyptstock = async function () {
+  return await retryWithDelay(
+    () => lotteryEgyptStockService.fetchAndSaveEgyptStockLottery(),
     5    // รอ 5 วินาทีระหว่างการลอง
   );
 }

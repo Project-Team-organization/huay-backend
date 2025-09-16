@@ -36,6 +36,7 @@ const { fetchLatestHanoiLottery, getAllHanoiLottery } = require('../controller/l
 const { fetchLatestHanoiDevelopLottery, getAllHanoiDevelopLottery } = require('../controller/lottery/lottery_hanoi_develop.controller');
 const { fetchLatestHanoiVipLottery, getAllHanoiVipLottery } = require('../controller/lottery/lottery_hanoi_vip.controller');
 const { fetchLatestHanoiExtraLottery, getAllHanoiExtraLottery } = require('../controller/lottery/lottery_hanoi_extra.controller');
+const { fetchLatestEgyptStockLottery, getAllEgyptStockLottery } = require('../controller/lottery/lottery_egypt_stock.controller');
 
 // Route to create a lottery Sets
 router.post("/createSets", lotterySetsController.createLotterySets);
@@ -292,6 +293,12 @@ router.post('/hanoi-extra/latest', fetchLatestHanoiExtraLottery);
 
 //ดึงข้อมูลหวยฮานอย EXTRA ทั้งหมดแบบ pagination
 router.get('/hanoi-extra', getAllHanoiExtraLottery);
+
+//สร้างข้อมูลหวยหุ้นอิยิปต์
+router.post('/egypt-stock/latest', fetchLatestEgyptStockLottery);
+
+//ดึงข้อมูลหวยหุ้นอิยิปต์ทั้งหมดแบบ pagination
+router.get('/egypt-stock', getAllEgyptStockLottery);
 
 
 module.exports = router;

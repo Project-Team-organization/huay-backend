@@ -12,6 +12,7 @@ require('./cronjob/huay.lao');
 require('./cronjob/huay.thai');
 require('./cronjob/huay.magnum4d');
 require('./cronjob/huay.hanoi');
+require('./cronjob/huay.egypt.stock');
 
 const app = express();
 
