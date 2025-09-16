@@ -23,6 +23,8 @@ const LotteryHanoi = require("../../../models/lottery_hanoi.model");
 const LotteryHanoiDevelop = require("../../../models/lottery_hanoi_develop.model");
 const LotteryHanoiVip = require("../../../models/lottery_hanoi_vip.model");
 const LotteryHanoiExtra = require("../../../models/lottery_hanoi_extra.model");
+const LotteryThaiGsb = require("../../../models/lottery_thai_gsb.model");
+const LotteryThaiSavings = require("../../../models/lottery_thai_savings.model");
 const Huay = require("../../../models/huay.model");
 
 
@@ -148,12 +150,26 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
 
       const codesToShow = ["6d_top", "3d_front_2", "3d_bottom", "2d_bottom"];
 
-      const huayList = await Huay.find({
-        createdAt: { $gte: start, $lte: end },
-        code: { $in: codesToShow },
-      })
-        .sort({ createdAt: -1 })
-        .lean();
+      const [huayList, thaiGsb, thaiSavings] = await Promise.all([
+        Huay.find({
+          createdAt: { $gte: start, $lte: end },
+          code: { $in: codesToShow },
+        })
+          .sort({ createdAt: -1 })
+          .lean(),
+        LotteryThaiGsb.find({
+          createdAt: { $gte: start, $lte: end }
+        })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean(),
+        LotteryThaiSavings.find({
+          createdAt: { $gte: start, $lte: end }
+        })
+          .sort({ createdAt: -1 })
+          .select("-url -betting_types -__v -scraper -scrapedAt")
+          .lean()
+      ]);
 
       const grouped = huayList.reduce((acc, doc) => {
         const setId = doc.lottery_set_id.toString();
@@ -170,7 +186,10 @@ exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
         return acc;
       }, {});
 
-      return Object.values(grouped);
+      const huayData = Object.values(grouped);
+      const thaiData = [...thaiGsb, ...thaiSavings];
+
+      return [...huayData, ...thaiData];
     }
 
     // 📌 Hanoi lottery
