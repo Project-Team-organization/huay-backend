@@ -5,11 +5,10 @@ const fetchAndSaveHanoiStarLottery = async () => {
   try {
     // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date();
+    const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
     const existingLottery = await LotteryHanoiStar.findOne({
-      createdAt: {
-        $gte: new Date(today.setHours(0, 0, 0, 0)),
-        $lt: new Date(today.setHours(23, 59, 59, 999)),
-      },
+      lotto_date: todayString,
     });
 
     // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxxx") ให้ return ข้อมูลเดิม
@@ -178,11 +177,11 @@ const fetchAndSaveHanoiStarLottery = async () => {
         lotteryData,
         { new: true }
       );
-      console.log(`🔄 อัพเดทข้อมูลหวยฮานอยสตาร์ วันนี้`);
+      console.log(`🔄 อัพเดทข้อมูลหวยฮานอยสตาร์วันนี้ (ID: ${existingLottery._id})`);
     } else {
       lottery = new LotteryHanoiStar(lotteryData);
       await lottery.save();
-      console.log(`💾 บันทึกข้อมูลหวยฮานอยสตาร์ วันนี้ใหม่`);
+      console.log(`💾 บันทึกข้อมูลหวยฮานอยสตาร์วันนี้ใหม่ (ID: ${lottery._id})`);
     }
     return lottery;
   } catch (error) {
