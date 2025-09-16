@@ -82,7 +82,7 @@ const retryWithDelay = async (fn, delaySeconds = 5) => {
 exports.huaylaocronjob = async function () {
   return await retryWithDelay(
     () => lotteryLaoService.fetchAndSaveLaoLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -90,7 +90,7 @@ exports.huaylaocronjob = async function () {
 exports.huaylaoextracronjob = async function () {
   return await retryWithDelay(
     () => lotteryLaoExtraService.fetchAndSaveLaoExtraLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -98,7 +98,7 @@ exports.huaylaoextracronjob = async function () {
 exports.huaylaostarcronjob = async function () {
   return await retryWithDelay(
     () => lotteryLaoStarsService.fetchAndSaveLaoStarsLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -106,7 +106,7 @@ exports.huaylaostarcronjob = async function () {
 exports.huaylaounioncronjob = async function () {
   return await retryWithDelay(
     () => lotteryLaoUnionService.fetchLatestResult(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -114,7 +114,7 @@ exports.huaylaounioncronjob = async function () {
 exports.huaylaohd = async function () {
   return await retryWithDelay(
     () => lotteryLaoHdService.fetchAndSaveLaoHdLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -122,7 +122,7 @@ exports.huaylaohd = async function () {
 exports.huaylaovip = async function () {
   return await retryWithDelay(
     () => lotteryLaoVipService.fetchAndSaveLaoVipLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -130,7 +130,7 @@ exports.huaylaovip = async function () {
 exports.huaylaostarvip = async function () {
   return await retryWithDelay(
     () => lotteryLaoStarsVipService.fetchAndSaveLaoStarsVipLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -138,7 +138,7 @@ exports.huaylaostarvip = async function () {
 exports.huylaogachad = async function () {
   return await retryWithDelay(
     () => lotteryLaoRedcrossService.fetchAndSaveLaoRedcrossLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -146,7 +146,7 @@ exports.huylaogachad = async function () {
 exports.huaylaothakhek5d = async function () {
   return await retryWithDelay(
     () => lotteryLaoThakhek5dService.fetchAndSaveLaoThakhek5dLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -154,7 +154,7 @@ exports.huaylaothakhek5d = async function () {
 exports.huaylaothakhekvip = async function () {
   return await retryWithDelay(
     () => lotteryLaoThakhekVipService.fetchAndSaveLaoThakhekVipLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -162,7 +162,7 @@ exports.huaylaothakhekvip = async function () {
 exports.huaylaotv = async function () {
   return await retryWithDelay(
     () => lotteryLaoTvService.fetchAndSaveLaoTvLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -170,7 +170,7 @@ exports.huaylaotv = async function () {
 exports.huaymagnum4d = async function () {
   return await retryWithDelay(
     () => lotteryMagnum4dService.fetchAndSaveMagnum4dLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -178,7 +178,7 @@ exports.huaymagnum4d = async function () {
 exports.huaysingapore4d = async function () {
   return await retryWithDelay(
     () => lotterySingapore4dService.fetchAndSaveSingapore4dLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -186,7 +186,7 @@ exports.huaysingapore4d = async function () {
 exports.huaygranddragon4d = async function () {
   return await retryWithDelay(
     () => lotteryGrandDragon4dService.fetchAndSaveGrandDragon4dLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -194,7 +194,7 @@ exports.huaygranddragon4d = async function () {
 exports.huaythaigsb = async function () {
   return await retryWithDelay(
     () => lotteryThaiGsbService.fetchAndSaveThaiGsbLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -202,7 +202,7 @@ exports.huaythaigsb = async function () {
 exports.huaythaisavings = async function () {
   return await retryWithDelay(
     () => lotteryThaiSavingsService.fetchAndSaveThaiSavingsLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -210,7 +210,7 @@ exports.huaythaisavings = async function () {
 exports.huayhanoiasean = async function () {
   return await retryWithDelay(
     () => lotteryHanoiAseanService.fetchAndSaveHanoiAseanLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -218,7 +218,7 @@ exports.huayhanoiasean = async function () {
 exports.huayhanoihd = async function () {
   return await retryWithDelay(
     () => lotteryHanoiHdService.fetchAndSaveHanoiHdLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -226,7 +226,7 @@ exports.huayhanoihd = async function () {
 exports.huayhanoistar = async function () {
   return await retryWithDelay(
     () => lotteryHanoiStarService.fetchAndSaveHanoiStarLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -234,7 +234,7 @@ exports.huayhanoistar = async function () {
 exports.huayhanoitv = async function () {
   return await retryWithDelay(
     () => lotteryHanoiTvService.fetchAndSaveHanoiTvLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -242,7 +242,7 @@ exports.huayhanoitv = async function () {
 exports.huayhanoispecial = async function () {
   return await retryWithDelay(
     () => lotteryHanoiSpecialService.fetchAndSaveHanoiSpecialLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -250,7 +250,7 @@ exports.huayhanoispecial = async function () {
 exports.huayhanoiredcross = async function () {
   return await retryWithDelay(
     () => lotteryHanoiRedcrossService.fetchAndSaveHanoiRedcrossLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -258,7 +258,7 @@ exports.huayhanoiredcross = async function () {
 exports.huayhanoispecialapi = async function () {
   return await retryWithDelay(
     () => lotteryHanoiSpecialApiService.fetchAndSaveHanoiSpecialApiLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -266,7 +266,7 @@ exports.huayhanoispecialapi = async function () {
 exports.huayhanoi = async function () {
   return await retryWithDelay(
     () => lotteryHanoiService.fetchAndSaveHanoiLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -274,7 +274,7 @@ exports.huayhanoi = async function () {
 exports.huayhanoidevelop = async function () {
   return await retryWithDelay(
     () => lotteryHanoiDevelopService.fetchAndSaveHanoiDevelopLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -282,7 +282,7 @@ exports.huayhanoidevelop = async function () {
 exports.huayhanoivip = async function () {
   return await retryWithDelay(
     () => lotteryHanoiVipService.fetchAndSaveHanoiVipLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -290,7 +290,7 @@ exports.huayhanoivip = async function () {
 exports.huayhanoiextra = async function () {
   return await retryWithDelay(
     () => lotteryHanoiExtraService.fetchAndSaveHanoiExtraLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -298,7 +298,7 @@ exports.huayhanoiextra = async function () {
 exports.huayegyptstock = async function () {
   return await retryWithDelay(
     () => lotteryEgyptStockService.fetchAndSaveEgyptStockLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -306,7 +306,7 @@ exports.huayegyptstock = async function () {
 exports.huaykoreanstockvip = async function () {
   return await retryWithDelay(
     () => lotteryKoreanStockVipService.fetchAndSaveKoreanStockVipLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
 
@@ -314,6 +314,6 @@ exports.huaykoreanstockvip = async function () {
 exports.huayhangsengafternoon = async function () {
   return await retryWithDelay(
     () => lotteryHangsengAfternoonService.fetchAndSaveHangsengAfternoonLottery(),
-    5    // รอ 5 วินาทีระหว่างการลอง
+    60   // รอ 1 นาทีระหว่างการลอง
   );
 }
