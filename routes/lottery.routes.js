@@ -38,6 +38,7 @@ const { fetchLatestHanoiVipLottery, getAllHanoiVipLottery } = require('../contro
 const { fetchLatestHanoiExtraLottery, getAllHanoiExtraLottery } = require('../controller/lottery/lottery_hanoi_extra.controller');
 const { fetchLatestEgyptStockLottery, getAllEgyptStockLottery } = require('../controller/lottery/lottery_egypt_stock.controller');
 const { fetchLatestKoreanStockVipLottery, getAllKoreanStockVipLottery } = require('../controller/lottery/lottery_korean_stock_vip.controller');
+const { fetchLatestHangsengAfternoonLottery, getAllHangsengAfternoonLottery } = require('../controller/lottery/lottery_hangseng_afternoon.controller');
 
 // Route to create a lottery Sets
 router.post("/createSets", lotterySetsController.createLotterySets);
@@ -306,6 +307,12 @@ router.post('/korean-stock-vip/latest', fetchLatestKoreanStockVipLottery);
 
 //ดึงข้อมูลหวยหุ้นเกาหลี VIP ทั้งหมดแบบ pagination
 router.get('/korean-stock-vip', getAllKoreanStockVipLottery);
+
+//สร้างข้อมูลหวยฮั่งเส็งรอบบ่าย
+router.post('/hangseng-afternoon/latest', fetchLatestHangsengAfternoonLottery);
+
+//ดึงข้อมูลหวยฮั่งเส็งรอบบ่ายทั้งหมดแบบ pagination
+router.get('/hangseng-afternoon', getAllHangsengAfternoonLottery);
 
 
 module.exports = router;

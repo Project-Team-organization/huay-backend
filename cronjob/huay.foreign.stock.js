@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const { huayegyptstock, huaykoreanstockvip } = require('../service/cronjob/cronjob.service');
+const { huayegyptstock, huaykoreanstockvip, huayhangsengafternoon } = require('../service/cronjob/cronjob.service');
 
 // Cronjob สำหรับหวยหุ้นอิยิปต์ - จันทร์-ศุกร์ เวลา 19:45 น. (เวลาประเทศไทย)
 cron.schedule('45 19 * * 1-5', async () => {
@@ -24,6 +24,19 @@ cron.schedule('35 12 * * 1-5', async () => {
     console.log('✅ Korean Stock VIP lottery data fetched and saved successfully');
   } catch (error) {
     console.error('❌ Error fetching Korean Stock VIP lottery data:', error.message);
+  }
+}, { timezone: "Asia/Bangkok" });
+
+// Cronjob สำหรับหวยฮั่งเส็งรอบบ่าย - จันทร์-ศุกร์ เวลา 15:00 น. (เวลาประเทศไทย)
+cron.schedule('0 15 * * 1-5', async () => {
+  try {
+    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hangseng Afternoon lottery data...`);
+    
+    await huayhangsengafternoon();
+    
+    console.log('✅ Hangseng Afternoon lottery data fetched and saved successfully');
+  } catch (error) {
+    console.error('❌ Error fetching Hangseng Afternoon lottery data:', error.message);
   }
 }, { timezone: "Asia/Bangkok" });
 
