@@ -1,20 +1,6 @@
 const lotteryLaoStarsService = require('../../service/lottery/lottery_lao_stars.service');
 const { handleSuccess, handleError } = require('../../utils/responseHandler');
 
-// Rate limiting สำหรับป้องกันการเรียกใช้ซ้ำ
-const rateLimit = require('express-rate-limit');
-
-const lotteryRateLimit = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 นาที
-  max: 1, // เรียกได้แค่ 1 ครั้งต่อ 5 นาที
-  message: {
-    error: 'หวยลาวสตาร์สามารถอัพเดทได้แค่ 1 ครั้งต่อ 5 นาที',
-    message: 'กรุณารอสักครู่ก่อนเรียกใช้ใหม่'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 const fetchLatestLaoStarsLottery = async (req, res) => {
   try {
     const lottery = await lotteryLaoStarsService.fetchAndSaveLaoStarsLottery();
@@ -51,6 +37,5 @@ const getAllLaoStarsLottery = async (req, res) => {
 
 module.exports = {
   fetchLatestLaoStarsLottery,
-  getAllLaoStarsLottery,
-  lotteryRateLimit
+  getAllLaoStarsLottery
 }; 

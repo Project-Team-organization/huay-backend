@@ -11,7 +11,7 @@ const lotteryWinnersController = require('../controller/lottery/lottery_winners.
 const { handleError } = require("puppeteer");
 const { fetchLatestLaoLottery, getAllLaoLottery } = require('../controller/lottery/lottery_lao.controller');
 const { fetchLatestLaoExtraLottery, getAllLaoExtraLottery } = require('../controller/lottery/lottery_lao_extra.controller');
-const { fetchLatestLaoStarsLottery, getAllLaoStarsLottery, lotteryRateLimit } = require('../controller/lottery/lottery_lao_stars.controller');
+const { fetchLatestLaoStarsLottery, getAllLaoStarsLottery } = require('../controller/lottery/lottery_lao_stars.controller');
 const { fetchLatestLaoStarsVipLottery, getAllLaoStarsVipLottery } = require('../controller/lottery/lottery_lao_stars_vip.controller');
 const { fetchLatestLaoRedcrossLottery, getAllLaoRedcrossLottery } = require('../controller/lottery/lottery_lao_redcross.controller');
 const { fetchLatestLaoThakhekVipLottery, getAllLaoThakhekVipLottery } = require('../controller/lottery/lottery_lao_thakhek_vip.controller');
@@ -149,7 +149,7 @@ router.post('/lao-extra/latest', fetchLatestLaoExtraLottery);
 router.get('/lao-extra', getAllLaoExtraLottery);
 
 //สร้างข้อมูลหวยลาวสตาร์
-router.post('/lao-stars/latest', lotteryRateLimit, fetchLatestLaoStarsLottery);
+router.post('/lao-stars/latest', fetchLatestLaoStarsLottery);
 
 //ดึงข้อมูลหวยลาวสตาร์ทั้งหมดแบบ pagination
 router.get('/lao-stars', getAllLaoStarsLottery);
