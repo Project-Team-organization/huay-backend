@@ -28,8 +28,9 @@ const fetchAndSaveHangsengAfternoonLottery = async () => {
     }
 
     const response = await axios.get(
-      "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/hangseng-afternoon/latest"
+      "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/hong-kong-hsi/latest"
     );
+    console.log(response.data);
     const { data } = response.data;
     
     // Extract values from Hangseng Afternoon lottery response
