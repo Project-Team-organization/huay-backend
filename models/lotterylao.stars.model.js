@@ -10,6 +10,12 @@ const lotteryLaoStarsSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    type: {
+      type: String,
+      enum: ['normal', 'vip'],
+      default: 'normal',
+      required: true,
+    },
     lotto_date: {
       type: String,
       required: true,
@@ -60,6 +66,9 @@ const lotteryLaoStarsSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// เพิ่ม unique index เพื่อป้องกันข้อมูลซ้ำ (รวม type)
+lotteryLaoStarsSchema.index({ lotto_date: 1, type: 1 }, { unique: true });
 
 const LotteryLaoStars = mongoose.model(
   "LotteryLaoStars",

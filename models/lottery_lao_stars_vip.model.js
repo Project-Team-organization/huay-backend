@@ -81,6 +81,9 @@ const lotteryLaoStarsVipSchema = new mongoose.Schema(
   }
 );
 
+// เพิ่ม unique index เพื่อป้องกันข้อมูลซ้ำ
+lotteryLaoStarsVipSchema.index({ lotto_date: 1 }, { unique: true });
+
 const LotteryLaoStarsVip = mongoose.model("LotteryLaoStarsVip", lotteryLaoStarsVipSchema);
 
 module.exports = LotteryLaoStarsVip;

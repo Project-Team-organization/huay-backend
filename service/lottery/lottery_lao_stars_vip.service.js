@@ -1,18 +1,40 @@
 const axios = require("axios");
-const LotteryLaoStarsVip = require("../../models/lottery_lao_stars_vip.model");
+const LotteryLaoStars = require("../../models/lotterylao.stars.model");
 
 const apiUrl = 'https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars-vip/latest';
 
+// Mutex เพื่อป้องกันการเรียกใช้พร้อมกัน
+const processingLock = new Map();
+
 const fetchAndSaveLaoStarsVipLottery = async () => {
+  const today = new Date().toISOString().split("T")[0];
+  const lockKey = `lao-stars-vip-${today}`;
+  
+  // ตรวจสอบว่ากำลังประมวลผลอยู่หรือไม่
+  if (processingLock.has(lockKey)) {
+    console.log(`⏳ หวยลาวสตาร์ VIP วันนี้กำลังประมวลผลอยู่...`);
+    return processingLock.get(lockKey);
+  }
+  
+  const processPromise = processLotteryData();
+  processingLock.set(lockKey, processPromise);
+  
+  try {
+    const result = await processPromise;
+    return result;
+  } finally {
+    processingLock.delete(lockKey);
+  }
+};
+
+const processLotteryData = async () => {
   try {
     // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
-    const today = new Date();
-    // ถ้าเวลาเป็น 00:00:00 ก็ต้องหาในวันก่อนหน้า
-    const existingLottery = await LotteryLaoStarsVip.findOne({
-      createdAt: {
-        $gte: new Date(today.setHours(0, 0, 0, 0)),
-        $lt: new Date(today.setHours(23, 59, 59, 999)),
-      },
+    const today = new Date().toISOString().split("T")[0];
+    const existingLottery = await LotteryLaoStars.findOne({
+      lotto_date: today,
+      type: 'vip',
+      results: { $exists: true, $ne: null }
     });
 
     // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxx") ให้ return ข้อมูลเดิม
@@ -99,6 +121,7 @@ const fetchAndSaveLaoStarsVipLottery = async () => {
     const lotteryData = {
       name: data.name || "lao-lottery",
       url: data.url || "https://api.laostars-vip.com",
+      type: 'vip',
       title: data.lotteryName || "หวยลาวสตาร์ VIP",
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName || "หวยลาวสตาร์ VIP",
@@ -152,14 +175,14 @@ const fetchAndSaveLaoStarsVipLottery = async () => {
     // ถ้ามีข้อมูลเดิมอยู่แล้ว ให้อัพเดท ถ้าไม่มีให้สร้างใหม่
     let lottery;
     if (existingLottery) {
-      lottery = await LotteryLaoStarsVip.findByIdAndUpdate(
+      lottery = await LotteryLaoStars.findByIdAndUpdate(
         existingLottery._id,
         lotteryData,
         { new: true }
       );
       console.log(`🔄 อัพเดทข้อมูลหวยลาวสตาร์ VIP วันนี้`);
     } else {
-      lottery = new LotteryLaoStarsVip(lotteryData);
+      lottery = new LotteryLaoStars(lotteryData);
       await lottery.save();
       console.log(`💾 บันทึกข้อมูลหวยลาวสตาร์ VIP วันนี้ใหม่`);
     }
@@ -188,10 +211,10 @@ const getAllLaoStarsVipLottery = async ({ page, limit, startDate, endDate }) => 
     const skip = (page - 1) * limit;
 
     // Get total count for pagination
-    const total = await LotteryLaoStarsVip.countDocuments(query);
+    const total = await LotteryLaoStars.countDocuments(query);
 
     // Get data with pagination
-    const data = await LotteryLaoStarsVip.find(query)
+    const data = await LotteryLaoStars.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

@@ -1,9 +1,9 @@
-const lotteryLaoStarsVipService = require('../../service/lottery/lottery_lao_stars_vip.service');
+const lotteryLaoStarsService = require('../../service/lottery/lottery_lao_stars.service');
 const { handleSuccess, handleError } = require('../../utils/responseHandler');
 
 const fetchLatestLaoStarsVipLottery = async (req, res) => {
   try {
-    const lottery = await lotteryLaoStarsVipService.fetchAndSaveLaoStarsVipLottery();
+    const lottery = await lotteryLaoStarsService.fetchAndSaveLaoStarsVipLottery();
     const response = await handleSuccess(lottery);
     return res.status(response.status).json(response);
   } catch (error) {
@@ -16,7 +16,7 @@ const getAllLaoStarsVipLottery = async (req, res) => {
     try {
         const { page = 1, limit = 10, startDate, endDate } = req.query;
         
-        const result = await lotteryLaoStarsVipService.getAllLaoStarsVipLottery({
+        const result = await lotteryLaoStarsService.getAllLaoStarsVipLottery({
             page: parseInt(page),
             limit: parseInt(limit),
             startDate,

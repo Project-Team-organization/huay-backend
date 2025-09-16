@@ -1,12 +1,38 @@
 const axios = require("axios");
 const LotteryLaoStars = require("../../models/lotterylao.stars.model");
 
+// Mutex เพื่อป้องกันการเรียกใช้พร้อมกัน
+const processingLock = new Map();
+
 const fetchAndSaveLaoStarsLottery = async () => {
+  const today = new Date().toISOString().split("T")[0];
+  const lockKey = `lao-stars-${today}`;
+  
+  // ตรวจสอบว่ากำลังประมวลผลอยู่หรือไม่
+  if (processingLock.has(lockKey)) {
+    console.log(`⏳ หวยลาวสตาร์วันนี้กำลังประมวลผลอยู่...`);
+    return processingLock.get(lockKey);
+  }
+  
+  const processPromise = processLotteryData();
+  processingLock.set(lockKey, processPromise);
+  
+  try {
+    const result = await processPromise;
+    return result;
+  } finally {
+    processingLock.delete(lockKey);
+  }
+};
+
+const processLotteryData = async () => {
   try {
     // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date().toISOString().split("T")[0];
     const existingLottery = await LotteryLaoStars.findOne({
       lotto_date: today,
+      type: 'normal',
+      results: { $exists: true, $ne: null }
     });
 
     // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxx") ให้ return ข้อมูลเดิม
@@ -84,6 +110,7 @@ const fetchAndSaveLaoStarsLottery = async () => {
     const lotteryData = {
       name: data.name,
       url: "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars/latest",
+      type: 'normal',
       lottery_name: data.lotteryName,
       lotto_date: data.lotto_date,
       start_spin: new Date(data.start_spin),
@@ -194,7 +221,54 @@ const getAllLaoStarsLottery = async ({
   }
 };
 
+const getAllLaoStarsVipLottery = async ({
+  page = 1,
+  limit = 10,
+  startDate,
+  endDate,
+}) => {
+  try {
+    const query = { type: 'vip' };
+
+    // Add date range filter if provided
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        query.createdAt.$lte = new Date(endDate);
+      }
+    }
+
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const total = await LotteryLaoStars.countDocuments(query);
+
+    // Get data with pagination
+    const data = await LotteryLaoStars.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return {
+      data,
+      total,
+    };
+  } catch (error) {
+    console.error("Error in getAllLaoStarsVipLottery service:", error);
+    throw new Error("เกิดข้อผิดพลาดในการดึงข้อมูลหวยลาวสตาร์ VIP");
+  }
+};
+
+// Import VIP service functions
+const { fetchAndSaveLaoStarsVipLottery } = require('./lottery_lao_stars_vip.service');
+
 module.exports = {
   fetchAndSaveLaoStarsLottery,
   getAllLaoStarsLottery,
+  fetchAndSaveLaoStarsVipLottery,
+  getAllLaoStarsVipLottery,
 };
