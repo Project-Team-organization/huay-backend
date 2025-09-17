@@ -7,18 +7,14 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Build stage
 FROM base AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --omit=dev
 COPY . .
-
-# Run tests and linting in build stage (skip for now)
-# RUN npm run lint || echo "Linting completed with warnings"
-# RUN npm test || echo "Tests completed"
 
 # Production stage
 FROM base AS runner
