@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  huay-backend:
+    image: huay_backend:1.0.0
+    container_name: huay-backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/check', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - huay-network
+
+networks:
+  huay-network:
+    driver: bridge
