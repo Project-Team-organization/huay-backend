@@ -104,8 +104,8 @@ cron.schedule('30 17 * * *', async () => {
   }
 }, { timezone: "Asia/Bangkok" });
 
-// Cronjob สำหรับหวยฮานอย - ทุกวัน เวลา 18:30 น. (เวลาประเทศไทย)
-cron.schedule('30 18 * * *', async () => {
+// Cronjob สำหรับหวยฮานอย - ทุกวัน เวลา 18:35 น. (เวลาประเทศไทย)
+cron.schedule('35 18 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi lottery data...`);
     

@@ -32,9 +32,21 @@ const fetchAndSaveHanoiLottery = async () => {
     );
     const { data } = response.data;
     
-    // ไม่ต้องเช็ค results ที่นี่ เพราะ retryWithDelay จะจัดการให้
+    // ตรวจสอบว่าข้อมูลครบหรือไม่
+    const hasIncompleteData = Object.values(data.results).some(value => {
+      if (typeof value === 'string') {
+        return value.includes('...') || value.includes('..') || value === "" || value === null || value === undefined;
+      }
+      return value === null || value === undefined;
+    });
 
-    // Pre-calculate values for performance
+    if (hasIncompleteData) {
+      console.log(`⏳ หวยฮานอย วันนี้ยังไม่ออกผลครบ (มีข้อมูลบางส่วน)`);
+      console.log(`📊 ข้อมูลที่ได้:`, JSON.stringify(data.results, null, 2));
+      console.log(`💾 บันทึกข้อมูลบางส่วนของหวยฮานอย`);
+    }
+
+    // Pre-calculate values for performance (รองรับข้อมูลไม่ครบ)
     const prize1st = data.results.prize_1st || "";
     const prize2nd = data.results.prize_2nd || "";
     const prize3rd1 = data.results.prize_3rd_1 || "";
@@ -43,19 +55,19 @@ const fetchAndSaveHanoiLottery = async () => {
     const digit2Top = data.results.digit2_top || "";
     const digit2Bottom = data.results.digit2_bottom || "";
 
-    // Extract 3 digits from prize_1st
-    const prize1st3d = prize1st.slice(-3);
-    const prize2nd3d = prize2nd.slice(-3);
-    const prize3rd13d = prize3rd1.slice(-3);
-    const prize3rd23d = prize3rd2.slice(-3);
+    // Extract 3 digits from prize_1st (ตรวจสอบความยาวก่อน)
+    const prize1st3d = prize1st.length >= 3 ? prize1st.slice(-3) : "";
+    const prize2nd3d = prize2nd.length >= 3 ? prize2nd.slice(-3) : "";
+    const prize3rd13d = prize3rd1.length >= 3 ? prize3rd1.slice(-3) : "";
+    const prize3rd23d = prize3rd2.length >= 3 ? prize3rd2.slice(-3) : "";
 
-    // Extract 2 digits from prize_1st
-    const prize1st2d = prize1st.slice(-2);
-    const prize2nd2d = prize2nd.slice(-2);
-    const prize3rd12d = prize3rd1.slice(-2);
-    const prize3rd22d = prize3rd2.slice(-2);
+    // Extract 2 digits from prize_1st (ตรวจสอบความยาวก่อน)
+    const prize1st2d = prize1st.length >= 2 ? prize1st.slice(-2) : "";
+    const prize2nd2d = prize2nd.length >= 2 ? prize2nd.slice(-2) : "";
+    const prize3rd12d = prize3rd1.length >= 2 ? prize3rd1.slice(-2) : "";
+    const prize3rd22d = prize3rd2.length >= 2 ? prize3rd2.slice(-2) : "";
 
-    // Collect all 4th prizes
+    // Collect all 4th prizes (กรองข้อมูลไม่ครบ)
     const prize4th = [
       data.results.prize_4th_1,
       data.results.prize_4th_2,
@@ -63,17 +75,17 @@ const fetchAndSaveHanoiLottery = async () => {
       data.results.prize_4th_4,
       data.results.prize_4th_5,
       data.results.prize_4th_6,
-    ].filter(prize => prize && prize !== "");
+    ].filter(prize => prize && prize !== "" && !prize.includes('...') && !prize.includes('..'));
 
-    // Collect all 5th prizes
+    // Collect all 5th prizes (กรองข้อมูลไม่ครบ)
     const prize5th = [
       data.results.prize_5th_1,
       data.results.prize_5th_2,
       data.results.prize_5th_3,
       data.results.prize_5th_4,
-    ].filter(prize => prize && prize !== "");
+    ].filter(prize => prize && prize !== "" && !prize.includes('...') && !prize.includes('..'));
 
-    // Collect all 6th prizes
+    // Collect all 6th prizes (กรองข้อมูลไม่ครบ)
     const prize6th = [
       data.results.prize_6th_1,
       data.results.prize_6th_2,
@@ -81,22 +93,22 @@ const fetchAndSaveHanoiLottery = async () => {
       data.results.prize_6th_4,
       data.results.prize_6th_5,
       data.results.prize_6th_6,
-    ].filter(prize => prize && prize !== "");
+    ].filter(prize => prize && prize !== "" && !prize.includes('...') && !prize.includes('..'));
 
-    // Collect all 7th prizes
+    // Collect all 7th prizes (กรองข้อมูลไม่ครบ)
     const prize7th = [
       data.results.prize_7th_1,
       data.results.prize_7th_2,
       data.results.prize_7th_3,
-    ].filter(prize => prize && prize !== "");
+    ].filter(prize => prize && prize !== "" && !prize.includes('...') && !prize.includes('..'));
 
-    // Collect all 2 digits prizes
+    // Collect all 2 digits prizes (กรองข้อมูลไม่ครบ)
     const prize2digits = [
       data.results.prize_2digits_1,
       data.results.prize_2digits_2,
       data.results.prize_2digits_3,
       data.results.prize_2digits_4,
-    ].filter(prize => prize && prize !== "");
+    ].filter(prize => prize && prize !== "" && !prize.includes('...') && !prize.includes('..'));
 
     const lotteryData = {
       name: data.name,
