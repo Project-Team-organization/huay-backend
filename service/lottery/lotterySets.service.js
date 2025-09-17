@@ -24,7 +24,7 @@ exports.createLotterySets = async function (data) {
 
 exports.getLotterySets = async function (query) {
   try {
-    const { status, limit = 10, page = 1, slug } = query;
+    const { status, limit, page = 1, slug } = query;
 
     const filter = {};
     if (status) {
@@ -32,8 +32,8 @@ exports.getLotterySets = async function (query) {
     }
 
     let lotterySets = await LotterySets.find(filter)
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * (limit ? parseInt(limit) : 0))
+      .limit(limit ? parseInt(limit) : undefined)
       .populate("lottery_type_id")
 
     if (slug) {
@@ -49,8 +49,8 @@ exports.getLotterySets = async function (query) {
       pagination: {
         total: totalItems,
         page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(totalItems / parseInt(limit)),
+        limit: limit ? parseInt(limit) : null,
+        totalPages: limit ? Math.ceil(totalItems / parseInt(limit)) : 1,
       },
     };
   } catch (error) {
