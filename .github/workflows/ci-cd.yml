@@ -50,7 +50,7 @@ jobs:
             # Clean up the transferred tar file
             rm /tmp/huay_backend.tar
             # Navigate to the application directory
-            cd /home/api
+            cd /home/api/huay-backend
             # Stop existing containers and remove orphaned containers
             docker-compose down --remove-orphans
             # Start the application in detached mode
