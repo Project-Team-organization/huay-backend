@@ -1,19 +1,6 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:7.0
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin123
-      - MONGO_INITDB_DATABASE=huay-backend
-    volumes:
-      - mongodb_data:/data/db
-    restart: unless-stopped
-
   huay-backend:
     image: huay_backend:1.0.0
     container_name: huay-backend
@@ -22,13 +9,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - MONGO_URI=mongodb://huayuser:huaypass123@mongodb:27017/huay-backend
-    depends_on:
-      - mongodb
     restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
-
-volumes:
-  mongodb_data:
