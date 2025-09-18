@@ -15,8 +15,6 @@ require('./cronjob/huay.hanoi');
 // require('./cronjob/huay.foreign.stock');
 
 const app = express();
-
-
 // Middleware
 app.use(cors());
 app.use(express.json());
