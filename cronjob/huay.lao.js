@@ -1,5 +1,4 @@
 const cron = require('node-cron');
-const { checkLotterySetResults } = require('../service/lottery/lotterySets.service');
 const {
     huaylaocronjob,
     huaylaoextracronjob,
@@ -127,11 +126,10 @@ cron.schedule('30 23 * * *', async () => {
     }
 }, { timezone: "Asia/Bangkok" });
 
-// ออกผลหวย ทุกนาที (สำหรับตรวจสอบผลหวยอื่นๆ)
-cron.schedule('* * * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ออกผลหวย ทุกนาที...`);
-    await checkLotterySetResults();
-}, { timezone: "Asia/Bangkok" });
+
+
+
+
 
 
 // หวยลาว TEST ทุกวัน เวลา 12:35 น.
