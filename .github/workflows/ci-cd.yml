@@ -52,9 +52,9 @@ jobs:
             # Navigate to the application directory
             cd /home/api
             # Stop existing containers and remove orphaned containers
-            docker compose down --remove-orphans
+            docker-compose down --remove-orphans
             # Start the application in detached mode
-            docker compose up --no-build -d
+            docker-compose up --no-build -d
           EOF
 
       # Clean up build artifacts locally
