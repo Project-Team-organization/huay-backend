@@ -317,3 +317,84 @@ exports.huayhangsengafternoon = async function () {
     60   // รอ 1 นาทีระหว่างการลอง
   );
 }
+
+//สร้าง lotteryset หวยรัฐบาล  
+exports.createThaiGovernmentLottery = async function () {
+  try {
+    const { createLotterySets } = require('../lottery/lotterySets.service');
+    const LotteryType = require('../../models/lotteryType.model');
+    
+    console.log("🏛️ เริ่มสร้างหวยรัฐบาล...");
+    
+    // หา lottery_type_id สำหรับหวยรัฐบาล
+    const lotteryType = await LotteryType.findOne({ lottery_type: "หวยไทย" });
+    if (!lotteryType) {
+      throw new Error("ไม่พบประเภทหวยไทยในระบบ");
+    }
+    
+    const now = new Date();
+    const currentDate = now.getDate();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    let drawDate, resultTime;
+    
+    // ถ้าสร้างวันที่ 2 = ออกผลวันที่ 16 ของเดือนเดียวกัน
+    if (currentDate === 2) {
+      // ออกผลวันที่ 16 ของเดือนเดียวกัน เวลา 16:30
+      drawDate = new Date(currentYear, currentMonth, 16);
+      resultTime = new Date(currentYear, currentMonth, 16, 16, 30, 0);
+    }
+    // ถ้าสร้างวันที่ 17 = ออกผลวันที่ 1 ของเดือนถัดไป
+    else if (currentDate === 17) {
+      // ออกผลวันที่ 1 ของเดือนถัดไป เวลา 16:30
+      drawDate = new Date(currentYear, currentMonth + 1, 1);
+      resultTime = new Date(currentYear, currentMonth + 1, 1, 16, 30, 0);
+    } else {
+      console.log("⏰ ไม่ใช่วันที่สร้างหวยรัฐบาล (วันที่ 2 หรือ 17)");
+      return;
+    }
+    
+    // สร้างชื่องวด
+    const monthNames = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    
+    const drawMonth = drawDate.getMonth();
+    const drawYear = drawDate.getFullYear() + 543; // แปลงเป็น พ.ศ.
+    const roundNumber = drawDate.getDate() === 1 ? 1 : 2;
+    
+    const lotteryData = {
+      lottery_type_id: lotteryType._id,
+      name: "หวยรัฐบาล",
+      openTime: now, // เริ่มแทงได้ทันที
+      closeTime: new Date(resultTime.getTime() - 30 * 60 * 1000), // หยุดแทง 30 นาทีก่อนออกผล
+      result_time: resultTime,
+      status: "scheduled"
+    };
+    
+    // ตรวจสอบว่ามีงวดนี้แล้วหรือยัง
+    const LotterySets = require('../../models/lotterySets.model');
+    const existingSet = await LotterySets.findOne({
+      name: "หวยรัฐบาล",
+      result_time: resultTime
+    });
+    
+    if (existingSet) {
+      console.log(`⚠️ หวยรัฐบาลงวดวันที่ ${drawDate.getDate()} ${monthNames[drawMonth]} ${drawYear} มีอยู่แล้ว`);
+      return existingSet;
+    }
+    
+    const createdLottery = await createLotterySets(lotteryData);
+    
+    console.log(`✅ สร้างหวยรัฐบาลสำเร็จ: ${createdLottery.id}`);
+    console.log(`📅 วันออกผล: ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
+    
+    return createdLottery;
+    
+  } catch (error) {
+    console.error("❌ เกิดข้อผิดพลาดในการสร้างหวยรัฐบาล:", error.message);
+    throw error;
+  }
+};

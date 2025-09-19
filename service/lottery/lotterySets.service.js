@@ -350,33 +350,15 @@ async function checkLotterySetResults() {
     }
 
     // ออกผลหวย
-    const readyLotterySets = await LotterySets.aggregate([
-      {
-        $lookup: {
-          from: "lotterytypes",
-          localField: "lottery_type_id",
-          foreignField: "_id",
-          as: "lottery_type_info"
-        }
-      },
-      {
-        $unwind: "$lottery_type_info"
-      },
-      {
-        $match: {
-          result_time: { $lte: serverTime },
-          "lottery_type_info.lottery_type": "หวยไทย",
-          status: { 
-            $nin: ["resulted", "cancelled"] // ไม่เอาสถานะ resulted และ cancelled
-          }
-        }
-      },
-      {
-        $addFields: {
-          lottery_type_id: "$lottery_type_info"
-        }
+
+    const readyLotterySets = await LotterySets.find({
+      result_time: { $lte: serverTime },
+      status: { 
+        $nin: ["resulted", "cancelled"] // ไม่เอาสถานะ resulted และ cancelled
       }
-    ]);
+    });
+    
+  
 
     if (readyLotterySets.length > 0) {
       const user_id = '685d483a2144647be58f9312';
@@ -384,14 +366,16 @@ async function checkLotterySetResults() {
       // Process each lottery set
       for (const lotterySet of readyLotterySets) {
         try {
-          //ให้ไปเช็ค huayService ว่ามีข้อมูลหวยหรือยัง
-          const huayData = await huay.find({lottery_set_id: lotterySet._id});
-          if(huayData.length <= 0){
-            console.log(`📥 ดึงข้อมูลหวยจาก API สำหรับ: ${lotterySet.name}`);
-            await createHuayFromAPI(lotterySet._id);
-            console.log(`✅ บันทึกข้อมูลหวยสำเร็จ: ${lotterySet.name}`);
-          }
 
+          if(lotterySet.name === "หวยรัฐบาล"){
+              //ให้ไปเช็ค huayService ว่ามีข้อมูลหวยหรือยัง
+              const huayData = await huay.find({lottery_set_id: lotterySet._id});
+              if(huayData.length <= 0){
+                  console.log(`📥 ดึงข้อมูลหวยจาก API สำหรับ: ${lotterySet.name}`);
+                  await createHuayFromAPI(lotterySet._id);
+                  console.log(`✅ บันทึกข้อมูลหวยสำเร็จ: ${lotterySet.name}`);
+              }
+          }
           console.log(`🔍 ออกผลหวย: ${lotterySet.name}`);
           await huayService.evaluateUserBetsByLotterySet(lotterySet._id, user_id);
           
