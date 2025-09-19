@@ -302,3 +302,77 @@ exports.getUsersReferredByUser = async (req, res) => {
     return res.status(response.status).json(response);
   }
 };
+
+// ลืมรหัสผ่านด้วยเบอร์โทรและเลขบัญชีธนาคาร
+exports.forgotPasswordWithBankNumber = async (req, res) => {
+  const fullUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+  const ipRaw =
+    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    req.connection.remoteAddress ||
+    req.ip;
+  const ip = normalizeIP(ipRaw);
+  const referrer = req.get("Referer") || null;
+  const body = req.body;
+
+  try {
+    // Validate input
+    const { error } = validate.forgotPasswordValidate(body);
+    if (error) {
+      await logAction("forgot_password_failed_validation", {
+        tag: "forgot_password",
+        endpoint: fullUrl,
+        method: "POST",
+        data: { error: error.details[0].message, input: body, referrer, ip },
+      });
+      const response = await handleError(error, error.details[0].message, 400);
+      return res.status(response.status).json(response);
+    }
+
+    const result = await userService.forgotPasswordWithBankNumber({
+      phone: body.phone,
+      bank_number: body.bank_number,
+      new_password: body.new_password,
+    });
+
+    if (!result.success) {
+      await logAction("forgot_password_failed", {
+        tag: "forgot_password",
+        endpoint: fullUrl,
+        method: "POST",
+        data: {
+          error: result.error || "Password reset failed",
+          input: body,
+          referrer,
+          ip,
+        },
+      });
+      return res.status(result.status).json(result);
+    }
+
+    await logAction("forgot_password_success", {
+      tag: "forgot_password",
+      endpoint: fullUrl,
+      method: "POST",
+      data: {
+        user: {
+          id: result.data.user_id,
+          phone: result.data.phone,
+        },
+        ip,
+        referrer,
+      },
+    });
+
+    return res.status(result.status).json(result);
+  } catch (error) {
+    await logAction("forgot_password_error", {
+      tag: "forgot_password",
+      endpoint: fullUrl,
+      method: "POST",
+      data: { error: error.message, stack: error.stack, referrer },
+    });
+
+    const response = await handleError(error);
+    return res.status(response.status).json(response);
+  }
+};

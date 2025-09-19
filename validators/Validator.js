@@ -266,3 +266,26 @@ exports.validateCreateLotteryType = (data) => {
 
 //   return schema.validate(data, { abortEarly: false });
 // };
+
+// Validator สำหรับลืมรหัสผ่านด้วยเบอร์โทรและเลขบัญชีธนาคาร
+exports.forgotPasswordValidate = (data) => {
+  const schema = Joi.object({
+    phone: Joi.string().min(10).max(15).required().messages({
+      "any.required": "กรุณาระบุเบอร์โทรศัพท์",
+      "string.empty": "เบอร์โทรศัพท์ไม่สามารถเป็นค่าว่างได้",
+      "string.min": "เบอร์โทรศัพท์ต้องมีอย่างน้อย 10 หลัก",
+      "string.max": "เบอร์โทรศัพท์ต้องไม่เกิน 15 หลัก",
+    }),
+    bank_number: Joi.string().required().messages({
+      "any.required": "กรุณาระบุเลขบัญชีธนาคาร",
+      "string.empty": "เลขบัญชีธนาคารไม่สามารถเป็นค่าว่างได้",
+    }),
+    new_password: Joi.string().min(6).required().messages({
+      "any.required": "กรุณาระบุรหัสผ่านใหม่",
+      "string.empty": "รหัสผ่านใหม่ไม่สามารถเป็นค่าว่างได้",
+      "string.min": "รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร",
+    }),
+  });
+
+  return schema.validate(data, { abortEarly: false });
+};
