@@ -444,3 +444,72 @@ exports.getUsersReferredByUser = async (userId) => {
     return handleError(error);
   }
 };
+
+// ลืมรหัสผ่านด้วยเบอร์โทรและเลขบัญชีธนาคาร
+exports.forgotPasswordWithBankNumber = async ({ phone, bank_number, new_password }) => {
+  try {
+    // ค้นหาผู้ใช้ด้วยเบอร์โทรและเลขบัญชีธนาคาร
+    const user = await User.findOne({ 
+      phone: phone,
+      bank_number: bank_number 
+    });
+
+    if (!user) {
+      return handleError(null, "ไม่พบผู้ใช้งานที่ตรงกับเบอร์โทรและเลขบัญชีธนาคารที่ระบุ", 404);
+    }
+
+    // เข้ารหัสรหัสผ่านใหม่
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    // อัพเดทรหัสผ่าน
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      { 
+        $set: { 
+          password: hashedPassword,
+          updatedAt: new Date()
+        } 
+      },
+      { new: true }
+    ).select("-password");
+
+    // บันทึกประวัติการเปลี่ยนรหัสผ่าน
+    const now = new Date();
+    await PasswordHistory.create({
+      user_id: user._id,
+      password: hashedPassword,
+      changed_by: [
+        {
+          user_id: user._id,
+          role: "user",
+          full_name: user.full_name,
+          changed_at: now,
+        },
+      ],
+      last_password_change: [
+        {
+          date: now,
+          password: user.password,
+          changed_by: {
+            user_id: user._id,
+            role: "user",
+            full_name: user.full_name,
+          },
+        },
+      ],
+      changed_at: now,
+    });
+
+    return handleSuccess(
+      { 
+        user_id: updatedUser._id,
+        full_name: updatedUser.full_name,
+        phone: updatedUser.phone 
+      }, 
+      "เปลี่ยนรหัสผ่านสำเร็จ", 
+      200
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+};

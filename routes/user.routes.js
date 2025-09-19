@@ -17,10 +17,11 @@ router.post("/code", userController.checkCode);
 // ส่วนของ user ที่ใช้ได้
 router.get("/getbyid/:id", authmiddleware.isUser, userController.getUserById);
 router.put("/update/:id", authmiddleware.isUser, userController.updateUser);
+
+// ลืมรหัสผ่านด้วยเบอร์โทรและเลขบัญชีธนาคาร
 router.post(
   "/forgotpassword",
-  authmiddleware.isUser,
-  userController.forgotPassword
+  userController.forgotPasswordWithBankNumber
 );
 
 // ส่วนของ admin จัดการ user
