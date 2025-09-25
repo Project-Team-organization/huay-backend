@@ -62,7 +62,6 @@ const fetchAndSaveMagnum4dLottery = async () => {
     const lotteryData = {
       name: data.name,
       url: data.url,
-      title: data.title || "Magnum 4D",
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName,
       draw_number: data.draw_number,

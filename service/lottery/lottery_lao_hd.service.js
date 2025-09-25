@@ -99,7 +99,6 @@ const fetchAndSaveLaoHdLottery = async () => {
     const lotteryData = {
       name: data.name || "lao-lottery",
       url: data.url || "https://laoshd.com",
-      title: data.lotteryName || "หวยลาว HD",
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName || "หวยลาว HD",
       start_spin: new Date(data.start_spin),

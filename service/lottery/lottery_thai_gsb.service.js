@@ -96,7 +96,6 @@ const fetchAndSaveThaiGsbLottery = async () => {
     const lotteryData = {
       name: data.name,
       url: data.url,
-      title: data.title || "หวย ธ.ก.ส.",
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName,
       start_spin: new Date(),

@@ -95,7 +95,6 @@ const fetchAndSaveLaoLottery = async () => {
     const lotteryData = {
       name: data.name,
       url: data.url,
-      title: data.title,
       lotto_date: data.date,
       lottery_name: data.lotteryName,
       start_spin: new Date(),

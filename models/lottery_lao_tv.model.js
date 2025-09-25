@@ -10,10 +10,6 @@ const lotteryLaoTvSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    title: {
-      type: String,
-      default: "",
-    },
     lotto_date: {
       type: String,
       required: true,

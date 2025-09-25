@@ -99,7 +99,6 @@ const fetchAndSaveLaoThakhek5dLottery = async () => {
     const lotteryData = {
       name: data.name || "lao-lottery",
       url: data.url || "https://laosthakhek.net/",
-      title: data.lotteryName || "หวยลาวท่าแขก 5D",
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName || "หวยลาวท่าแขก 5D",
       start_spin: data.start_spin ? new Date(data.start_spin) : null,
