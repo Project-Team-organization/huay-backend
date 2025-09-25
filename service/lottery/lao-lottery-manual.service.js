@@ -343,7 +343,6 @@ exports.LotteryLaoVip = async (data) => {
         const lotteryData = {
             name: data.name || "lao-lottery",
             url: data.url || "https://laosviplot.com",
-            title: data.lotteryName || "หวยลาว VIP",
             lotto_date: data.lotto_date,
             lottery_name: data.lotteryName || "หวยลาว VIP",
             start_spin: data.start_spin ? new Date(data.start_spin) : null,
@@ -442,7 +441,6 @@ exports.LotteryLaoStarsVip = async (data) => {
             name: data.name || "lao-lottery",
             url: data.url || "https://api.laostars-vip.com",
             type: "vip",
-            title: data.lotteryName || "หวยลาวสตาร์ VIP",
             lotto_date: data.lotto_date,
             lottery_name: data.lotteryName || "หวยลาวสตาร์ VIP",
             start_spin: data.start_spin ? new Date(data.start_spin) : null,
@@ -535,7 +533,6 @@ exports.LotteryLaoThakhek5d = async (data) => {
         const lotteryData = {
             name: data.name || "lao-lottery",
             url: data.url || "https://laosthakhek.net/",
-            title: data.lotteryName || "หวยลาวท่าแขก 5D",
             lotto_date: data.lotto_date,
             lottery_name: data.lotteryName || "หวยลาวท่าแขก 5D",
             start_spin: data.start_spin ? new Date(data.start_spin) : null,
@@ -633,7 +630,6 @@ exports.LotteryLaoThakhekVip = async (data) => {
         const lotteryData = {
             name: data.name || "lao-lottery",
             url: data.url || "https://laosthakhek.net/",
-            title: data.lotteryName || "หวยลาวท่าแขก VIP",
             lotto_date: data.lotto_date,
             lottery_name: data.lotteryName || "หวยลาวท่าแขก VIP",
             start_spin: data.start_spin ? new Date(data.start_spin) : null,
@@ -731,7 +727,6 @@ exports.LotteryLaoExtra = async (data) => {
         const lotteryData = {
             name: data.name || "lao-extra",
             url: data.url || "https://laoextra.com",
-            title: data.lotteryName || "หวยลาว EXTRA",
             lotto_date: data.lotto_date,
             lottery_name: data.lotteryName || "หวยลาว EXTRA",
             start_spin: data.start_spin ? new Date(data.start_spin) : null,
@@ -830,7 +825,6 @@ exports.LotteryLao = async (data) => {
         const lotteryData = {
             name: data.name || "lao-lottery",
             url: data.url || "https://laolottery.com",
-            title: data.title || "หวยลาวปกติ",
             lotto_date: data.date,
             lottery_name: data.lotteryName || "lao_lottery",
             start_spin: new Date(data.start_spin) || new Date(),
@@ -932,7 +926,6 @@ exports.LotteryLaoStars = async (data) => {
             name: data.name || "lao-stars",
             url: "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars/latest",
             type: "normal",
-            title: data.lotteryName || "หวยลาวสตาร์",
             lottery_name: data.lotteryName || "หวยลาวสตาร์",
             lotto_date: data.lotto_date,
             start_spin: data.start_spin ? new Date(data.start_spin) : null,
