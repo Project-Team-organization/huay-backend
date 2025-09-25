@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const lotterySetsController = require("../controller/lottery/lotterySets.controller");
+const serviceHuayManualController = require("../controller/lottery/lao-lottery-manual.controller")
 const lotteryTypeController = require("../controller/lottery/lotteryType.controller");
 const huayController = require("../controller/lottery/huay.controller");
 const bettingTypesController = require("../controller/lottery/bettingTypes.controller");
@@ -314,5 +315,19 @@ router.post('/hangseng-afternoon/latest', fetchLatestHangsengAfternoonLottery);
 //ดึงข้อมูลหวยฮั่งเส็งรอบบ่ายทั้งหมดแบบ pagination
 router.get('/hangseng-afternoon', getAllHangsengAfternoonLottery);
 
+
+
+//สร้างหวยแบบ manul
+router.post("/manul/create/hd", serviceHuayManualController.createHd);
+router.post("/manul/create/redcross", serviceHuayManualController.createRedcross);
+router.post("/manul/create/tv", serviceHuayManualController.createTv);
+router.post("/manul/create/vip", serviceHuayManualController.createVip);
+router.post("/manul/create/start-vip", serviceHuayManualController.createStarsVip);
+router.post("/manul/create/thakhek-5d", serviceHuayManualController.createThakhek5d);
+router.post("/manul/create/thakhek-vip", serviceHuayManualController.createThakhekVip);
+router.post("/manul/create/extra", serviceHuayManualController.createExtra);
+router.post("/manul/create/start", serviceHuayManualController.createStars);
+router.post("/manul/create/union", serviceHuayManualController.createUnion)
+router.post("/manul/create/lao", serviceHuayManualController.createLao)
 
 module.exports = router;
