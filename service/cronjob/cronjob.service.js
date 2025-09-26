@@ -726,7 +726,7 @@ exports.createLaoTvLottery = async function () {
 // ============= ฟังก์ชันสำหรับหวย 4D =============
 
 // ฟังก์ชันทั่วไปสำหรับสร้างหวย 4D
-const create4dLottery = async (lotteryName, drawTime, lotteryTypeStr = "หวย4D") => {
+const create4dLottery = async (lotteryName, drawTime, lotteryTypeStr = "หวย 4D") => {
   try {
     const { createLotterySets } = require('../lottery/lotterySets.service');
     const LotteryType = require('../../models/lotteryType.model');
@@ -751,13 +751,9 @@ const create4dLottery = async (lotteryName, drawTime, lotteryTypeStr = "หว�
       resultTime.setDate(resultTime.getDate() + 1);
     }
     
-    // สร้างเวลาเปิดแทง (เที่ยงคืน)
-    const openTime = new Date();
+    // กำหนดเวลาเปิดแทงเป็นเที่ยงคืนของวันเดียวกับ resultTime
+    const openTime = new Date(resultTime);
     openTime.setHours(0, 0, 0, 0);
-    // ถ้าขณะนี้ผ่านเที่ยงคืนแล้ว ให้เปิดแทงวันถัดไป
-    if (now.getHours() >= 0) {
-      openTime.setDate(openTime.getDate() + 1);
-    }
     
     const lotteryData = {
       lottery_type_id: lotteryType._id,
@@ -837,13 +833,9 @@ const createHanoiLottery = async (lotteryName, drawTime, lotteryTypeStr = "ห�
       resultTime.setDate(resultTime.getDate() + 1);
     }
     
-    // สร้างเวลาเปิดแทง (เที่ยงคืน)
-    const openTime = new Date();
+    // กำหนดเวลาเปิดแทงเป็นเที่ยงคืนของวันเดียวกับ resultTime
+    const openTime = new Date(resultTime);
     openTime.setHours(0, 0, 0, 0);
-    // ถ้าขณะนี้ผ่านเที่ยงคืนแล้ว ให้เปิดแทงวันถัดไป
-    if (now.getHours() >= 0) {
-      openTime.setDate(openTime.getDate() + 1);
-    }
     
     const lotteryData = {
       lottery_type_id: lotteryType._id,
@@ -852,7 +844,7 @@ const createHanoiLottery = async (lotteryName, drawTime, lotteryTypeStr = "ห�
       closeTime: resultTime, // ปิดแทงตรงเวลาออกผล
       result_time: resultTime,
       status: "scheduled"
-    };
+    }; 
     
     // ตรวจสอบว่ามีงวดนี้แล้วหรือยัง
     const LotterySets = require('../../models/lotterySets.model');
