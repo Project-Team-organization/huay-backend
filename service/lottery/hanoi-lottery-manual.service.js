@@ -18,12 +18,9 @@ exports.LotteryHanoi = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-lottery",
-            url: data.url || "https://hanoi.lottery.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอย",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -78,8 +75,6 @@ exports.LotteryHanoi = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoi(lotteryData);
@@ -98,12 +93,9 @@ exports.LotteryHanoiDevelop = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-develop",
-            url: data.url || "https://hanoi-develop.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอยพัฒนา",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -158,8 +150,6 @@ exports.LotteryHanoiDevelop = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-develop-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiDevelop(lotteryData);
@@ -177,12 +167,9 @@ exports.LotteryHanoiVip = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-vip",
-            url: data.url || "https://hanoi-vip.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอย VIP",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -237,8 +224,6 @@ exports.LotteryHanoiVip = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-vip-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiVip(lotteryData);
@@ -257,12 +242,9 @@ exports.LotteryHanoiExtra = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-extra",
-            url: data.url || "https://hanoi-extra.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอย Extra",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -317,8 +299,6 @@ exports.LotteryHanoiExtra = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-extra-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiExtra(lotteryData);
@@ -337,12 +317,9 @@ exports.LotteryHanoiAsean = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-asean",
-            url: data.url || "https://hanoi-asean.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอยอาเซียน",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -397,8 +374,6 @@ exports.LotteryHanoiAsean = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-asean-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiAsean(lotteryData);
@@ -415,12 +390,9 @@ exports.LotteryHanoiHd = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-hd",
-            url: data.url || "https://hanoi-hd.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอย HD",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -475,8 +447,6 @@ exports.LotteryHanoiHd = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-hd-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiHd(lotteryData);
@@ -495,12 +465,9 @@ exports.LotteryHanoiStar = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-star",
-            url: data.url || "https://hanoi-star.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอยสตาร์",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -555,8 +522,6 @@ exports.LotteryHanoiStar = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-star-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiStar(lotteryData);
@@ -575,12 +540,9 @@ exports.LotteryHanoiTv = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-tv",
-            url: data.url || "https://hanoi-tv.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอย TV",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -635,8 +597,6 @@ exports.LotteryHanoiTv = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-tv-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiTv(lotteryData);
@@ -655,12 +615,9 @@ exports.LotteryHanoiSpecial = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-special",
-            url: data.url || "https://hanoi-special.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอยเฉพาะกิจ",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -715,8 +672,6 @@ exports.LotteryHanoiSpecial = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-special-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiSpecial(lotteryData);
@@ -735,12 +690,9 @@ exports.LotteryHanoiRedcross = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-redcross",
-            url: data.url || "https://hanoi-redcross.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอยกาชาด",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -795,8 +747,6 @@ exports.LotteryHanoiRedcross = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-redcross-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiRedcross(lotteryData);
@@ -815,12 +765,9 @@ exports.LotteryHanoiSpecialApi = async (data) => {
 
         const lotteryData = {
             name: data.name || "hanoi-special-api",
-            url: data.url || "https://hanoi-special-api.com",
             lotto_date: data.lotto_date,
             lottery_name: data.lottery_name || "หวยฮานอยพิเศษ API",
             draw_number: data.draw_number || "",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
             results: {
                 digit3_top: data.results?.digit3_top || "",
                 digit2_top: data.results?.digit2_top || "",
@@ -875,8 +822,6 @@ exports.LotteryHanoiSpecialApi = async (data) => {
                     digit: prize2nd.length >= 2 ? [prize2nd.slice(-2)] : [],
                 },
             ],
-            scraper: data.scraper || "hanoi-special-api-manual",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : new Date(),
         };
 
         const doc = new LotteryHanoiSpecialApi(lotteryData);
