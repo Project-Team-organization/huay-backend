@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const lotterySetsController = require("../controller/lottery/lotterySets.controller");
+const serviceHuayManualController = require("../controller/lottery/lao-lottery-manual.controller")
+const serviceHanoiManualController = require("../controller/lottery/hanoi-lottery-manual.controller")
 const lotteryTypeController = require("../controller/lottery/lotteryType.controller");
 const huayController = require("../controller/lottery/huay.controller");
 const bettingTypesController = require("../controller/lottery/bettingTypes.controller");
@@ -314,5 +316,32 @@ router.post('/hangseng-afternoon/latest', fetchLatestHangsengAfternoonLottery);
 //ดึงข้อมูลหวยฮั่งเส็งรอบบ่ายทั้งหมดแบบ pagination
 router.get('/hangseng-afternoon', getAllHangsengAfternoonLottery);
 
+
+
+//สร้างหวยลาวแบบ manual
+router.post("/manul/create/hd", serviceHuayManualController.createHd);
+router.post("/manul/create/redcross", serviceHuayManualController.createRedcross);
+router.post("/manul/create/tv", serviceHuayManualController.createTv);
+router.post("/manul/create/vip", serviceHuayManualController.createVip);
+router.post("/manul/create/start-vip", serviceHuayManualController.createStarsVip);
+router.post("/manul/create/thakhek-5d", serviceHuayManualController.createThakhek5d);
+router.post("/manul/create/thakhek-vip", serviceHuayManualController.createThakhekVip);
+router.post("/manul/create/extra", serviceHuayManualController.createExtra);
+router.post("/manul/create/start", serviceHuayManualController.createStars);
+router.post("/manul/create/union", serviceHuayManualController.createUnion)
+router.post("/manul/create/lao", serviceHuayManualController.createLao)
+
+//สร้างหวยฮานอยแบบ manual
+router.post("/manul/hanoi/create/hanoi", serviceHanoiManualController.createHanoi);
+router.post("/manul/hanoi/create/hanoi-develop", serviceHanoiManualController.createHanoiDevelop);
+router.post("/manul/hanoi/create/hanoi-vip", serviceHanoiManualController.createHanoiVip);
+router.post("/manul/hanoi/create/hanoi-extra", serviceHanoiManualController.createHanoiExtra);
+router.post("/manul/hanoi/create/hanoi-asean", serviceHanoiManualController.createHanoiAsean);
+router.post("/manul/hanoi/create/hanoi-hd", serviceHanoiManualController.createHanoiHd);
+router.post("/manul/hanoi/create/hanoi-star", serviceHanoiManualController.createHanoiStar);
+router.post("/manul/hanoi/create/hanoi-tv", serviceHanoiManualController.createHanoiTv);
+router.post("/manul/hanoi/create/hanoi-special", serviceHanoiManualController.createHanoiSpecial);
+router.post("/manul/hanoi/create/hanoi-redcross", serviceHanoiManualController.createHanoiRedcross);
+router.post("/manul/hanoi/create/hanoi-special-api", serviceHanoiManualController.createHanoiSpecialApi);
 
 module.exports = router;

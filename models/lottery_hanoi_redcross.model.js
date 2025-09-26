@@ -10,10 +10,6 @@ const lotteryHanoiRedcrossSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    title: {
-      type: String,
-      default: "ฮานอยกาชาด",
-    },
     lotto_date: {
       type: String,
       default: "",

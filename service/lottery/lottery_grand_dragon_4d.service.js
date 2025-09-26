@@ -62,7 +62,6 @@ const fetchAndSaveGrandDragon4dLottery = async () => {
     const lotteryData = {
       name: data.name,
       url: data.url,
-      title: data.title || "หวย Grand Dragon 4D",
       lotto_date: data.lotto_date,
       draw_number: data.draw_number,
       lottery_name: data.lotteryName,

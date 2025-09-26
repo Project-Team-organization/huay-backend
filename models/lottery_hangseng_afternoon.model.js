@@ -10,10 +10,6 @@ const lotteryHangsengAfternoonSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    title: {
-      type: String,
-      default: "หวยฮั่งเส็งรอบบ่าย",
-    },
     lotto_date: {
       type: String,
       default: "",

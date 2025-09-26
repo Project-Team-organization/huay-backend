@@ -10,10 +10,7 @@ const lotteryKoreanStockVipSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    title: {
-      type: String,
-      default: "หวยหุ้นเกาหลี VIP",
-    },
+
     lotto_date: {
       type: String,
       default: "",
