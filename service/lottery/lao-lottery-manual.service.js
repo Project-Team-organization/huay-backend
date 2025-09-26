@@ -10,6 +10,60 @@ const LotteryLao = require("../../models/lotterylao.model");
 const LotteryLaoStars = require("../../models/lotterylao.stars.model");
 const LotteryLaoUnion = require("../../models/lotterylao.union.model");
 
+// Helper function เพื่อสร้าง betting_types เฉพาะที่มีค่า
+const createBettingTypes = (threeTop, threeToad, twoTop, twoBottom, twoSpecial, oneTop, oneBottom, oneFront) => {
+    const betting_types = [];
+    if (threeTop) betting_types.push({ code: "3top", name: "สามตัวบน", digit: threeTop });
+    if (threeToad && threeToad.length > 0) betting_types.push({ code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") });
+    if (twoTop) betting_types.push({ code: "2top", name: "สองตัวบน", digit: twoTop });
+    if (twoBottom) betting_types.push({ code: "2bottom", name: "สองตัวล่าง", digit: twoBottom });
+    if (twoSpecial) betting_types.push({ code: "2special", name: "สองตัวพิเศษ", digit: twoSpecial });
+    if (oneTop) betting_types.push({ code: "1top", name: "วิ่งบน", digit: oneTop });
+    if (oneBottom) betting_types.push({ code: "1bottom", name: "วิ่งล่าง", digit: oneBottom });
+    if (oneFront) betting_types.push({ code: "1front", name: "วิ่งหน้า", digit: oneFront });
+    return betting_types;
+};
+
+// Helper function เพื่อเพิ่ม optional fields
+const addOptionalFields = (lotteryData, data) => {
+    // Required fields - ใส่ค่า default หากไม่มี
+    lotteryData.start_spin = data.start_spin ? new Date(data.start_spin) : new Date();
+    lotteryData.show_result = data.show_result ? new Date(data.show_result) : new Date();
+
+    // Optional fields - เพิ่มเฉพาะเมื่อมีค่า
+    if (data.url) lotteryData.url = data.url;
+    if (data.type) lotteryData.type = data.type;
+    if (data.scraper) lotteryData.scraper = data.scraper;
+    if (data.scrapedAt) lotteryData.scrapedAt = new Date(data.scrapedAt);
+    if (data.apiUpdate) lotteryData.apiUpdate = new Date(data.apiUpdate);
+    if (data.apiNow) lotteryData.apiNow = data.apiNow;
+    return lotteryData;
+};
+
+// Helper function สำหรับการคำนวณ permutation
+const calculatePermutations = (threeTop) => {
+    let threeToad = [];
+    if (threeTop) {
+        const digits = threeTop.split("");
+        const perms = new Set();
+
+        const permute = (arr, m = []) => {
+            if (arr.length === 0) {
+                perms.add(m.join(""));
+            } else {
+                for (let i = 0; i < arr.length; i++) {
+                    const curr = arr.slice();
+                    const next = curr.splice(i, 1);
+                    permute(curr.slice(), m.concat(next));
+                }
+            }
+        };
+
+        permute(digits);
+        threeToad = [...perms];
+    }
+    return threeToad;
+};
 
 exports.LotteryLaoHd = async (data) => {
     try {
@@ -20,26 +74,7 @@ exports.LotteryLaoHd = async (data) => {
         }
 
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
@@ -65,19 +100,14 @@ exports.LotteryLaoHd = async (data) => {
             oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        // ➤ เตรียม betting_types
-        const betting_types = [
-            { code: "3top", name: "สามตัวบน", digit: threeTop },
-            { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-            { code: "2top", name: "สองตัวบน", digit: twoTop },
-            { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-            { code: "1top", name: "วิ่งบน", digit: oneTop },
-            { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-        ];
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
 
-        // ➤ สร้าง document พร้อมค่า derived + betting_types
-        const doc = new LotteryLaoHd({
-            ...data,
+        let lotteryData = {
+            name: data.name || "lao-hd",
+            lotto_date: data.lotto_date,
+            lottery_name: data.lottery_name || "หวยลาว HD",
+            results: data.results,
             betting_types,
             derived: {
                 threeTop,
@@ -87,15 +117,18 @@ exports.LotteryLaoHd = async (data) => {
                 oneTop,
                 oneBottom,
             },
-        });
+        };
 
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
+
+        const doc = new LotteryLaoHd(lotteryData);
         return await doc.save();
     } catch (error) {
         console.error("Error in LotteryLaoHd service:", error);
         throw error;
     }
 };
-
 
 exports.LotteryLaoRedcross = async (data) => {
     try {
@@ -106,26 +139,7 @@ exports.LotteryLaoRedcross = async (data) => {
         }
 
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
@@ -163,22 +177,14 @@ exports.LotteryLaoRedcross = async (data) => {
             oneFront = data.results.digit1;
         }
 
-        // ➤ เตรียม betting_types
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, twoSpecial, oneTop, oneBottom, oneFront);
 
-        const betting_types = [
-            { code: "3top", name: "สามตัวบน", digit: threeTop },
-            { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-            { code: "2top", name: "สองตัวบน", digit: twoTop },
-            { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-            { code: "2special", name: "สองตัวพิเศษ", digit: twoSpecial },
-            { code: "1top", name: "วิ่งบน", digit: oneTop },
-            { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            { code: "1front", name: "วิ่งหน้า", digit: oneFront },
-        ];
-
-        // ➤ สร้าง document พร้อมค่า derived + betting_types
-        const doc = new LotteryLaoRedcross({
-            ...data,
+        let lotteryData = {
+            name: data.name || "lao-redcross",
+            lotto_date: data.lotto_date,
+            lottery_name: data.lottery_name || "หวยลาวกาชาด",
+            results: data.results,
             betting_types,
             derived: {
                 threeTop,
@@ -190,8 +196,12 @@ exports.LotteryLaoRedcross = async (data) => {
                 oneBottom,
                 oneFront,
             },
-        });
+        };
 
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
+
+        const doc = new LotteryLaoRedcross(lotteryData);
         return await doc.save();
     } catch (error) {
         console.error("Error in LotteryLaoRedcross service:", error);
@@ -199,75 +209,49 @@ exports.LotteryLaoRedcross = async (data) => {
     }
 };
 
-
 exports.LotteryLaoTv = async (data) => {
     try {
         // ➤ หา 3 ตัวบน
         let threeTop = "";
-        if (data.results.digit3) {
+        if (data.results?.digit3) {
             threeTop = data.results.digit3;
         }
 
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.results.digit2_top) {
+        if (data.results?.digit2_top) {
             twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.results.digit2_bottom) {
+        if (data.results?.digit2_bottom) {
             twoBottom = data.results.digit2_bottom;
         }
 
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.results.digit3 && data.results.digit3.length === 3) {
-            oneTop = data.results.digit3.split("").join(","); // เช่น "764" → "7,6,4"
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
+            oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.results.digit2_bottom && data.results.digit2_bottom.length === 2) {
-            oneBottom = data.results.digit2_bottom.split("").join(","); // เช่น "24" → "2,4"
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
+            oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        // ➤ เตรียม betting_types
-        const betting_types = [
-            { code: "3top", name: "สามตัวบน", digit: threeTop },
-            { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-            { code: "2top", name: "สองตัวบน", digit: twoTop },
-            { code: "2bot", name: "สองตัวล่าง", digit: twoBottom },
-            { code: "1top", name: "วิ่งบน", digit: oneTop },
-            { code: "1bot", name: "วิ่งล่าง", digit: oneBottom },
-        ];
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
 
-
-        // ➤ สร้าง document พร้อมค่า derived + betting_types
-        const doc = new LotteryLaoTv({
-            ...data,
+        let lotteryData = {
+            name: data.name || "lao-tv",
+            lotto_date: data.lotto_date,
+            lottery_name: data.lottery_name || "หวยลาว TV",
+            results: data.results,
             betting_types,
             derived: {
                 threeTop,
@@ -277,8 +261,12 @@ exports.LotteryLaoTv = async (data) => {
                 oneTop,
                 oneBottom,
             },
-        });
+        };
 
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
+
+        const doc = new LotteryLaoTv(lotteryData);
         return await doc.save();
     } catch (error) {
         console.error("Error in LotteryLaoTv service:", error);
@@ -290,78 +278,46 @@ exports.LotteryLaoVip = async (data) => {
     try {
         // ➤ หา 3 ตัวบน
         let threeTop = "";
-        if (data.results.digit3) {
+        if (data.results?.digit3) {
             threeTop = data.results.digit3;
         }
 
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.results.digit2_top) {
+        if (data.results?.digit2_top) {
             twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.results.digit2_bottom) {
+        if (data.results?.digit2_bottom) {
             twoBottom = data.results.digit2_bottom;
         }
 
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.results.digit3 && data.results.digit3.length === 3) {
-            oneTop = data.results.digit3.split("").join(","); // เช่น "234" → "2,3,4"
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
+            oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.results.digit2_bottom && data.results.digit2_bottom.length === 2) {
-            oneBottom = data.results.digit2_bottom.split(",").join(","); // เช่น "25" → "2,5"
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
+            oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        const lotteryData = {
-            name: data.name || "lao-lottery",
-            url: data.url || "https://laosviplot.com",
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
+
+        let lotteryData = {
+            name: data.name || "lao-vip",
             lotto_date: data.lotto_date,
-            lottery_name: data.lotteryName || "หวยลาว VIP",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
-            results: {
-                digit5: data.results.digit5,
-                digit4: data.results.digit4,
-                digit3: data.results.digit3,
-                digit2_top: data.results.digit2_top,
-                digit2_bottom: data.results.digit2_bottom,
-            },
-            betting_types: [
-                { code: "3top", name: "สามตัวบน", digit: threeTop },
-                { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-                { code: "2top", name: "สองตัวบน", digit: twoTop },
-                { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-                { code: "1top", name: "วิ่งบน", digit: oneTop },
-                { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            ],
+            lottery_name: data.lottery_name || "หวยลาว VIP",
+            results: data.results,
+            betting_types,
             derived: {
                 threeTop,
                 threeToad,
@@ -370,9 +326,10 @@ exports.LotteryLaoVip = async (data) => {
                 oneTop,
                 oneBottom,
             },
-            scraper: data.scraper || "lao-vip",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
         };
+
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
 
         const doc = new LotteryLaoVip(lotteryData);
         return await doc.save();
@@ -382,89 +339,54 @@ exports.LotteryLaoVip = async (data) => {
     }
 };
 
-// Stars VIP
 exports.LotteryLaoStarsVip = async (data) => {
     try {
         // ➤ หา 3 ตัวบน
         let threeTop = "";
-        if (data.results.digit3) {
+        if (data.results?.digit3) {
             threeTop = data.results.digit3;
         }
-        
+
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.results.digit2_top) {
+        if (data.results?.digit2_top) {
             twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.results.digit2_bottom) {
+        if (data.results?.digit2_bottom) {
             twoBottom = data.results.digit2_bottom;
         }
-        
+
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.results.digit3 && data.results.digit3.length === 3) {
-            oneTop = data.results.digit3.split("").join(","); // เช่น "234" → "2,3,4"
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
+            oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.results.digit2_bottom && data.results.digit2_bottom.length === 2) {
-            oneBottom = data.results.digit2_bottom.split("").join(","); // เช่น "25" → "2,5"
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
+            oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        const lotteryData = {
-            name: data.name || "lao-lottery",
-            url: data.url || "https://api.laostars-vip.com",
-            type: "vip",
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
+
+        let lotteryData = {
+            name: data.name || "lao-stars-vip",
             lotto_date: data.lotto_date,
-            lottery_name: data.lotteryName || "หวยลาวสตาร์ VIP",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
-            results: {
-                digit5: data.results.digit5,
-                digit4: data.results.digit4,
-                digit3: data.results.digit3,
-                digit2_top: data.results.digit2_top,
-                digit2_bottom: data.results.digit2_bottom,
-            },
-            betting_types: [
-                { code: "3top", name: "สามตัวบน", digit: threeTop },
-                { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-                { code: "2top", name: "สองตัวบน", digit: twoTop },
-                { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-                { code: "1top", name: "วิ่งบน", digit: oneTop },
-                { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            ],
-            scraper: data.scraper || "lao-stars-vip",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
-            apiUpdate: data.apiUpdate ? new Date(data.apiUpdate) : null,
-            apiNow: data.apiNow || "",
+            lottery_name: data.lottery_name || "หวยลาวสตาร์ VIP",
+            results: data.results,
+            betting_types,
         };
+
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
 
         const doc = new LotteryLaoStarsVip(lotteryData);
         return await doc.save();
@@ -474,83 +396,50 @@ exports.LotteryLaoStarsVip = async (data) => {
     }
 };
 
-
-// Thakhek 5D
 exports.LotteryLaoThakhek5d = async (data) => {
     try {
         // ➤ หา 3 ตัวบน
         let threeTop = "";
-        if (data.results.digit3) {
+        if (data.results?.digit3) {
             threeTop = data.results.digit3;
         }
-        
+
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.results.digit2_top) {
+        if (data.results?.digit2_top) {
             twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.results.digit2_bottom) {
+        if (data.results?.digit2_bottom) {
             twoBottom = data.results.digit2_bottom;
         }
-        
+
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.results.digit3 && data.results.digit3.length === 3) {
-            oneTop = data.results.digit3.split("").join(","); // เช่น "234" → "2,3,4"
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
+            oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.results.digit2_bottom && data.results.digit2_bottom.length === 2) {
-            oneBottom = data.results.digit2_bottom.split("").join(","); // เช่น "25" → "2,5"
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
+            oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        const lotteryData = {
-            name: data.name || "lao-lottery",
-            url: data.url || "https://laosthakhek.net/",
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
+
+        let lotteryData = {
+            name: data.name || "lao-thakhek-5d",
             lotto_date: data.lotto_date,
-            lottery_name: data.lotteryName || "หวยลาวท่าแขก 5D",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
-            results: {
-                digit4: data.results.digit4,
-                digit3: data.results.digit3,
-                digit2_top: data.results.digit2_top,
-                digit2_bottom: data.results.digit2_bottom,
-            },
-            betting_types: [
-                { code: "3top", name: "สามตัวบน", digit: threeTop },
-                { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-                { code: "2bottom", name: "สองตัวบน", digit: twoTop },
-                { code: "2bot", name: "สองตัวล่าง", digit: twoBottom },
-                { code: "1top", name: "วิ่งบน", digit: oneTop },
-                { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            ],
+            lottery_name: data.lottery_name || "หวยลาวท่าแขก 5D",
+            results: data.results,
+            betting_types,
             derived: {
                 threeTop,
                 threeToad,
@@ -559,9 +448,10 @@ exports.LotteryLaoThakhek5d = async (data) => {
                 oneTop,
                 oneBottom,
             },
-            scraper: data.scraper || "lao-thakhek-5d",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
         };
+
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
 
         const doc = new LotteryLaoThakhek5d(lotteryData);
         return await doc.save();
@@ -571,83 +461,50 @@ exports.LotteryLaoThakhek5d = async (data) => {
     }
 };
 
-
-// Thakhek VIP
 exports.LotteryLaoThakhekVip = async (data) => {
     try {
         // ➤ หา 3 ตัวบน
         let threeTop = "";
-        if (data.results.digit3) {
+        if (data.results?.digit3) {
             threeTop = data.results.digit3;
         }
-        
+
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.results.digit2_top) {
+        if (data.results?.digit2_top) {
             twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.results.digit2_bottom) {
+        if (data.results?.digit2_bottom) {
             twoBottom = data.results.digit2_bottom;
         }
-        
+
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.results.digit3 && data.results.digit3.length === 3) {
-            oneTop = data.results.digit3.split("").join(","); // เช่น "234" → "2,3,4"
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
+            oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.results.digit2_bottom && data.results.digit2_bottom.length === 2) {
-            oneBottom = data.results.digit2_bottom.split("").join(","); // เช่น "25" → "2,5"
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
+            oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        const lotteryData = {
-            name: data.name || "lao-lottery",
-            url: data.url || "https://laosthakhek.net/",
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
+
+        let lotteryData = {
+            name: data.name || "lao-thakhek-vip",
             lotto_date: data.lotto_date,
-            lottery_name: data.lotteryName || "หวยลาวท่าแขก VIP",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
-            results: {
-                digit4: data.results.digit4,
-                digit3: data.results.digit3,
-                digit2_top: data.results.digit2_top,
-                digit2_bottom: data.results.digit2_bottom,
-            },
-            betting_types: [
-                { code: "3top", name: "สามตัวบน", digit: threeTop },
-                { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-                { code: "2top", name: "สองตัวบน", digit: twoTop },
-                { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-                { code: "1top", name: "วิ่งบน", digit: oneTop },
-                { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            ],
+            lottery_name: data.lottery_name || "หวยลาวท่าแขก VIP",
+            results: data.results,
+            betting_types,
             derived: {
                 threeTop,
                 threeToad,
@@ -656,9 +513,10 @@ exports.LotteryLaoThakhekVip = async (data) => {
                 oneTop,
                 oneBottom,
             },
-            scraper: data.scraper || "lao-thakhek-vip",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
         };
+
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
 
         const doc = new LotteryLaoThakhekVip(lotteryData);
         return await doc.save();
@@ -668,84 +526,50 @@ exports.LotteryLaoThakhekVip = async (data) => {
     }
 };
 
-
-// Extra
 exports.LotteryLaoExtra = async (data) => {
     try {
         // ➤ หา 3 ตัวบน
         let threeTop = "";
-        if (data.results.digit3) {
+        if (data.results?.digit3) {
             threeTop = data.results.digit3;
         }
 
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.results.digit2_top) {
+        if (data.results?.digit2_top) {
             twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.results.digit2_bottom) {
+        if (data.results?.digit2_bottom) {
             twoBottom = data.results.digit2_bottom;
         }
 
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.results.digit3 && data.results.digit3.length === 3) {
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
             oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.results.digit2_bottom && data.results.digit2_bottom.length === 2) {
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
             oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        const lotteryData = {
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
+
+        let lotteryData = {
             name: data.name || "lao-extra",
-            url: data.url || "https://laoextra.com",
             lotto_date: data.lotto_date,
-            lottery_name: data.lotteryName || "หวยลาว EXTRA",
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
-            results: {
-                digit5: data.results.digit5,
-                digit4: data.results.digit4,
-                digit3: data.results.digit3,
-                digit2_top: data.results.digit2_top,
-                digit2_bottom: data.results.digit2_bottom,
-            },
-            betting_types: [
-                { code: "3top", name: "สามตัวบน", digit: threeTop },
-                { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-                { code: "2top", name: "สองตัวบน", digit: twoTop },
-                { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-                { code: "1top", name: "วิ่งบน", digit: oneTop },
-                { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            ],
+            lottery_name: data.lottery_name || "หวยลาว EXTRA",
+            results: data.results,
+            betting_types,
             derived: {
                 threeTop,
                 threeToad,
@@ -754,9 +578,10 @@ exports.LotteryLaoExtra = async (data) => {
                 oneTop,
                 oneBottom,
             },
-            scraper: data.scraper || "lao-extra",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
         };
+
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
 
         const doc = new LotteryLaoExtra(lotteryData);
         return await doc.save();
@@ -766,86 +591,50 @@ exports.LotteryLaoExtra = async (data) => {
     }
 };
 
-
-// Lao พัฒนา
 exports.LotteryLao = async (data) => {
     try {
-        // ➤ หา 3 ตัวบน
+        // ➤ หา 3 ตัวบน (ใช้ data.results แทน data.numbers)
         let threeTop = "";
-        if (data.numbers.digit3) {
-            threeTop = data.numbers.digit3;
+        if (data.results?.digit3) {
+            threeTop = data.results.digit3;
         }
 
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.numbers.digit2_top) {
-            twoTop = data.numbers.digit2_top;
+        if (data.results?.digit2_top) {
+            twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.numbers.digit2_bottom) {
-            twoBottom = data.numbers.digit2_bottom;
+        if (data.results?.digit2_bottom) {
+            twoBottom = data.results.digit2_bottom;
         }
 
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.numbers.digit3 && data.numbers.digit3.length === 3) {
-            oneTop = data.numbers.digit3.split("").join(",");
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
+            oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.numbers.digit2_bottom && data.numbers.digit2_bottom.length === 2) {
-            oneBottom = data.numbers.digit2_bottom.split("").join(",");
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
+            oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        const lotteryData = {
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
+
+        let lotteryData = {
             name: data.name || "lao-lottery",
-            url: data.url || "https://laolottery.com",
-            lotto_date: data.date,
-            lottery_name: data.lotteryName || "lao_lottery",
-            start_spin: new Date(data.start_spin) || new Date(),
-            show_result: new Date(data.show_result) || new Date(),
-            results: {
-                digit5: data.numbers.digit5,
-                digit4: data.numbers.digit4,
-                digit3: data.numbers.digit3,
-                digit2_top: data.numbers.digit2_top,
-                digit2_bottom: data.numbers.digit2_bottom,
-                animal: data.numbers.animal,
-                development: data.numbers.development,
-            },
-            betting_types: [
-                { code: "3top", name: "สามตัวบน", digit: threeTop },
-                { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-                { code: "2top", name: "สองตัวบน", digit: twoTop },
-                { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-                { code: "1top", name: "วิ่งบน", digit: oneTop },
-                { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            ],
+            lotto_date: data.lotto_date,
+            lottery_name: data.lottery_name || "หวยลาวพัฒนา",
+            results: data.results,
+            betting_types,
             derived: {
                 threeTop,
                 threeToad,
@@ -854,9 +643,10 @@ exports.LotteryLao = async (data) => {
                 oneTop,
                 oneBottom,
             },
-            scraper: data.scraper || "lao-lottery",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
         };
+
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
 
         const doc = new LotteryLao(lotteryData);
         return await doc.save();
@@ -866,85 +656,50 @@ exports.LotteryLao = async (data) => {
     }
 };
 
-
-// Stars
 exports.LotteryLaoStars = async (data) => {
     try {
         // ➤ หา 3 ตัวบน
         let threeTop = "";
-        if (data.results.digit3) {
+        if (data.results?.digit3) {
             threeTop = data.results.digit3;
         }
 
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.results.digit2_top) {
+        if (data.results?.digit2_top) {
             twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.results.digit2_bottom) {
+        if (data.results?.digit2_bottom) {
             twoBottom = data.results.digit2_bottom;
         }
 
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.results.digit3 && data.results.digit3.length === 3) {
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
             oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.results.digit2_bottom && data.results.digit2_bottom.length === 2) {
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
             oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        const lotteryData = {
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
+
+        let lotteryData = {
             name: data.name || "lao-stars",
-            url: "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars/latest",
-            type: "normal",
-            lottery_name: data.lotteryName || "หวยลาวสตาร์",
+            lottery_name: data.lottery_name || "หวยลาวสตาร์",
             lotto_date: data.lotto_date,
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
-            results: {
-                digit5: data.results.digit5,
-                digit4: data.results.digit4,
-                digit3: data.results.digit3,
-                digit2_top: data.results.digit2_top,
-                digit2_bottom: data.results.digit2_bottom,
-            },
-            betting_types: [
-                { code: "3top", name: "สามตัวบน", digit: threeTop },
-                { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-                { code: "2top", name: "สองตัวบน", digit: twoTop },
-                { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-                { code: "1top", name: "วิ่งบน", digit: oneTop },
-                { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            ],
+            results: data.results,
+            betting_types,
             derived: {
                 threeTop,
                 threeToad,
@@ -953,9 +708,10 @@ exports.LotteryLaoStars = async (data) => {
                 oneTop,
                 oneBottom,
             },
-            scraper: data.scraper || "lao-stars",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
         };
+
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
 
         const doc = new LotteryLaoStars(lotteryData);
         return await doc.save();
@@ -965,84 +721,50 @@ exports.LotteryLaoStars = async (data) => {
     }
 };
 
-
-// Union
 exports.LotteryLaoUnion = async (data) => {
     try {
         // ➤ หา 3 ตัวบน
         let threeTop = "";
-        if (data.results.digit3) {
+        if (data.results?.digit3) {
             threeTop = data.results.digit3;
         }
 
         // ➤ หา 3 ตัวโต๊ด
-        let threeToad = [];
-        if (threeTop) {
-            const digits = threeTop.split("");
-            const perms = new Set();
-
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    perms.add(m.join(""));
-                } else {
-                    for (let i = 0; i < arr.length; i++) {
-                        const curr = arr.slice();
-                        const next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
-                    }
-                }
-            };
-
-            permute(digits);
-            threeToad = [...perms];
-        }
+        const threeToad = calculatePermutations(threeTop);
 
         // ➤ หา 2 ตัวบน
         let twoTop = "";
-        if (data.results.digit2_top) {
+        if (data.results?.digit2_top) {
             twoTop = data.results.digit2_top;
         }
 
         // ➤ หา 2 ตัวล่าง
         let twoBottom = "";
-        if (data.results.digit2_bottom) {
+        if (data.results?.digit2_bottom) {
             twoBottom = data.results.digit2_bottom;
         }
 
         // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
         let oneTop = "";
-        if (data.results.digit3 && data.results.digit3.length === 3) {
+        if (data.results?.digit3 && data.results.digit3.length === 3) {
             oneTop = data.results.digit3.split("").join(",");
         }
 
         // ➤ 1 ตัวล่าง (วิ่งล่าง จาก digit2_bottom)
         let oneBottom = "";
-        if (data.results.digit2_bottom && data.results.digit2_bottom.length === 2) {
+        if (data.results?.digit2_bottom && data.results.digit2_bottom.length === 2) {
             oneBottom = data.results.digit2_bottom.split("").join(",");
         }
 
-        const lotteryData = {
+        // ➤ เตรียม betting_types และ lotteryData
+        const betting_types = createBettingTypes(threeTop, threeToad, twoTop, twoBottom, null, oneTop, oneBottom, null);
+
+        let lotteryData = {
+            name: data.name || "lao-union",
             lotto_date: data.lotto_date,
-            start_spin: data.start_spin ? new Date(data.start_spin) : null,
-            show_result: data.show_result ? new Date(data.show_result) : null,
-            results: {
-                digit5: data.results.digit5,
-                digit4: data.results.digit4,
-                digit3: data.results.digit3,
-                digit2_top: data.results.digit2_top,
-                digit2_bottom: data.results.digit2_bottom,
-            },
-            url: data.url || "https://laounionlottery.com",
-            name: data.name || "หวยลาว UNION",
-            lottery_name: data.lotteryName || "lao_union",
-            betting_types: [
-                { code: "3top", name: "สามตัวบน", digit: threeTop },
-                { code: "3toad", name: "สามตัวโต๊ด", digit: threeToad.join(",") },
-                { code: "2top", name: "สองตัวบน", digit: twoTop },
-                { code: "2bottom", name: "สองตัวล่าง", digit: twoBottom },
-                { code: "1top", name: "วิ่งบน", digit: oneTop },
-                { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
-            ],
+            lottery_name: data.lottery_name || "หวยลาว UNION",
+            results: data.results,
+            betting_types,
             derived: {
                 threeTop,
                 threeToad,
@@ -1051,9 +773,10 @@ exports.LotteryLaoUnion = async (data) => {
                 oneTop,
                 oneBottom,
             },
-            scraper: data.scraper || "lao-union",
-            scrapedAt: data.scrapedAt ? new Date(data.scrapedAt) : null,
         };
+
+        // เพิ่ม optional fields
+        lotteryData = addOptionalFields(lotteryData, data);
 
         const doc = new LotteryLaoUnion(lotteryData);
         return await doc.save();
@@ -1062,4 +785,3 @@ exports.LotteryLaoUnion = async (data) => {
         throw error;
     }
 };
-
