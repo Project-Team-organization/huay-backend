@@ -101,7 +101,6 @@ const fetchAndSaveHanoiExtraLottery = async () => {
     const lotteryData = {
       name: data.name,
       url: data.url,
-      title: data.title || "ฮานอย EXTRA",
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName,
       draw_number: data.draw_number,

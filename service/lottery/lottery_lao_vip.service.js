@@ -99,7 +99,6 @@ const fetchAndSaveLaoVipLottery = async () => {
     const lotteryData = {
       name: data.name || "lao-lottery",
       url: data.url || "https://laosviplot.com",
-      title: data.lotteryName || "หวยลาว VIP",
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName || "หวยลาว VIP",
       start_spin: data.start_spin ? new Date(data.start_spin) : null,

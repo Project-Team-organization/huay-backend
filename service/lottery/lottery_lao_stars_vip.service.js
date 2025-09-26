@@ -122,7 +122,6 @@ const processLotteryData = async () => {
       name: data.name || "lao-lottery",
       url: data.url || "https://api.laostars-vip.com",
       type: 'vip',
-      title: data.lotteryName || "หวยลาวสตาร์ VIP",
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName || "หวยลาวสตาร์ VIP",
       start_spin: new Date(data.start_spin),

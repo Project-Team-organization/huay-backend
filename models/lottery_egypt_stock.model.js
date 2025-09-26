@@ -10,10 +10,6 @@ const lotteryEgyptStockSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    title: {
-      type: String,
-      default: "หวยหุ้นอิยิปต์",
-    },
     lotto_date: {
       type: String,
       default: "",

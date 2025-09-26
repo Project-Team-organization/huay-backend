@@ -10,10 +10,6 @@ const lotteryGrandDragon4dSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    title: {
-      type: String,
-      default: "หวย Grand Dragon 4D",
-    },
     lotto_date: {
       type: String,
       required: true,

@@ -552,7 +552,7 @@ exports.evaluateUserBetsByLotterySet = async function (
     }else if(lottery_set.name === "หวยลาวสตาร์ VIP"){
       console.log("🇱🇦 ประมวลผลหวยลาวสตาร์ VIP");
       const result = await processlotterylaostars_vip(lottery_set_id, createdBy, lottery_set, lottery_type);
-      return result;
+      return result; 
     }else if(lottery_set.name === "หวยลาวกาชาด"){
       console.log("🇱🇦 ประมวลผลหวยลาวกาชาด");
       const result = await processlotterylao_redcross(lottery_set_id, createdBy, lottery_set, lottery_type);
@@ -642,7 +642,7 @@ exports.evaluateUserBetsByLotterySet = async function (
       console.log(`🎯 ประมวลผลหวยประเภทอื่น: ${lottery_set.name}`);
       // TODO: เพิ่มฟังก์ชันสำหรับหวยประเภทอื่นๆ
       throw new Error("ยังไม่รองรับหวยประเภทนี้");
-    } 
+    }
 
   } catch (error) {
     console.error("❌ evaluateUserBetsByLotterySet error:", error.message);
