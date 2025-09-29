@@ -3,6 +3,7 @@ const router = express.Router();
 const lotterySetsController = require("../controller/lottery/lotterySets.controller");
 const serviceHuayManualController = require("../controller/lottery/lao-lottery-manual.controller")
 const serviceHanoiManualController = require("../controller/lottery/hanoi-lottery-manual.controller")
+const service4DManualController = require("../controller/lottery/4d-lottery-manual.controller")
 const lotteryTypeController = require("../controller/lottery/lotteryType.controller");
 const huayController = require("../controller/lottery/huay.controller");
 const bettingTypesController = require("../controller/lottery/bettingTypes.controller");
@@ -343,5 +344,10 @@ router.post("/manul/hanoi/create/hanoi-tv", serviceHanoiManualController.createH
 router.post("/manul/hanoi/create/hanoi-special", serviceHanoiManualController.createHanoiSpecial);
 router.post("/manul/hanoi/create/hanoi-redcross", serviceHanoiManualController.createHanoiRedcross);
 router.post("/manul/hanoi/create/hanoi-special-api", serviceHanoiManualController.createHanoiSpecialApi);
+
+//สร้างหวย 4D แบบ manual
+router.post("/manual/create/singapore-4d", service4DManualController.createSingapore4d);
+router.post("/manual/create/magnum-4d", service4DManualController.createMagnum4d);
+router.post("/manual/create/grand-dragon-4d", service4DManualController.createGrandDragon4d);
 
 module.exports = router;

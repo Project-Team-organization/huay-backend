@@ -75,3 +75,10 @@ coverage/
 
 # Docker
 .dockerignore
+
+
+# SQLite files
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
