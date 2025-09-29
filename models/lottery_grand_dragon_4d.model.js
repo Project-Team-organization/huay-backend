@@ -6,10 +6,6 @@ const lotteryGrandDragon4dSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    url: {
-      type: String,
-      required: true,
-    },
     lotto_date: {
       type: String,
       required: true,
