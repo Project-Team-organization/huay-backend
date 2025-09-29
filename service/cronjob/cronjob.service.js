@@ -41,6 +41,30 @@ const logCronjobExecution = async (jobName, lotteryName, status, result = null, 
   }
 };
 
+// ===================== Time Helpers (Server-time aligned) =====================
+// หมายเหตุ: เวลาที่กำหนดในเอกสารเป็นเวลาไทย (Asia/Bangkok, UTC+7)
+// โค้ดนี้จะแปลงเวลาไทยให้เป็น timestamp เดียวกันในโซนเวลาของเซิร์ฟเวอร์
+// โดยใช้ Date.UTC เพื่อสร้างเวลาแบบ UTC จากคอมโพเนนต์ของเวลาไทย
+
+// คืนค่า Date ที่แทน "วันเดียวกับ baseDate ตามเวลาไทย" และเวลาชั่วโมง/นาทีที่ระบุ (เวลาไทย)
+function getBangkokDateAt(hoursThai, minutesThai, baseDate = new Date()) {
+  const year = baseDate.getFullYear();
+  const month = baseDate.getMonth();
+  const date = baseDate.getDate();
+  // ไทย UTC+7 ⇒ แปลงเป็น UTC ด้วยการลบ 7 ชั่วโมง
+  const utcMs = Date.UTC(year, month, date, hoursThai - 7, minutesThai, 0, 0);
+  return new Date(utcMs);
+}
+
+// คืนค่าเที่ยงคืนของวันเดียวกับ dateRef ตามเวลาไทย (Bangkok midnight) เป็น Date เซิร์ฟเวอร์
+function getBangkokMidnight(dateRef) {
+  const year = dateRef.getFullYear();
+  const month = dateRef.getMonth();
+  const date = dateRef.getDate();
+  const utcMs = Date.UTC(year, month, date, 0 - 7, 0, 0, 0);
+  return new Date(utcMs);
+}
+
 const lotteryLaoService = require('../lottery/lottery_lao.service');
 const lotteryLaoExtraService = require('../lottery/lottery_lao_extra.service');
 const lotteryLaoStarsService = require('../lottery/lottery_lao_stars.service');
@@ -397,13 +421,13 @@ exports.createThaiGovernmentLottery = async function () {
     if (currentDate === 2) {
       // ออกผลวันที่ 16 ของเดือนเดียวกัน เวลา 16:30
       drawDate = new Date(currentYear, currentMonth, 16);
-      resultTime = new Date(currentYear, currentMonth, 16, 16, 30, 0);
+      resultTime = getBangkokDateAt(16, 30, drawDate);
     }
     // ถ้าสร้างวันที่ 17 = ออกผลวันที่ 1 ของเดือนถัดไป
     else if (currentDate === 17) {
       // ออกผลวันที่ 1 ของเดือนถัดไป เวลา 16:30
       drawDate = new Date(currentYear, currentMonth + 1, 1);
-      resultTime = new Date(currentYear, currentMonth + 1, 1, 16, 30, 0);
+      resultTime = getBangkokDateAt(16, 30, drawDate);
     } else {
       console.log("⏰ ไม่ใช่วันที่สร้างหวยรัฐบาล (วันที่ 2 หรือ 17)");
       return;
@@ -422,7 +446,7 @@ exports.createThaiGovernmentLottery = async function () {
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: "หวยรัฐบาล",
-      openTime: now, // เริ่มแทงได้ทันที
+      openTime: now, // เริ่มแทงได้ทันที (เวลาเซิร์ฟเวอร์)
       closeTime: new Date(resultTime.getTime() - 30 * 60 * 1000), // หยุดแทง 30 นาทีก่อนออกผล
       result_time: resultTime,
       status: "scheduled"
@@ -478,13 +502,13 @@ exports.createThaiSavingsLottery = async function () {
     if (currentDate === 2) {
       // ออกผลวันที่ 16 ของเดือนเดียวกัน เวลา 16:30
       drawDate = new Date(currentYear, currentMonth, 16);
-      resultTime = new Date(currentYear, currentMonth, 16, 16, 30, 0);
+      resultTime = getBangkokDateAt(16, 30, drawDate);
     }
     // ถ้าสร้างวันที่ 17 = ออกผลวันที่ 1 ของเดือนถัดไป
     else if (currentDate === 17) {
       // ออกผลวันที่ 1 ของเดือนถัดไป เวลา 16:30
       drawDate = new Date(currentYear, currentMonth + 1, 1);
-      resultTime = new Date(currentYear, currentMonth + 1, 1, 16, 30, 0);
+      resultTime = getBangkokDateAt(16, 30, drawDate);
     } else {
       console.log("⏰ ไม่ใช่วันที่สร้างหวยออมสิน (วันที่ 2 หรือ 17)");
       return;
@@ -503,7 +527,7 @@ exports.createThaiSavingsLottery = async function () {
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: "หวยออมสิน",
-      openTime: now, // เริ่มแทงได้ทันที
+      openTime: now, // เริ่มแทงได้ทันที (เวลาเซิร์ฟเวอร์)
       closeTime: new Date(resultTime.getTime() - 30 * 60 * 1000), // หยุดแทง 30 นาทีก่อนออกผล
       result_time: resultTime,
       status: "scheduled"
@@ -559,7 +583,7 @@ exports.createThaiGsbLottery = async function () {
     if (currentDate === 17) {
       // ออกผลวันที่ 16 ของเดือนถัดไป เวลา 16:30
       drawDate = new Date(currentYear, currentMonth + 1, 16);
-      resultTime = new Date(currentYear, currentMonth + 1, 16, 16, 30, 0);
+      resultTime = getBangkokDateAt(16, 30, drawDate);
     } else {
       console.log("⏰ ไม่ใช่วันที่สร้างหวย ธกส (วันที่ 17)");
       return;
@@ -577,7 +601,7 @@ exports.createThaiGsbLottery = async function () {
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: "หวย ธกส",
-      openTime: now, // เริ่มแทงได้ทันที
+      openTime: now, // เริ่มแทงได้ทันที (เวลาเซิร์ฟเวอร์)
       closeTime: new Date(resultTime.getTime() - 30 * 60 * 1000), // หยุดแทง 30 นาทีก่อนออกผล
       result_time: resultTime,
       status: "scheduled"
@@ -625,13 +649,13 @@ const createLaoLottery = async (lotteryName, drawTime) => {
     const now = new Date();
     const [hours, minutes] = drawTime.split(':').map(Number);
     
-    // สร้างเวลาออกผลในวันเดียวกัน
-    const resultTime = new Date();
-    resultTime.setHours(hours, minutes, 0, 0);
+    // เวลาผลออกตามเอกสารเป็นเวลาไทย -> แปลงเป็นเวลาบนเซิร์ฟเวอร์
+    let resultTime = getBangkokDateAt(hours, minutes, now);
     
-    // ถ้าเวลาผ่านไปแล้ว ให้เลื่อนไปวันถัดไป
+    // ถ้าเวลาผ่านไปแล้ว (เทียบตามเวลาเซิร์ฟเวอร์) ให้เลื่อนไปวันถัดไปของไทย
     if (resultTime <= now) {
-      resultTime.setDate(resultTime.getDate() + 1);
+      const nextDayThai = new Date(resultTime.getTime() + 24 * 60 * 60 * 1000);
+      resultTime = getBangkokDateAt(hours, minutes, nextDayThai);
     }
     
     const lotteryData = {
@@ -742,18 +766,15 @@ const create4dLottery = async (lotteryName, drawTime, lotteryTypeStr = "หว�
     const now = new Date();
     const [hours, minutes] = drawTime.split(':').map(Number);
     
-    // สร้างเวลาออกผลในวันเดียวกัน
-    const resultTime = new Date();
-    resultTime.setHours(hours, minutes, 0, 0);
-    
-    // ถ้าเวลาผ่านไปแล้ว ให้เลื่อนไปวันถัดไป
+    // เวลาผลออกเป็นเวลาไทย -> แปลงเป็นเวลาบนเซิร์ฟเวอร์
+    let resultTime = getBangkokDateAt(hours, minutes, now);
     if (resultTime <= now) {
-      resultTime.setDate(resultTime.getDate() + 1);
+      const nextDayThai = new Date(resultTime.getTime() + 24 * 60 * 60 * 1000);
+      resultTime = getBangkokDateAt(hours, minutes, nextDayThai);
     }
     
-    // กำหนดเวลาเปิดแทงเป็นเที่ยงคืนของวันเดียวกับ resultTime
-    const openTime = new Date(resultTime);
-    openTime.setHours(0, 0, 0, 0);
+    // กำหนดเวลาเปิดแทงเป็นเที่ยงคืนของวันเดียวกับ resultTime (เวลาไทย)
+    const openTime = getBangkokMidnight(resultTime);
     
     const lotteryData = {
       lottery_type_id: lotteryType._id,
@@ -824,18 +845,15 @@ const createHanoiLottery = async (lotteryName, drawTime, lotteryTypeStr = "ห�
     const now = new Date();
     const [hours, minutes] = drawTime.split(':').map(Number);
     
-    // สร้างเวลาออกผลในวันเดียวกัน
-    const resultTime = new Date();
-    resultTime.setHours(hours, minutes, 0, 0);
-    
-    // ถ้าเวลาผ่านไปแล้ว ให้เลื่อนไปวันถัดไป
+    // เวลาผลออกเป็นเวลาไทย -> แปลงเป็นเวลาบนเซิร์ฟเวอร์
+    let resultTime = getBangkokDateAt(hours, minutes, now);
     if (resultTime <= now) {
-      resultTime.setDate(resultTime.getDate() + 1);
+      const nextDayThai = new Date(resultTime.getTime() + 24 * 60 * 60 * 1000);
+      resultTime = getBangkokDateAt(hours, minutes, nextDayThai);
     }
     
-    // กำหนดเวลาเปิดแทงเป็นเที่ยงคืนของวันเดียวกับ resultTime
-    const openTime = new Date(resultTime);
-    openTime.setHours(0, 0, 0, 0);
+    // กำหนดเวลาเปิดแทงเป็นเที่ยงคืนของวันเดียวกับ resultTime (เวลาไทย)
+    const openTime = getBangkokMidnight(resultTime);
     
     const lotteryData = {
       lottery_type_id: lotteryType._id,
