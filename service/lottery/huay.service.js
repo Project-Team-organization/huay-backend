@@ -1924,13 +1924,24 @@ async function processlottery_magnum_4d(lottery_set_id, createdBy, lottery_set, 
       createdBy,
     });
 
-    const betting_types = resulthuay.betting_types;
+    const betting_types = (resulthuay && resulthuay.betting_types) || [];
     const processedBettingTypes = betting_types.map(bettingType => {
+      const source = bettingType._doc || bettingType;
+      const rawDigit = source && source.digit;
+      let normalizedDigits = [];
+      if (rawDigit == null) {
+        normalizedDigits = [];
+      } else if (Array.isArray(rawDigit)) {
+        normalizedDigits = rawDigit.map(d => String(d).trim()).filter(Boolean);
+      } else {
+        const str = String(rawDigit);
+        normalizedDigits = str.includes(',')
+          ? str.split(',').map(d => d.trim()).filter(Boolean)
+          : [str.trim()].filter(Boolean);
+      }
       return {
-        ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        ...source,
+        digit: normalizedDigits,
       };
     });
     const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
@@ -1970,13 +1981,24 @@ async function processlottery_singapore_4d(lottery_set_id, createdBy, lottery_se
       createdBy,
     });
 
-    const betting_types = resulthuay.betting_types;
+    const betting_types = (resulthuay && resulthuay.betting_types) || [];
     const processedBettingTypes = betting_types.map(bettingType => {
+      const source = bettingType._doc || bettingType;
+      const rawDigit = source && source.digit;
+      let normalizedDigits = [];
+      if (rawDigit == null) {
+        normalizedDigits = [];
+      } else if (Array.isArray(rawDigit)) {
+        normalizedDigits = rawDigit.map(d => String(d).trim()).filter(Boolean);
+      } else {
+        const str = String(rawDigit);
+        normalizedDigits = str.includes(',')
+          ? str.split(',').map(d => d.trim()).filter(Boolean)
+          : [str.trim()].filter(Boolean);
+      }
       return {
-        ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        ...source,
+        digit: normalizedDigits,
       };
     });
     const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
