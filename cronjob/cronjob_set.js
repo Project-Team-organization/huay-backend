@@ -226,135 +226,135 @@ cron.schedule('2 0 * * *', async () => {
 
 // ============= หวยฮานอย CRONJOBS เปิดเที่ยงคืน =============
 
-// ฮานอยอาเซียน - สร้างเที่ยงคืนทุกวัน  //crojobs ผ่าน 
-cron.schedule('3 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างฮานอยอาเซียน...`);
-    try {
-        const { createHanoiAseanLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiAseanLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างฮานอยอาเซียน สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างฮานอยอาเซียน:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // ฮานอยอาเซียน - สร้างเที่ยงคืนทุกวัน  //crojobs ผ่าน 
+// cron.schedule('3 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างฮานอยอาเซียน...`);
+//     try {
+//         const { createHanoiAseanLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiAseanLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างฮานอยอาเซียน สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างฮานอยอาเซียน:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอย HD - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
-cron.schedule('4 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย HD...`);
-    try {
-        const { createHanoiHdLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiHdLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย HD สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย HD:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอย HD - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
+// cron.schedule('4 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย HD...`);
+//     try {
+//         const { createHanoiHdLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiHdLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย HD สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย HD:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอยสตาร์ - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
-cron.schedule('5 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยสตาร์...`);
-    try {
-        const { createHanoiStarLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiStarLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยสตาร์ สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยสตาร์:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอยสตาร์ - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
+// cron.schedule('5 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยสตาร์...`);
+//     try {
+//         const { createHanoiStarLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiStarLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยสตาร์ สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยสตาร์:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอย TV - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
-cron.schedule('6 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย TV...`);
-    try {
-        const { createHanoiTvLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiTvLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย TV สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย TV:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอย TV - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
+// cron.schedule('6 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย TV...`);
+//     try {
+//         const { createHanoiTvLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiTvLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย TV สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย TV:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอยเฉพาะกิจ - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
-cron.schedule('7 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยเฉพาะกิจ...`);
-    try {
-        const { createHanoiSpecialLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiSpecialLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยเฉพาะกิจ สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยเฉพาะกิจ:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอยเฉพาะกิจ - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
+// cron.schedule('7 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยเฉพาะกิจ...`);
+//     try {
+//         const { createHanoiSpecialLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiSpecialLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยเฉพาะกิจ สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยเฉพาะกิจ:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอยกาชาด - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
-cron.schedule('8 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยกาชาด...`);
-    try {
-        const { createHanoiRedcrossLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiRedcrossLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยกาชาด สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยกาชาด:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอยกาชาด - สร้างเที่ยงคืนทุกวัน // crojobs ผ่าน 
+// cron.schedule('8 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยกาชาด...`);
+//     try {
+//         const { createHanoiRedcrossLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiRedcrossLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยกาชาด สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยกาชาด:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอยพิเศษ - สร้างเที่ยงคืนทุกวัน  // error  เวลาปิดต้องมากกว่าเวลาเปิด
-cron.schedule('9 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยพิเศษ...`);
-    try {
-        const { createHanoiSpecialApiLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiSpecialApiLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยพิเศษ สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยพิเศษ:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอยพิเศษ - สร้างเที่ยงคืนทุกวัน  // error  เวลาปิดต้องมากกว่าเวลาเปิด
+// cron.schedule('9 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยพิเศษ...`);
+//     try {
+//         const { createHanoiSpecialApiLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiSpecialApiLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยพิเศษ สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยพิเศษ:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอย - สร้างเที่ยงคืนทุกวัน  // error  เวลาปิดต้องมากกว่าเวลาเปิด
-cron.schedule('10 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย...`);
-    try {
-        const { createHanoiLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอย - สร้างเที่ยงคืนทุกวัน  // error  เวลาปิดต้องมากกว่าเวลาเปิด
+// cron.schedule('10 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย...`);
+//     try {
+//         const { createHanoiLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอยพัฒนา - สร้างเที่ยงคืนทุกวัน // error  เวลาปิดต้องมากกว่าเวลาเปิด
-cron.schedule('11 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยพัฒนา...`);
-    try {
-        const { createHanoiDevelopLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiDevelopLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยพัฒนา สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยพัฒนา:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอยพัฒนา - สร้างเที่ยงคืนทุกวัน // error  เวลาปิดต้องมากกว่าเวลาเปิด
+// cron.schedule('11 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอยพัฒนา...`);
+//     try {
+//         const { createHanoiDevelopLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiDevelopLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอยพัฒนา สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอยพัฒนา:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอย VIP - สร้างเที่ยงคืนทุกวัน // error  เวลาปิดต้องมากกว่าเวลาเปิด
-cron.schedule('12 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย VIP...`);
-    try {
-        const { createHanoiVipLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiVipLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย VIP สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย VIP:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอย VIP - สร้างเที่ยงคืนทุกวัน // error  เวลาปิดต้องมากกว่าเวลาเปิด
+// cron.schedule('12 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย VIP...`);
+//     try {
+//         const { createHanoiVipLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiVipLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย VIP สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย VIP:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
-// หวยฮานอย EXTRA - สร้างเที่ยงคืนทุกวัน  // error  เวลาปิดต้องมากกว่าเวลาเปิด
-cron.schedule('13 0 * * *', async () => {
-    console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย EXTRA...`);
-    try {
-        const { createHanoiExtraLotteryWithLog } = require('../service/cronjob/cronjob.service');
-        await createHanoiExtraLotteryWithLog();
-        console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย EXTRA สำเร็จ`);
-    } catch (error) {
-        console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย EXTRA:`, error.message);
-    }
-}, { timezone: "Asia/Bangkok" });
+// // หวยฮานอย EXTRA - สร้างเที่ยงคืนทุกวัน  // error  เวลาปิดต้องมากกว่าเวลาเปิด
+// cron.schedule('13 0 * * *', async () => {
+//     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] 🇻🇳 สร้างหวยฮานอย EXTRA...`);
+//     try {
+//         const { createHanoiExtraLotteryWithLog } = require('../service/cronjob/cronjob.service');
+//         await createHanoiExtraLotteryWithLog();
+//         console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ✅ สร้างหวยฮานอย EXTRA สำเร็จ`);
+//     } catch (error) {
+//         console.error(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยฮานอย EXTRA:`, error.message);
+//     }
+// }, { timezone: "Asia/Bangkok" });
 
