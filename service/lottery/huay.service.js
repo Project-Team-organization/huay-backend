@@ -1152,6 +1152,30 @@ const createLotteryResultItemsLao = async (lottery_set, lotteryResult, processed
   return resultItems;
 }
 
+// ฟังก์ชันเฉพาะสำหรับหวยฮานอย
+const createLotteryResultItemsHanoi = async (lottery_set, lotteryResult, processedBettingTypes, lottery_type) => {
+  const resultItems = [];
+  const bettingTypes = lottery_type.betting_types || [];
+
+  for (const bettingType of processedBettingTypes) {
+    const payoutRate = bettingTypes.find((bt) => bt.code === bettingType.code)?.payout_rate || 0;
+    
+    // สำหรับหวยฮานอย digit มาพร้อมเป็น array แล้ว
+    const numbers = Array.isArray(bettingType.digit) ? bettingType.digit : [bettingType.digit];
+    
+    const resultItem = await LotteryResultItem.create({
+      lottery_result_id: lotteryResult._id,
+      betting_type_id: bettingType.code,
+      name: bettingType.name,
+      reward: payoutRate,
+      numbers: numbers,
+      winner_count: 0,
+    });
+    resultItems.push(resultItem);
+  }
+  return resultItems;
+}
+
 // ฟังก์ชันสำหรับการตรวจรางวัลและบันทึกผู้ชนะ
 const processLotteryWinners = async (pendingBets, resultItems, lottery_set_id, lotteryName) => {
   const winners = [];
@@ -2042,12 +2066,10 @@ async function processlottery_hanoi_asean(lottery_set_id, createdBy, lottery_set
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2088,12 +2110,10 @@ async function processlottery_hanoi_hd(lottery_set_id, createdBy, lottery_set, l
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2134,12 +2154,10 @@ async function processlottery_hanoi_star(lottery_set_id, createdBy, lottery_set,
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2180,12 +2198,10 @@ async function processlottery_hanoi_tv(lottery_set_id, createdBy, lottery_set, l
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2226,12 +2242,10 @@ async function processlottery_hanoi_special(lottery_set_id, createdBy, lottery_s
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2272,12 +2286,10 @@ async function processlottery_hanoi_redcross(lottery_set_id, createdBy, lottery_
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2318,12 +2330,10 @@ async function processlottery_hanoi_special_api(lottery_set_id, createdBy, lotte
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2364,12 +2374,10 @@ async function processlottery_hanoi(lottery_set_id, createdBy, lottery_set, lott
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2410,12 +2418,10 @@ async function processlottery_hanoi_develop(lottery_set_id, createdBy, lottery_s
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2456,12 +2462,10 @@ async function processlottery_hanoi_vip(lottery_set_id, createdBy, lottery_set, 
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
@@ -2502,12 +2506,10 @@ async function processlottery_hanoi_extra(lottery_set_id, createdBy, lottery_set
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
         ...bettingType._doc || bettingType,
-        digit: bettingType.digit.includes(',') 
-          ? bettingType.digit.split(',').map(d => d.trim())
-          : [bettingType.digit.trim()]
+        digit: bettingType.digit // หวยฮานอย digit มาพร้อมเป็น array แล้ว
       };
     });
-    const resultItems = await createLotteryResultItemsLao(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
+    const resultItems = await createLotteryResultItemsHanoi(lottery_set, lotteryResult, processedBettingTypes, lottery_type);
 
     const pendingBets = await UserBet.find({
       lottery_set_id,
