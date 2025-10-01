@@ -1,43 +1,52 @@
 const mongoose = require("mongoose");
 const axios = require("axios");
-const CronjobLog = require('../../models/cronjob.log.model');
+const CronjobLog = require("../../models/cronjob.log.model");
 
 // ฟังก์ชันสำหรับบันทึก log การทำงานของ cronjob
-const logCronjobExecution = async (jobName, lotteryName, status, result = null, error = null, startTime = Date.now()) => {
+const logCronjobExecution = async (
+  jobName,
+  lotteryName,
+  status,
+  result = null,
+  error = null,
+  startTime = Date.now()
+) => {
   try {
     const endTime = Date.now();
     const duration = endTime - startTime;
-    
+
     const logData = {
       job_name: jobName,
       lottery_name: lotteryName,
       status: status, // 'success' หรือ 'error'
       execution_time: new Date(startTime),
-      duration_ms: duration
+      duration_ms: duration,
     };
-    
-    if (status === 'success' && result) {
+
+    if (status === "success" && result) {
       logData.lottery_set_id = result.id || result._id;
       logData.additional_info = {
         result_time: result.result_time,
         open_time: result.openTime,
-        close_time: result.closeTime
+        close_time: result.closeTime,
       };
     }
-    
-    if (status === 'error' && error) {
+
+    if (status === "error" && error) {
       logData.error_message = error.message || error.toString();
       logData.additional_info = {
         stack: error.stack,
-        error_details: error
+        error_details: error,
       };
     }
-    
+
     await CronjobLog.create(logData);
     console.log(`📊 บันทึก log ${jobName}: ${status} (${duration}ms)`);
-    
   } catch (logError) {
-    console.error('❌ เกิดข้อผิดพลาดในการบันทึก cronjob log:', logError.message);
+    console.error(
+      "❌ เกิดข้อผิดพลาดในการบันทึก cronjob log:",
+      logError.message
+    );
   }
 };
 
@@ -48,375 +57,422 @@ const logCronjobExecution = async (jobName, lotteryName, status, result = null, 
 
 // คืนค่า Date ที่แทน "วันเดียวกับ baseDate ตามเวลาไทย" และเวลาชั่วโมง/นาทีที่ระบุ (เวลาไทย)
 function getBangkokDateAt(hoursThai, minutesThai, baseDate = new Date()) {
-  const year = baseDate.getFullYear();
-  const month = baseDate.getMonth();
-  const date = baseDate.getDate();
-  // ไทย UTC+7 ⇒ แปลงเป็น UTC ด้วยการลบ 7 ชั่วโมง
-  const utcMs = Date.UTC(year, month, date, hoursThai - 7, minutesThai, 0, 0);
-  return new Date(utcMs);
+  // แปลง baseDate เป็นวันที่ในเวลาไทย
+  const bangkokDateStr = baseDate.toLocaleDateString("en-CA", {
+    timeZone: "Asia/Bangkok",
+  }); // YYYY-MM-DD format
+  const [year, month, day] = bangkokDateStr.split("-").map(Number);
+
+  // สร้าง Date object สำหรับเวลาไทยที่ต้องการ
+  // ใช้ UTC constructor แล้วบวก offset ของเวลาไทย
+  const utcTime = Date.UTC(
+    year,
+    month - 1,
+    day,
+    hoursThai - 7,
+    minutesThai,
+    0,
+    0
+  );
+  return new Date(utcTime);
 }
 
 // คืนค่าเที่ยงคืนของวันเดียวกับ dateRef ตามเวลาไทย (Bangkok midnight) เป็น Date เซิร์ฟเวอร์
 function getBangkokMidnight(dateRef) {
-  const year = dateRef.getFullYear();
-  const month = dateRef.getMonth();
-  const date = dateRef.getDate();
-  const utcMs = Date.UTC(year, month, date, 0 - 7, 0, 0, 0);
-  return new Date(utcMs);
+  // แปลง dateRef เป็นวันที่ในเวลาไทย
+  const bangkokDateStr = dateRef.toLocaleDateString("en-CA", {
+    timeZone: "Asia/Bangkok",
+  }); // YYYY-MM-DD format
+  const [year, month, day] = bangkokDateStr.split("-").map(Number);
+
+  // สร้างเที่ยงคืนในเวลาไทย (00:00:00) แล้วแปลงเป็น UTC
+  const utcTime = Date.UTC(year, month - 1, day, 0 - 7, 0, 0, 0); // ลบ 7 ชั่วโมงสำหรับ UTC+7
+  return new Date(utcTime);
 }
 
-const lotteryLaoService = require('../lottery/lottery_lao.service');
-const lotteryLaoExtraService = require('../lottery/lottery_lao_extra.service');
-const lotteryLaoStarsService = require('../lottery/lottery_lao_stars.service');
-const lotteryLaoUnionService = require('../lottery/lottery_lao_union.service');
+const lotteryLaoService = require("../lottery/lottery_lao.service");
+const lotteryLaoExtraService = require("../lottery/lottery_lao_extra.service");
+const lotteryLaoStarsService = require("../lottery/lottery_lao_stars.service");
+const lotteryLaoUnionService = require("../lottery/lottery_lao_union.service");
 
 // Import services สำหรับหวยลาวแต่ละประเภท
-const lotteryLaoHdService = require('../lottery/lottery_lao_hd.service');
-const lotteryLaoVipService = require('../lottery/lottery_lao_vip.service');
-const lotteryLaoStarsVipService = require('../lottery/lottery_lao_stars_vip.service');
-const lotteryLaoRedcrossService = require('../lottery/lottery_lao_redcross.service');
-const lotteryLaoThakhek5dService = require('../lottery/lottery_lao_thakhek_5d.service');
-const lotteryLaoThakhekVipService = require('../lottery/lottery_lao_thakhek_vip.service');
-const lotteryLaoTvService = require('../lottery/lottery_lao_tv.service');
+const lotteryLaoHdService = require("../lottery/lottery_lao_hd.service");
+const lotteryLaoVipService = require("../lottery/lottery_lao_vip.service");
+const lotteryLaoStarsVipService = require("../lottery/lottery_lao_stars_vip.service");
+const lotteryLaoRedcrossService = require("../lottery/lottery_lao_redcross.service");
+const lotteryLaoThakhek5dService = require("../lottery/lottery_lao_thakhek_5d.service");
+const lotteryLaoThakhekVipService = require("../lottery/lottery_lao_thakhek_vip.service");
+const lotteryLaoTvService = require("../lottery/lottery_lao_tv.service");
 
 // Import services สำหรับหวย 4D
-const lotteryMagnum4dService = require('../lottery/lottery_magnum_4d.service');
-const lotterySingapore4dService = require('../lottery/lottery_singapore_4d.service');
-const lotteryGrandDragon4dService = require('../lottery/lottery_grand_dragon_4d.service');
+const lotteryMagnum4dService = require("../lottery/lottery_magnum_4d.service");
+const lotterySingapore4dService = require("../lottery/lottery_singapore_4d.service");
+const lotteryGrandDragon4dService = require("../lottery/lottery_grand_dragon_4d.service");
 
 // Import services สำหรับหวยไทย
-const lotteryThaiGsbService = require('../lottery/lottery_thai_gsb.service');
-const lotteryThaiSavingsService = require('../lottery/lottery_thai_savings.service');
+const lotteryThaiGsbService = require("../lottery/lottery_thai_gsb.service");
+const lotteryThaiSavingsService = require("../lottery/lottery_thai_savings.service");
 
 // Import services สำหรับหวยฮานอย
-const lotteryHanoiAseanService = require('../lottery/lottery_hanoi_asean.service');
-const lotteryHanoiHdService = require('../lottery/lottery_hanoi_hd.service');
-const lotteryHanoiStarService = require('../lottery/lottery_hanoi_star.service');
-const lotteryHanoiTvService = require('../lottery/lottery_hanoi_tv.service');
-const lotteryHanoiSpecialService = require('../lottery/lottery_hanoi_special.service');
-const lotteryHanoiRedcrossService = require('../lottery/lottery_hanoi_redcross.service');
-const lotteryHanoiSpecialApiService = require('../lottery/lottery_hanoi_special_api.service');
-const lotteryHanoiService = require('../lottery/lottery_hanoi.service');
-const lotteryHanoiDevelopService = require('../lottery/lottery_hanoi_develop.service');
-const lotteryHanoiVipService = require('../lottery/lottery_hanoi_vip.service');
-const lotteryHanoiExtraService = require('../lottery/lottery_hanoi_extra.service');
-const lotteryEgyptStockService = require('../lottery/lottery_egypt_stock.service');
-const lotteryKoreanStockVipService = require('../lottery/lottery_korean_stock_vip.service');
-const lotteryHangsengAfternoonService = require('../lottery/lottery_hangseng_afternoon.service');
+const lotteryHanoiAseanService = require("../lottery/lottery_hanoi_asean.service");
+const lotteryHanoiHdService = require("../lottery/lottery_hanoi_hd.service");
+const lotteryHanoiStarService = require("../lottery/lottery_hanoi_star.service");
+const lotteryHanoiTvService = require("../lottery/lottery_hanoi_tv.service");
+const lotteryHanoiSpecialService = require("../lottery/lottery_hanoi_special.service");
+const lotteryHanoiRedcrossService = require("../lottery/lottery_hanoi_redcross.service");
+const lotteryHanoiSpecialApiService = require("../lottery/lottery_hanoi_special_api.service");
+const lotteryHanoiService = require("../lottery/lottery_hanoi.service");
+const lotteryHanoiDevelopService = require("../lottery/lottery_hanoi_develop.service");
+const lotteryHanoiVipService = require("../lottery/lottery_hanoi_vip.service");
+const lotteryHanoiExtraService = require("../lottery/lottery_hanoi_extra.service");
+const lotteryEgyptStockService = require("../lottery/lottery_egypt_stock.service");
+const lotteryKoreanStockVipService = require("../lottery/lottery_korean_stock_vip.service");
+const lotteryHangsengAfternoonService = require("../lottery/lottery_hangseng_afternoon.service");
 
 // Helper function สำหรับ retry mechanism
 const retryWithDelay = async (fn, delaySeconds = 5) => {
   let attempt = 1;
-  
+
   while (true) {
     try {
       const result = await fn();
-      
+
       // ตรวจสอบว่าผลหวยออกครบหรือยัง (ไม่มี "xxx", "xx", "xxxx", "xxxxx")
       if (result && result.results) {
-        const hasIncompleteResults = Object.values(result.results).some(value => {
-          if (typeof value === 'string') {
-            // เช็ค "xxx", "xx", "xxxx", "xxxxx" หรือค่าว่าง
-            return value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+        const hasIncompleteResults = Object.values(result.results).some(
+          value => {
+            if (typeof value === "string") {
+              // เช็ค "xxx", "xx", "xxxx", "xxxxx" หรือค่าว่าง
+              return (
+                value.includes("xxx") ||
+                value.includes("xx") ||
+                value === "" ||
+                value === null ||
+                value === undefined
+              );
+            }
+            return value === null || value === undefined;
           }
-          return value === null || value === undefined;
-        });
-        
+        );
+
         if (!hasIncompleteResults) {
           console.log(`✅ ผลหวยออกครบแล้ว หลังจากลอง ${attempt} ครั้ง`);
           return result;
         }
-        
-        console.log(`⏳ ผลหวยยังไม่ออกครบ (มี "xxx") ลองใหม่ใน ${delaySeconds} วินาที (ครั้งที่ ${attempt})`);
+
+        console.log(
+          `⏳ ผลหวยยังไม่ออกครบ (มี "xxx") ลองใหม่ใน ${delaySeconds} วินาที (ครั้งที่ ${attempt})`
+        );
         console.log(`📊 ผลปัจจุบัน:`, JSON.stringify(result.results, null, 2));
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
       attempt++;
-      
     } catch (error) {
-      console.error(`❌ เกิดข้อผิดพลาดในการลองครั้งที่ ${attempt}:`, error.message);
+      console.error(
+        `❌ เกิดข้อผิดพลาดในการลองครั้งที่ ${attempt}:`,
+        error.message
+      );
       console.log(`⏳ ลองใหม่ใน ${delaySeconds} วินาที`);
       await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
       attempt++;
     }
   }
-}
+};
 
 // หวยลาวพัฒนา
 exports.huaylaocronjob = async function () {
   return await retryWithDelay(
     () => lotteryLaoService.fetchAndSaveLaoLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาว Extra
 exports.huaylaoextracronjob = async function () {
   return await retryWithDelay(
     () => lotteryLaoExtraService.fetchAndSaveLaoExtraLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาวสตาร์
 exports.huaylaostarcronjob = async function () {
   return await retryWithDelay(
     () => lotteryLaoStarsService.fetchAndSaveLaoStarsLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาวสามัคคี
 exports.huaylaounioncronjob = async function () {
   return await retryWithDelay(
     () => lotteryLaoUnionService.fetchLatestResult(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาว HD
 exports.huaylaohd = async function () {
   return await retryWithDelay(
     () => lotteryLaoHdService.fetchAndSaveLaoHdLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาว VIP
 exports.huaylaovip = async function () {
   return await retryWithDelay(
     () => lotteryLaoVipService.fetchAndSaveLaoVipLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาวสตาร์ VIP
 exports.huaylaostarvip = async function () {
   return await retryWithDelay(
     () => lotteryLaoStarsVipService.fetchAndSaveLaoStarsVipLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาวกาชาด
 exports.huylaogachad = async function () {
   return await retryWithDelay(
     () => lotteryLaoRedcrossService.fetchAndSaveLaoRedcrossLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาวทำเนียบ 5D
 exports.huaylaothakhek5d = async function () {
   return await retryWithDelay(
     () => lotteryLaoThakhek5dService.fetchAndSaveLaoThakhek5dLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาวทำเนียบ VIP
 exports.huaylaothakhekvip = async function () {
   return await retryWithDelay(
     () => lotteryLaoThakhekVipService.fetchAndSaveLaoThakhekVipLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยลาว TV
 exports.huaylaotv = async function () {
   return await retryWithDelay(
     () => lotteryLaoTvService.fetchAndSaveLaoTvLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวย Magnum 4D
 exports.huaymagnum4d = async function () {
   return await retryWithDelay(
     () => lotteryMagnum4dService.fetchAndSaveMagnum4dLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวย Singapore 4D
 exports.huaysingapore4d = async function () {
   return await retryWithDelay(
     () => lotterySingapore4dService.fetchAndSaveSingapore4dLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวย Grand Dragon 4D
 exports.huaygranddragon4d = async function () {
   return await retryWithDelay(
     () => lotteryGrandDragon4dService.fetchAndSaveGrandDragon4dLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยไทย GSB
 exports.huaythaigsb = async function () {
   return await retryWithDelay(
     () => lotteryThaiGsbService.fetchAndSaveThaiGsbLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยไทยออมสิน
 exports.huaythaisavings = async function () {
   return await retryWithDelay(
     () => lotteryThaiSavingsService.fetchAndSaveThaiSavingsLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอยอาเซียน
 exports.huayhanoiasean = async function () {
   return await retryWithDelay(
     () => lotteryHanoiAseanService.fetchAndSaveHanoiAseanLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอย HD
 exports.huayhanoihd = async function () {
   return await retryWithDelay(
     () => lotteryHanoiHdService.fetchAndSaveHanoiHdLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอยสตาร์
 exports.huayhanoistar = async function () {
   return await retryWithDelay(
     () => lotteryHanoiStarService.fetchAndSaveHanoiStarLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอย TV
 exports.huayhanoitv = async function () {
   return await retryWithDelay(
     () => lotteryHanoiTvService.fetchAndSaveHanoiTvLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอยเฉพาะกิจ
 exports.huayhanoispecial = async function () {
   return await retryWithDelay(
     () => lotteryHanoiSpecialService.fetchAndSaveHanoiSpecialLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอยกาชาด
 exports.huayhanoiredcross = async function () {
   return await retryWithDelay(
     () => lotteryHanoiRedcrossService.fetchAndSaveHanoiRedcrossLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอยพิเศษ
 exports.huayhanoispecialapi = async function () {
   return await retryWithDelay(
     () => lotteryHanoiSpecialApiService.fetchAndSaveHanoiSpecialApiLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอย
 exports.huayhanoi = async function () {
   return await retryWithDelay(
     () => lotteryHanoiService.fetchAndSaveHanoiLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอยพัฒนา
 exports.huayhanoidevelop = async function () {
   return await retryWithDelay(
     () => lotteryHanoiDevelopService.fetchAndSaveHanoiDevelopLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอย VIP
 exports.huayhanoivip = async function () {
   return await retryWithDelay(
     () => lotteryHanoiVipService.fetchAndSaveHanoiVipLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮานอย EXTRA
 exports.huayhanoiextra = async function () {
   return await retryWithDelay(
     () => lotteryHanoiExtraService.fetchAndSaveHanoiExtraLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยหุ้นอิยิปต์
 exports.huayegyptstock = async function () {
   return await retryWithDelay(
     () => lotteryEgyptStockService.fetchAndSaveEgyptStockLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยหุ้นเกาหลี VIP
 exports.huaykoreanstockvip = async function () {
   return await retryWithDelay(
     () => lotteryKoreanStockVipService.fetchAndSaveKoreanStockVipLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // หวยฮั่งเส็งรอบบ่าย
 exports.huayhangsengafternoon = async function () {
   return await retryWithDelay(
-    () => lotteryHangsengAfternoonService.fetchAndSaveHangsengAfternoonLottery(),
-    60   // รอ 1 นาทีระหว่างการลอง
+    () =>
+      lotteryHangsengAfternoonService.fetchAndSaveHangsengAfternoonLottery(),
+    60 // รอ 1 นาทีระหว่างการลอง
   );
-}
+};
 
 // Wrapper ฟังก์ชันสำหรับ cronjob พร้อม logging
-const createCronjobWithLogging = async (jobName, lotteryName, createFunction) => {
+const createCronjobWithLogging = async (
+  jobName,
+  lotteryName,
+  createFunction
+) => {
   const startTime = Date.now();
   try {
     const result = await createFunction();
-    await logCronjobExecution(jobName, lotteryName, 'success', result, null, startTime);
+    await logCronjobExecution(
+      jobName,
+      lotteryName,
+      "success",
+      result,
+      null,
+      startTime
+    );
     return result;
   } catch (error) {
-    await logCronjobExecution(jobName, lotteryName, 'error', null, error, startTime);
+    await logCronjobExecution(
+      jobName,
+      lotteryName,
+      "error",
+      null,
+      error,
+      startTime
+    );
     throw error;
   }
 };
 
-//สร้าง lotteryset หวยรัฐบาล  
+//สร้าง lotteryset หวยรัฐบาล
 exports.createThaiGovernmentLottery = async function () {
   try {
-    const { createLotterySets } = require('../lottery/lotterySets.service');
-    const LotteryType = require('../../models/lotteryType.model');
-    
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
     console.log("🏛️ เริ่มสร้างหวยรัฐบาล...");
-    
+
     // หา lottery_type_id สำหรับหวยรัฐบาล
     const lotteryType = await LotteryType.findOne({ lottery_type: "หวยไทย" });
     if (!lotteryType) {
       throw new Error("ไม่พบประเภทหวยไทยในระบบ");
     }
-    
+
     const now = new Date();
     const currentDate = now.getDate();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
+
     let drawDate, resultTime;
-    
+
     // ถ้าสร้างวันที่ 2 = ออกผลวันที่ 16 ของเดือนเดียวกัน
     if (currentDate === 2) {
       // ออกผลวันที่ 16 ของเดือนเดียวกัน เวลา 16:30
@@ -432,72 +488,89 @@ exports.createThaiGovernmentLottery = async function () {
       console.log("⏰ ไม่ใช่วันที่สร้างหวยรัฐบาล (วันที่ 2 หรือ 17)");
       return;
     }
-    
+
     // สร้างชื่องวด
     const monthNames = [
-      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+      "มกราคม",
+      "กุมภาพันธ์",
+      "มีนาคม",
+      "เมษายน",
+      "พฤษภาคม",
+      "มิถุนายน",
+      "กรกฎาคม",
+      "สิงหาคม",
+      "กันยายน",
+      "ตุลาคม",
+      "พฤศจิกายน",
+      "ธันวาคม",
     ];
-    
+
     const drawMonth = drawDate.getMonth();
     const drawYear = drawDate.getFullYear() + 543; // แปลงเป็น พ.ศ.
     const roundNumber = drawDate.getDate() === 1 ? 1 : 2;
-    
+
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: "หวยรัฐบาล",
       openTime: now, // เริ่มแทงได้ทันที (เวลาเซิร์ฟเวอร์)
       closeTime: new Date(resultTime.getTime() - 30 * 60 * 1000), // หยุดแทง 30 นาทีก่อนออกผล
       result_time: resultTime,
-      status: "scheduled"
+      status: "scheduled",
     };
-    
+
     // ตรวจสอบว่ามีงวดนี้แล้วหรือยัง
-    const LotterySets = require('../../models/lotterySets.model');
+    const LotterySets = require("../../models/lotterySets.model");
     const existingSet = await LotterySets.findOne({
       name: "หวยรัฐบาล",
-      result_time: resultTime
+      result_time: resultTime,
     });
-    
+
     if (existingSet) {
-      console.log(`⚠️ หวยรัฐบาลงวดวันที่ ${drawDate.getDate()} ${monthNames[drawMonth]} ${drawYear} มีอยู่แล้ว`);
+      console.log(
+        `⚠️ หวยรัฐบาลงวดวันที่ ${drawDate.getDate()} ${
+          monthNames[drawMonth]
+        } ${drawYear} มีอยู่แล้ว`
+      );
       return existingSet;
     }
-    
+
     const createdLottery = await createLotterySets(lotteryData);
-    
+
     console.log(`✅ สร้างหวยรัฐบาลสำเร็จ: ${createdLottery.id}`);
-    console.log(`📅 วันออกผล: ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
-    
+    console.log(
+      `📅 วันออกผล: ${resultTime.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}`
+    );
+
     return createdLottery;
-    
   } catch (error) {
     console.error("❌ เกิดข้อผิดพลาดในการสร้างหวยรัฐบาล:", error.message);
     throw error;
   }
 };
 
-//สร้าง lotteryset หวยออมสิน  
+//สร้าง lotteryset หวยออมสิน
 exports.createThaiSavingsLottery = async function () {
   try {
-    const { createLotterySets } = require('../lottery/lotterySets.service');
-    const LotteryType = require('../../models/lotteryType.model');
-    
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
     console.log("🏦 เริ่มสร้างหวยออมสิน...");
-    
+
     // หา lottery_type_id สำหรับหวยออมสิน
     const lotteryType = await LotteryType.findOne({ lottery_type: "หวยไทย" });
     if (!lotteryType) {
       throw new Error("ไม่พบประเภทหวยไทยในระบบ");
     }
-    
+
     const now = new Date();
     const currentDate = now.getDate();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
+
     let drawDate, resultTime;
-    
+
     // ถ้าสร้างวันที่ 2 = ออกผลวันที่ 16 ของเดือนเดียวกัน
     if (currentDate === 2) {
       // ออกผลวันที่ 16 ของเดือนเดียวกัน เวลา 16:30
@@ -513,72 +586,89 @@ exports.createThaiSavingsLottery = async function () {
       console.log("⏰ ไม่ใช่วันที่สร้างหวยออมสิน (วันที่ 2 หรือ 17)");
       return;
     }
-    
+
     // สร้างชื่องวด
     const monthNames = [
-      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+      "มกราคม",
+      "กุมภาพันธ์",
+      "มีนาคม",
+      "เมษายน",
+      "พฤษภาคม",
+      "มิถุนายน",
+      "กรกฎาคม",
+      "สิงหาคม",
+      "กันยายน",
+      "ตุลาคม",
+      "พฤศจิกายน",
+      "ธันวาคม",
     ];
-    
+
     const drawMonth = drawDate.getMonth();
     const drawYear = drawDate.getFullYear() + 543; // แปลงเป็น พ.ศ.
     const roundNumber = drawDate.getDate() === 1 ? 1 : 2;
-    
+
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: "หวยออมสิน",
       openTime: now, // เริ่มแทงได้ทันที (เวลาเซิร์ฟเวอร์)
       closeTime: new Date(resultTime.getTime() - 30 * 60 * 1000), // หยุดแทง 30 นาทีก่อนออกผล
       result_time: resultTime,
-      status: "scheduled"
+      status: "scheduled",
     };
-    
+
     // ตรวจสอบว่ามีงวดนี้แล้วหรือยัง
-    const LotterySets = require('../../models/lotterySets.model');
+    const LotterySets = require("../../models/lotterySets.model");
     const existingSet = await LotterySets.findOne({
       name: "หวยออมสิน",
-      result_time: resultTime
+      result_time: resultTime,
     });
-    
+
     if (existingSet) {
-      console.log(`⚠️ หวยออมสินงวดวันที่ ${drawDate.getDate()} ${monthNames[drawMonth]} ${drawYear} มีอยู่แล้ว`);
+      console.log(
+        `⚠️ หวยออมสินงวดวันที่ ${drawDate.getDate()} ${
+          monthNames[drawMonth]
+        } ${drawYear} มีอยู่แล้ว`
+      );
       return existingSet;
     }
-    
+
     const createdLottery = await createLotterySets(lotteryData);
-    
+
     console.log(`✅ สร้างหวยออมสินสำเร็จ: ${createdLottery.id}`);
-    console.log(`📅 วันออกผล: ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
-    
+    console.log(
+      `📅 วันออกผล: ${resultTime.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}`
+    );
+
     return createdLottery;
-    
   } catch (error) {
     console.error("❌ เกิดข้อผิดพลาดในการสร้างหวยออมสิน:", error.message);
     throw error;
   }
 };
 
-//สร้าง lotteryset หวย ธกส  
+//สร้าง lotteryset หวย ธกส
 exports.createThaiGsbLottery = async function () {
   try {
-    const { createLotterySets } = require('../lottery/lotterySets.service');
-    const LotteryType = require('../../models/lotteryType.model');
-    
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
     console.log("🏛️ เริ่มสร้างหวย ธกส...");
-    
+
     // หา lottery_type_id สำหรับหวย ธกส
     const lotteryType = await LotteryType.findOne({ lottery_type: "หวยไทย" });
     if (!lotteryType) {
       throw new Error("ไม่พบประเภทหวยไทยในระบบ");
     }
-    
+
     const now = new Date();
     const currentDate = now.getDate();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
+
     let drawDate, resultTime;
-    
+
     // ถ้าสร้างวันที่ 17 = ออกผลวันที่ 16 ของเดือนถัดไป
     if (currentDate === 17) {
       // ออกผลวันที่ 16 ของเดือนถัดไป เวลา 16:30
@@ -588,44 +678,61 @@ exports.createThaiGsbLottery = async function () {
       console.log("⏰ ไม่ใช่วันที่สร้างหวย ธกส (วันที่ 17)");
       return;
     }
-    
+
     // สร้างชื่องวด
     const monthNames = [
-      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+      "มกราคม",
+      "กุมภาพันธ์",
+      "มีนาคม",
+      "เมษายน",
+      "พฤษภาคม",
+      "มิถุนายน",
+      "กรกฎาคม",
+      "สิงหาคม",
+      "กันยายน",
+      "ตุลาคม",
+      "พฤศจิกายน",
+      "ธันวาคม",
     ];
-    
+
     const drawMonth = drawDate.getMonth();
     const drawYear = drawDate.getFullYear() + 543; // แปลงเป็น พ.ศ.
-    
+
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: "หวย ธกส",
       openTime: now, // เริ่มแทงได้ทันที (เวลาเซิร์ฟเวอร์)
       closeTime: new Date(resultTime.getTime() - 30 * 60 * 1000), // หยุดแทง 30 นาทีก่อนออกผล
       result_time: resultTime,
-      status: "scheduled"
+      status: "scheduled",
     };
-    
+
     // ตรวจสอบว่ามีงวดนี้แล้วหรือยัง
-    const LotterySets = require('../../models/lotterySets.model');
+    const LotterySets = require("../../models/lotterySets.model");
     const existingSet = await LotterySets.findOne({
       name: "หวย ธกส",
-      result_time: resultTime
+      result_time: resultTime,
     });
-    
+
     if (existingSet) {
-      console.log(`⚠️ หวย ธกส งวดวันที่ ${drawDate.getDate()} ${monthNames[drawMonth]} ${drawYear} มีอยู่แล้ว`);
+      console.log(
+        `⚠️ หวย ธกส งวดวันที่ ${drawDate.getDate()} ${
+          monthNames[drawMonth]
+        } ${drawYear} มีอยู่แล้ว`
+      );
       return existingSet;
     }
-    
+
     const createdLottery = await createLotterySets(lotteryData);
-    
+
     console.log(`✅ สร้างหวย ธกส สำเร็จ: ${createdLottery.id}`);
-    console.log(`📅 วันออกผล: ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
-    
+    console.log(
+      `📅 วันออกผล: ${resultTime.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}`
+    );
+
     return createdLottery;
-    
   } catch (error) {
     console.error("❌ เกิดข้อผิดพลาดในการสร้างหวย ธกส:", error.message);
     throw error;
@@ -635,57 +742,64 @@ exports.createThaiGsbLottery = async function () {
 // ฟังก์ชันทั่วไปสำหรับสร้างหวยลาว
 const createLaoLottery = async (lotteryName, drawTime) => {
   try {
-    const { createLotterySets } = require('../lottery/lotterySets.service');
-    const LotteryType = require('../../models/lotteryType.model');
-    
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
     console.log(`🇱🇦 เริ่มสร้าง${lotteryName}...`);
-    
+
     // หา lottery_type_id สำหรับหวยลาว
     const lotteryType = await LotteryType.findOne({ lottery_type: "หวยลาว" });
     if (!lotteryType) {
       throw new Error("ไม่พบประเภทหวยลาวในระบบ");
     }
-    
+
     const now = new Date();
-    const [hours, minutes] = drawTime.split(':').map(Number);
-    
+    const [hours, minutes] = drawTime.split(":").map(Number);
+
     // เวลาผลออกตามเอกสารเป็นเวลาไทย -> แปลงเป็นเวลาบนเซิร์ฟเวอร์
     let resultTime = getBangkokDateAt(hours, minutes, now);
-    
+
     // ถ้าเวลาผ่านไปแล้ว (เทียบตามเวลาเซิร์ฟเวอร์) ให้เลื่อนไปวันถัดไปของไทย
     if (resultTime <= now) {
       const nextDayThai = new Date(resultTime.getTime() + 24 * 60 * 60 * 1000);
       resultTime = getBangkokDateAt(hours, minutes, nextDayThai);
     }
-    
+
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: lotteryName,
       openTime: now, // เริ่มแทงได้ทันที
       closeTime: new Date(resultTime.getTime() - 5 * 60 * 1000), // หยุดแทง 5 นาทีก่อนออกผล
       result_time: resultTime,
-      status: "scheduled"
+      status: "scheduled",
     };
-    
+
     // ตรวจสอบว่ามีงวดนี้แล้วหรือยัง
-    const LotterySets = require('../../models/lotterySets.model');
+    const LotterySets = require("../../models/lotterySets.model");
     const existingSet = await LotterySets.findOne({
       name: lotteryName,
-      result_time: resultTime
+      result_time: resultTime,
     });
-    
+
     if (existingSet) {
-      console.log(`⚠️ ${lotteryName} งวดเวลา ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })} มีอยู่แล้ว`);
+      console.log(
+        `⚠️ ${lotteryName} งวดเวลา ${resultTime.toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })} มีอยู่แล้ว`
+      );
       return existingSet;
     }
-    
+
     const createdLottery = await createLotterySets(lotteryData);
-    
+
     console.log(`✅ สร้าง${lotteryName}สำเร็จ: ${createdLottery.id}`);
-    console.log(`📅 วันออกผล: ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
-    
+    console.log(
+      `📅 วันออกผล: ${resultTime.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}`
+    );
+
     return createdLottery;
-    
   } catch (error) {
     console.error(`❌ เกิดข้อผิดพลาดในการสร้าง${lotteryName}:`, error.message);
     throw error;
@@ -750,61 +864,78 @@ exports.createLaoTvLottery = async function () {
 // ============= ฟังก์ชันสำหรับหวย 4D =============
 
 // ฟังก์ชันทั่วไปสำหรับสร้างหวย 4D
-const create4dLottery = async (lotteryName, drawTime, lotteryTypeStr = "หวย 4D") => {
+const create4dLottery = async (
+  lotteryName,
+  drawTime,
+  lotteryTypeStr = "หวย 4D"
+) => {
   try {
-    const { createLotterySets } = require('../lottery/lotterySets.service');
-    const LotteryType = require('../../models/lotteryType.model');
-    
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
     console.log(`🎲 เริ่มสร้าง${lotteryName}...`);
-    
+
     // หา lottery_type_id สำหรับหวย 4D
-    const lotteryType = await LotteryType.findOne({ lottery_type: lotteryTypeStr });
+    const lotteryType = await LotteryType.findOne({
+      lottery_type: lotteryTypeStr,
+    });
     if (!lotteryType) {
       throw new Error(`ไม่พบประเภท${lotteryTypeStr}ในระบบ`);
     }
-    
+
     const now = new Date();
-    const [hours, minutes] = drawTime.split(':').map(Number);
-    
+    const [hours, minutes] = drawTime.split(":").map(Number);
+
     // เวลาผลออกเป็นเวลาไทย -> แปลงเป็นเวลาบนเซิร์ฟเวอร์
     let resultTime = getBangkokDateAt(hours, minutes, now);
     if (resultTime <= now) {
       const nextDayThai = new Date(resultTime.getTime() + 24 * 60 * 60 * 1000);
       resultTime = getBangkokDateAt(hours, minutes, nextDayThai);
     }
-    
+
     // กำหนดเวลาเปิดแทงเป็นเที่ยงคืนของวันเดียวกับ resultTime (เวลาไทย)
     const openTime = getBangkokMidnight(resultTime);
-    
+
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: lotteryName,
       openTime: openTime, // เปิดแทงเที่ยงคืน
       closeTime: new Date(resultTime.getTime() - 10 * 60 * 1000), // หยุดแทง 10 นาทีก่อนออกผล
       result_time: resultTime,
-      status: "scheduled"
+      status: "scheduled",
     };
-    
+
     // ตรวจสอบว่ามีงวดนี้แล้วหรือยัง
-    const LotterySets = require('../../models/lotterySets.model');
+    const LotterySets = require("../../models/lotterySets.model");
     const existingSet = await LotterySets.findOne({
       name: lotteryName,
-      result_time: resultTime
+      result_time: resultTime,
     });
-    
+
     if (existingSet) {
-      console.log(`⚠️ ${lotteryName} งวดเวลา ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })} มีอยู่แล้ว`);
+      console.log(
+        `⚠️ ${lotteryName} งวดเวลา ${resultTime.toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })} มีอยู่แล้ว`
+      );
       return existingSet;
     }
-    
+
     const createdLottery = await createLotterySets(lotteryData);
-    
+
     console.log(`✅ สร้าง${lotteryName}สำเร็จ: ${createdLottery.id}`);
-    console.log(`📅 เปิดแทง: ${openTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
-    console.log(`📅 วันออกผล: ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
-    
+    console.log(
+      `📅 เปิดแทง: ${openTime.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}`
+    );
+    console.log(
+      `📅 วันออกผล: ${resultTime.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}`
+    );
+
     return createdLottery;
-    
   } catch (error) {
     console.error(`❌ เกิดข้อผิดพลาดในการสร้าง${lotteryName}:`, error.message);
     throw error;
@@ -829,61 +960,78 @@ exports.createGrandDragon4dLottery = async function () {
 // ============= ฟังก์ชันสำหรับหวยฮานอย =============
 
 // ฟังก์ชันทั่วไปสำหรับสร้างหวยฮานอย
-const createHanoiLottery = async (lotteryName, drawTime, lotteryTypeStr = "หวยฮานอย") => {
+const createHanoiLottery = async (
+  lotteryName,
+  drawTime,
+  lotteryTypeStr = "หวยฮานอย"
+) => {
   try {
-    const { createLotterySets } = require('../lottery/lotterySets.service');
-    const LotteryType = require('../../models/lotteryType.model');
-    
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
     console.log(`🇻🇳 เริ่มสร้าง${lotteryName}...`);
-    
+
     // หา lottery_type_id สำหรับหวยฮานอย
-    const lotteryType = await LotteryType.findOne({ lottery_type: lotteryTypeStr });
+    const lotteryType = await LotteryType.findOne({
+      lottery_type: lotteryTypeStr,
+    });
     if (!lotteryType) {
       throw new Error(`ไม่พบประเภท${lotteryTypeStr}ในระบบ`);
     }
-    
+
     const now = new Date();
-    const [hours, minutes] = drawTime.split(':').map(Number);
-    
+    const [hours, minutes] = drawTime.split(":").map(Number);
+
     // เวลาผลออกเป็นเวลาไทย -> แปลงเป็นเวลาบนเซิร์ฟเวอร์
     let resultTime = getBangkokDateAt(hours, minutes, now);
     if (resultTime <= now) {
       const nextDayThai = new Date(resultTime.getTime() + 24 * 60 * 60 * 1000);
       resultTime = getBangkokDateAt(hours, minutes, nextDayThai);
     }
-    
+
     // กำหนดเวลาเปิดแทงเป็นเที่ยงคืนของวันเดียวกับ resultTime (เวลาไทย)
     const openTime = getBangkokMidnight(resultTime);
-    
+
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: lotteryName,
       openTime: openTime, // เปิดแทงเที่ยงคืน
       closeTime: resultTime, // ปิดแทงตรงเวลาออกผล
       result_time: resultTime,
-      status: "scheduled"
-    }; 
-    
+      status: "scheduled",
+    };
+
     // ตรวจสอบว่ามีงวดนี้แล้วหรือยัง
-    const LotterySets = require('../../models/lotterySets.model');
+    const LotterySets = require("../../models/lotterySets.model");
     const existingSet = await LotterySets.findOne({
       name: lotteryName,
-      result_time: resultTime
+      result_time: resultTime,
     });
-    
+
     if (existingSet) {
-      console.log(`⚠️ ${lotteryName} งวดเวลา ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })} มีอยู่แล้ว`);
+      console.log(
+        `⚠️ ${lotteryName} งวดเวลา ${resultTime.toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })} มีอยู่แล้ว`
+      );
       return existingSet;
     }
-    
+
     const createdLottery = await createLotterySets(lotteryData);
-    
+
     console.log(`✅ สร้าง${lotteryName}สำเร็จ: ${createdLottery.id}`);
-    console.log(`📅 เปิดแทง: ${openTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
-    console.log(`📅 ปิดแทง/ออกผล: ${resultTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
-    
+    console.log(
+      `📅 เปิดแทง: ${openTime.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}`
+    );
+    console.log(
+      `📅 ปิดแทง/ออกผล: ${resultTime.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}`
+    );
+
     return createdLottery;
-    
   } catch (error) {
     console.error(`❌ เกิดข้อผิดพลาดในการสร้าง${lotteryName}:`, error.message);
     throw error;
@@ -949,116 +1097,228 @@ exports.createHanoiExtraLottery = async function () {
 
 // หวยไทย
 exports.createThaiGovernmentLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createThaiGovernmentLottery', 'หวยรัฐบาล', exports.createThaiGovernmentLottery);
+  return await createCronjobWithLogging(
+    "createThaiGovernmentLottery",
+    "หวยรัฐบาล",
+    exports.createThaiGovernmentLottery
+  );
 };
 
 exports.createThaiSavingsLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createThaiSavingsLottery', 'หวยออมสิน', exports.createThaiSavingsLottery);
+  return await createCronjobWithLogging(
+    "createThaiSavingsLottery",
+    "หวยออมสิน",
+    exports.createThaiSavingsLottery
+  );
 };
 
 exports.createThaiGsbLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createThaiGsbLottery', 'หวย ธกส', exports.createThaiGsbLottery);
+  return await createCronjobWithLogging(
+    "createThaiGsbLottery",
+    "หวย ธกส",
+    exports.createThaiGsbLottery
+  );
 };
 
 // หวยลาว
 exports.createLaoHdLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoHdLottery', 'หวยลาว HD', exports.createLaoHdLottery);
+  return await createCronjobWithLogging(
+    "createLaoHdLottery",
+    "หวยลาว HD",
+    exports.createLaoHdLottery
+  );
 };
 
 exports.createLaoStarsLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoStarsLottery', 'หวยลาวสตาร์', exports.createLaoStarsLottery);
+  return await createCronjobWithLogging(
+    "createLaoStarsLottery",
+    "หวยลาวสตาร์",
+    exports.createLaoStarsLottery
+  );
 };
 
 exports.createLaoThakhekVipLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoThakhekVipLottery', 'หวยลาวท่าแขก VIP', exports.createLaoThakhekVipLottery);
+  return await createCronjobWithLogging(
+    "createLaoThakhekVipLottery",
+    "หวยลาวท่าแขก VIP",
+    exports.createLaoThakhekVipLottery
+  );
 };
 
 exports.createLaoThakhek5dLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoThakhek5dLottery', 'หวยลาวท่าแขก 5D', exports.createLaoThakhek5dLottery);
+  return await createCronjobWithLogging(
+    "createLaoThakhek5dLottery",
+    "หวยลาวท่าแขก 5D",
+    exports.createLaoThakhek5dLottery
+  );
 };
 
 exports.createLaoUnionLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoUnionLottery', 'หวยลาวสามัคคี', exports.createLaoUnionLottery);
+  return await createCronjobWithLogging(
+    "createLaoUnionLottery",
+    "หวยลาวสามัคคี",
+    exports.createLaoUnionLottery
+  );
 };
 
 exports.createLaoVipLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoVipLottery', 'หวยลาว VIP', exports.createLaoVipLottery);
+  return await createCronjobWithLogging(
+    "createLaoVipLottery",
+    "หวยลาว VIP",
+    exports.createLaoVipLottery
+  );
 };
 
 exports.createLaoStarsVipLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoStarsVipLottery', 'หวยลาวสตาร์ VIP', exports.createLaoStarsVipLottery);
+  return await createCronjobWithLogging(
+    "createLaoStarsVipLottery",
+    "หวยลาวสตาร์ VIP",
+    exports.createLaoStarsVipLottery
+  );
 };
 
 exports.createLaoRedcrossLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoRedcrossLottery', 'หวยลาวกาชาด', exports.createLaoRedcrossLottery);
+  return await createCronjobWithLogging(
+    "createLaoRedcrossLottery",
+    "หวยลาวกาชาด",
+    exports.createLaoRedcrossLottery
+  );
 };
 
 exports.createLaoDevelopLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoDevelopLottery', 'หวยลาวพัฒนา', exports.createLaoDevelopLottery);
+  return await createCronjobWithLogging(
+    "createLaoDevelopLottery",
+    "หวยลาวพัฒนา",
+    exports.createLaoDevelopLottery
+  );
 };
 
 exports.createLaoExtraLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoExtraLottery', 'หวยลาว Extra', exports.createLaoExtraLottery);
+  return await createCronjobWithLogging(
+    "createLaoExtraLottery",
+    "หวยลาว Extra",
+    exports.createLaoExtraLottery
+  );
 };
 
 exports.createLaoTvLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createLaoTvLottery', 'หวยลาว TV', exports.createLaoTvLottery);
+  return await createCronjobWithLogging(
+    "createLaoTvLottery",
+    "หวยลาว TV",
+    exports.createLaoTvLottery
+  );
 };
 
 // หวย 4D
 exports.createMagnum4dLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createMagnum4dLottery', 'หวย Magnum 4D', exports.createMagnum4dLottery);
+  return await createCronjobWithLogging(
+    "createMagnum4dLottery",
+    "หวย Magnum 4D",
+    exports.createMagnum4dLottery
+  );
 };
 
 exports.createSingapore4dLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createSingapore4dLottery', 'หวย Singapore 4D', exports.createSingapore4dLottery);
+  return await createCronjobWithLogging(
+    "createSingapore4dLottery",
+    "หวย Singapore 4D",
+    exports.createSingapore4dLottery
+  );
 };
 
 exports.createGrandDragon4dLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createGrandDragon4dLottery', 'หวย Grand Dragon 4D', exports.createGrandDragon4dLottery);
+  return await createCronjobWithLogging(
+    "createGrandDragon4dLottery",
+    "หวย Grand Dragon 4D",
+    exports.createGrandDragon4dLottery
+  );
 };
 
 // หวยฮานอย
 exports.createHanoiAseanLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiAseanLottery', 'หวยฮานอยอาเซียน', exports.createHanoiAseanLottery);
+  return await createCronjobWithLogging(
+    "createHanoiAseanLottery",
+    "หวยฮานอยอาเซียน",
+    exports.createHanoiAseanLottery
+  );
 };
 
 exports.createHanoiHdLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiHdLottery', 'หวยฮานอย HD', exports.createHanoiHdLottery);
+  return await createCronjobWithLogging(
+    "createHanoiHdLottery",
+    "หวยฮานอย HD",
+    exports.createHanoiHdLottery
+  );
 };
 
 exports.createHanoiStarLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiStarLottery', 'หวยฮานอยสตาร์', exports.createHanoiStarLottery);
+  return await createCronjobWithLogging(
+    "createHanoiStarLottery",
+    "หวยฮานอยสตาร์",
+    exports.createHanoiStarLottery
+  );
 };
 
 exports.createHanoiTvLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiTvLottery', 'หวยฮานอย TV', exports.createHanoiTvLottery);
+  return await createCronjobWithLogging(
+    "createHanoiTvLottery",
+    "หวยฮานอย TV",
+    exports.createHanoiTvLottery
+  );
 };
 
 exports.createHanoiSpecialLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiSpecialLottery', 'หวยฮานอยเฉพาะกิจ', exports.createHanoiSpecialLottery);
+  return await createCronjobWithLogging(
+    "createHanoiSpecialLottery",
+    "หวยฮานอยเฉพาะกิจ",
+    exports.createHanoiSpecialLottery
+  );
 };
 
 exports.createHanoiRedcrossLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiRedcrossLottery', 'หวยฮานอยกาชาด', exports.createHanoiRedcrossLottery);
+  return await createCronjobWithLogging(
+    "createHanoiRedcrossLottery",
+    "หวยฮานอยกาชาด",
+    exports.createHanoiRedcrossLottery
+  );
 };
 
 exports.createHanoiSpecialApiLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiSpecialApiLottery', 'หวยฮานอยพิเศษ', exports.createHanoiSpecialApiLottery);
+  return await createCronjobWithLogging(
+    "createHanoiSpecialApiLottery",
+    "หวยฮานอยพิเศษ",
+    exports.createHanoiSpecialApiLottery
+  );
 };
 
 exports.createHanoiLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiLottery', 'หวยฮานอย', exports.createHanoiLottery);
+  return await createCronjobWithLogging(
+    "createHanoiLottery",
+    "หวยฮานอย",
+    exports.createHanoiLottery
+  );
 };
 
 exports.createHanoiDevelopLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiDevelopLottery', 'หวยฮานอยพัฒนา', exports.createHanoiDevelopLottery);
+  return await createCronjobWithLogging(
+    "createHanoiDevelopLottery",
+    "หวยฮานอยพัฒนา",
+    exports.createHanoiDevelopLottery
+  );
 };
 
 exports.createHanoiVipLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiVipLottery', 'หวยฮานอย VIP', exports.createHanoiVipLottery);
+  return await createCronjobWithLogging(
+    "createHanoiVipLottery",
+    "หวยฮานอย VIP",
+    exports.createHanoiVipLottery
+  );
 };
 
 exports.createHanoiExtraLotteryWithLog = async function () {
-  return await createCronjobWithLogging('createHanoiExtraLottery', 'หวยฮานอย EXTRA', exports.createHanoiExtraLottery);
+  return await createCronjobWithLogging(
+    "createHanoiExtraLottery",
+    "หวยฮานอย EXTRA",
+    exports.createHanoiExtraLottery
+  );
 };
