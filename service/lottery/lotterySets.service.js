@@ -33,6 +33,7 @@ exports.getLotterySets = async function (query) {
     let lotterySets = await LotterySets.find(filter)
       .skip((parseInt(page) - 1) * (limit ? parseInt(limit) : 0))
       .limit(limit ? parseInt(limit) : undefined)
+      .sort({ result_time: -1 }) // เรียงตามเวลาออกผลล่าสุดก่อน
       .populate("lottery_type_id");
 
     if (slug) {
