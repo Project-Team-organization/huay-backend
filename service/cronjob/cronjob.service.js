@@ -765,11 +765,18 @@ const createLaoLottery = async (lotteryName, drawTime) => {
       resultTime = getBangkokDateAt(hours, minutes, nextDayThai);
     }
 
+    // คำนวณเวลาปิดรับแทง (1 นาทีก่อนออกผล)
+    const closeTime = new Date(resultTime.getTime() - 1 * 60 * 1000);
+
+    // ถ้าเวลาปิดน้อยกว่าหรือเท่ากับเวลาปัจจุบัน ให้ใช้เวลาปัจจุบันบวก 1 นาที
+    const finalCloseTime =
+      closeTime <= now ? new Date(now.getTime() + 60 * 1000) : closeTime;
+
     const lotteryData = {
       lottery_type_id: lotteryType._id,
       name: lotteryName,
       openTime: now, // เริ่มแทงได้ทันที
-      closeTime: new Date(resultTime.getTime() - 5 * 60 * 1000), // หยุดแทง 5 นาทีก่อนออกผล
+      closeTime: finalCloseTime, // หยุดแทงก่อนออกผล (อย่างน้อย 1 นาทีหลังจากเปิด)
       result_time: resultTime,
       status: "scheduled",
     };
