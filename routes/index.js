@@ -11,7 +11,8 @@ const masterRoutes = require("./master.routes");
 const creditRoutes = require("./credit.routes");
 const promotionRoutes = require("./promotion.routes");
 const withdrawalRoutes = require("./withdrawal.routes");
-const cronjobRoutes = require("./cronjob.routes");
+// const cronjobRoutes = require("./cronjob.routes");
+const analyticsRoutes = require("./analytics.routes");
 const { authenticate } = require("../middleware/authadmin.middleware");
 
 
@@ -72,6 +73,9 @@ router.use("/promotion", promotionRoutes);
 router.use("/withdrawal", withdrawalRoutes);
 
 // ส่วนของ cronjob logs
-router.use("/cronjob", cronjobRoutes);
+// router.use("/cronjob", cronjobRoutes);
+
+// ส่วนของ analytics
+router.use("/analytics", analyticsRoutes);
 
 module.exports = router;
