@@ -1329,3 +1329,216 @@ exports.createHanoiExtraLotteryWithLog = async function () {
     exports.createHanoiExtraLottery
   );
 };
+
+// ============= หวยยี้กี้ FUNCTIONS =============
+
+// สร้างหวยยี้กี้ธรรม 96 รอบ (ทุก 15 นาที)
+exports.createYiKeeRounds = async function () {
+  try {
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
+    console.log("🎲 เริ่มสร้างหวยยี้กี้ธรรม 96 รอบ...");
+
+    // หา lottery_type_id สำหรับหวยยี้กี้
+    const lotteryType = await LotteryType.findOne({ slug: "yikee" });
+    if (!lotteryType) {
+      throw new Error("ไม่พบประเภทหวยยี้กี้ในระบบ");
+    }
+
+    const now = new Date();
+    const midnight = getBangkokMidnight(now);
+    const createdLotteries = [];
+
+    // สร้าง 96 รอบ (ทุก 15 นาที)
+    for (let i = 0; i < 96; i++) {
+      const roundNumber = i + 1;
+      const minutesOffset = i * 15;
+
+      // เวลาเปิดรับแทง (เที่ยงคืน + offset)
+      const openTime = new Date(midnight.getTime() + minutesOffset * 60 * 1000);
+
+      // เวลาปิดรับแทง (ก่อนออกผล 1 นาที)
+      const closeTime = new Date(openTime.getTime() + (15 - 1) * 60 * 1000);
+
+      // เวลาออกผล (15 นาทีหลังเปิด)
+      const resultTime = new Date(openTime.getTime() + 15 * 60 * 1000);
+
+      const lotteryData = {
+        lottery_type_id: lotteryType._id,
+        name: `หวยยี้กี้ธรรม รอบที่ ${roundNumber}`,
+        openTime: openTime,
+        closeTime: closeTime,
+        result_time: resultTime,
+        status: "scheduled",
+      };
+
+      // ตรวจสอบว่ามีรอบนี้แล้วหรือยัง
+      const LotterySets = require("../../models/lotterySets.model");
+      const existingSet = await LotterySets.findOne({
+        name: lotteryData.name,
+        result_time: resultTime,
+      });
+
+      if (!existingSet) {
+        const createdLottery = await createLotterySets(lotteryData);
+        createdLotteries.push(createdLottery);
+      }
+    }
+
+    console.log(`✅ สร้างหวยยี้กี้ธรรมสำเร็จ ${createdLotteries.length} รอบ`);
+    return { count: createdLotteries.length, lotteries: createdLotteries };
+  } catch (error) {
+    console.error("❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ธรรม:", error.message);
+    throw error;
+  }
+};
+
+// สร้างหวยยี้กี้ 4G 144 รอบ (ทุก 10 นาที)
+exports.createYiKee4GRounds = async function () {
+  try {
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
+    console.log("🎲 เริ่มสร้างหวยยี้กี้ 4G 144 รอบ...");
+
+    // หา lottery_type_id สำหรับหวยยี้กี้ 4G
+    const lotteryType = await LotteryType.findOne({ slug: "yikee-4g" });
+    if (!lotteryType) {
+      throw new Error("ไม่พบประเภทหวยยี้กี้ 4G ในระบบ");
+    }
+
+    const now = new Date();
+    const midnight = getBangkokMidnight(now);
+    const createdLotteries = [];
+
+    // สร้าง 144 รอบ (ทุก 10 นาที)
+    for (let i = 0; i < 144; i++) {
+      const roundNumber = i + 1;
+      const minutesOffset = i * 10;
+
+      // เวลาเปิดรับแทง (เที่ยงคืน + offset)
+      const openTime = new Date(midnight.getTime() + minutesOffset * 60 * 1000);
+
+      // เวลาปิดรับแทง (ก่อนออกผล 1 นาที)
+      const closeTime = new Date(openTime.getTime() + (10 - 1) * 60 * 1000);
+
+      // เวลาออกผล (10 นาทีหลังเปิด)
+      const resultTime = new Date(openTime.getTime() + 10 * 60 * 1000);
+
+      const lotteryData = {
+        lottery_type_id: lotteryType._id,
+        name: `หวยยี้กี้ 4G รอบที่ ${roundNumber}`,
+        openTime: openTime,
+        closeTime: closeTime,
+        result_time: resultTime,
+        status: "scheduled",
+      };
+
+      // ตรวจสอบว่ามีรอบนี้แล้วหรือยัง
+      const LotterySets = require("../../models/lotterySets.model");
+      const existingSet = await LotterySets.findOne({
+        name: lotteryData.name,
+        result_time: resultTime,
+      });
+
+      if (!existingSet) {
+        const createdLottery = await createLotterySets(lotteryData);
+        createdLotteries.push(createdLottery);
+      }
+    }
+
+    console.log(`✅ สร้างหวยยี้กี้ 4G สำเร็จ ${createdLotteries.length} รอบ`);
+    return { count: createdLotteries.length, lotteries: createdLotteries };
+  } catch (error) {
+    console.error("❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ 4G:", error.message);
+    throw error;
+  }
+};
+
+// สร้างหวยยี้กี้ 5G 288 รอบ (ทุก 5 นาที)
+exports.createYiKee5GRounds = async function () {
+  try {
+    const { createLotterySets } = require("../lottery/lotterySets.service");
+    const LotteryType = require("../../models/lotteryType.model");
+
+    console.log("🎲 เริ่มสร้างหวยยี้กี้ 5G 288 รอบ...");
+
+    // หา lottery_type_id สำหรับหวยยี้กี้ 5G
+    const lotteryType = await LotteryType.findOne({ slug: "yikee-5g" });
+    if (!lotteryType) {
+      throw new Error("ไม่พบประเภทหวยยี้กี้ 5G ในระบบ");
+    }
+
+    const now = new Date();
+    const midnight = getBangkokMidnight(now);
+    const createdLotteries = [];
+
+    // สร้าง 288 รอบ (ทุก 5 นาที)
+    for (let i = 0; i < 288; i++) {
+      const roundNumber = i + 1;
+      const minutesOffset = i * 5;
+
+      // เวลาเปิดรับแทง (เที่ยงคืน + offset)
+      const openTime = new Date(midnight.getTime() + minutesOffset * 60 * 1000);
+
+      // เวลาปิดรับแทง (ก่อนออกผล 1 นาที)
+      const closeTime = new Date(openTime.getTime() + (5 - 1) * 60 * 1000);
+
+      // เวลาออกผล (5 นาทีหลังเปิด)
+      const resultTime = new Date(openTime.getTime() + 5 * 60 * 1000);
+
+      const lotteryData = {
+        lottery_type_id: lotteryType._id,
+        name: `หวยยี้กี้ 5G รอบที่ ${roundNumber}`,
+        openTime: openTime,
+        closeTime: closeTime,
+        result_time: resultTime,
+        status: "scheduled",
+      };
+
+      // ตรวจสอบว่ามีรอบนี้แล้วหรือยัง
+      const LotterySets = require("../../models/lotterySets.model");
+      const existingSet = await LotterySets.findOne({
+        name: lotteryData.name,
+        result_time: resultTime,
+      });
+
+      if (!existingSet) {
+        const createdLottery = await createLotterySets(lotteryData);
+        createdLotteries.push(createdLottery);
+      }
+    }
+
+    console.log(`✅ สร้างหวยยี้กี้ 5G สำเร็จ ${createdLotteries.length} รอบ`);
+    return { count: createdLotteries.length, lotteries: createdLotteries };
+  } catch (error) {
+    console.error("❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ 5G:", error.message);
+    throw error;
+  }
+};
+
+// Wrapper functions with logging
+exports.createYiKeeRoundsWithLog = async function () {
+  return await createCronjobWithLogging(
+    "createYiKeeRounds",
+    "หวยยี้กี้ธรรม 96 รอบ",
+    exports.createYiKeeRounds
+  );
+};
+
+exports.createYiKee4GRoundsWithLog = async function () {
+  return await createCronjobWithLogging(
+    "createYiKee4GRounds",
+    "หวยยี้กี้ 4G 144 รอบ",
+    exports.createYiKee4GRounds
+  );
+};
+
+exports.createYiKee5GRoundsWithLog = async function () {
+  return await createCronjobWithLogging(
+    "createYiKee5GRounds",
+    "หวยยี้กี้ 5G 288 รอบ",
+    exports.createYiKee5GRounds
+  );
+};
