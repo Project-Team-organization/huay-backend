@@ -499,14 +499,19 @@ const createLotteryResultItems = async (
         break;
     }
 
-    if (numbers.length > 0) {
+    // กรองค่าว่างออก
+    const validNumbers = numbers.filter(
+      num => num && String(num).trim() !== ""
+    );
+
+    if (validNumbers.length > 0) {
       // สร้างและบันทึก LotteryResultItem
       const resultItem = await LotteryResultItem.create({
         lottery_result_id: lotteryResult._id,
         betting_type_id: betType.code,
         name: betType.name,
         reward: betType.payout_rate,
-        numbers: numbers,
+        numbers: validNumbers,
         winner_count: 0,
       });
       resultItems.push(resultItem);
@@ -824,6 +829,18 @@ exports.evaluateUserBetsByLotterySet = async function (
   }
 };
 
+// ฟังก์ชันช่วยเหลือสำหรับอัพเดทสถานะ lottery_set เป็น resulted
+// เรียกใช้ทันทีหลังสร้าง LotteryResult เพื่อป้องกันการประมวลผลซ้ำ
+async function markLotterySetAsResulted(lottery_set_id) {
+  try {
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+    console.log(`✅ อัพเดทสถานะ lottery_set เป็น resulted แล้ว`);
+  } catch (error) {
+    console.error("❌ markLotterySetAsResulted error:", error.message);
+    throw error;
+  }
+}
+
 async function processlotterythai(lottery_set_id, createdBy, lottery_set) {
   try {
     console.log("🇹🇭 เริ่มประมวลผลหวยไทย (หวยรัฐบาล)");
@@ -851,6 +868,9 @@ async function processlotterythai(lottery_set_id, createdBy, lottery_set) {
         status: "published",
         createdBy,
       });
+
+      // อัพเดทสถานะเป็น resulted ทันทีเพื่อป้องกันการประมวลผลซ้ำ
+      await markLotterySetAsResulted(lottery_set_id);
 
       // 3. บันทึกรายการรางวัลโดยใช้ฟังก์ชันใหม่
       const huay_results = await huay.find({ lottery_set_id: lottery_set_id });
@@ -1063,9 +1083,6 @@ async function processlotterythai(lottery_set_id, createdBy, lottery_set) {
       console.log(`🎯 ผล: ${userBet.status.toUpperCase()}`);
     }
 
-    // อัพเดทสถานะ lottery_set เป็น resulted
-    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
-
     console.log(`\n✅ ตรวจเสร็จทั้งหมด ${pendingBets.length} รายการ`);
 
     return {
@@ -1102,6 +1119,9 @@ async function processlotterylaohd(
       status: "published",
       createdBy,
     });
+
+    // อัพเดทสถานะเป็น resulted ทันทีเพื่อป้องกันการประมวลผลซ้ำ
+    await markLotterySetAsResulted(lottery_set_id);
 
     // 3. บันทึกรายการรางวัลโดยใช้ฟังก์ชันใหม่
     const betting_types = resulthuay.betting_types;
@@ -1323,7 +1343,16 @@ const createLotteryResultItemsLao = async (
   const bettingTypes = lottery_type.betting_types || [];
 
   for (const bettingType of processedBettingTypes) {
-    // ตรวจสอบว่า lottery_set และ betting_types มีอยู่หรือไม่
+    // กรองค่าว่างออกจาก digit array
+    const validNumbers = Array.isArray(bettingType.digit)
+      ? bettingType.digit.filter(num => num && num.trim() !== "")
+      : [];
+
+    // ข้ามการสร้าง item ถ้าไม่มีเลข
+    if (validNumbers.length === 0) {
+      console.log(`⚠️ ข้าม ${bettingType.name} เพราะไม่มีเลขผลรางวัล`);
+      continue;
+    }
 
     const payoutRate =
       bettingTypes.find(bt => bt.code === bettingType.code)?.payout_rate || 0;
@@ -1332,7 +1361,7 @@ const createLotteryResultItemsLao = async (
       betting_type_id: bettingType.code,
       name: bettingType.name,
       reward: payoutRate,
-      numbers: bettingType.digit,
+      numbers: validNumbers,
       winner_count: 0,
     });
     resultItems.push(resultItem);
@@ -1359,12 +1388,23 @@ const createLotteryResultItemsHanoi = async (
       ? bettingType.digit
       : [bettingType.digit];
 
+    // กรองค่าว่างออก
+    const validNumbers = numbers.filter(
+      num => num && String(num).trim() !== ""
+    );
+
+    // ข้ามการสร้าง item ถ้าไม่มีเลข
+    if (validNumbers.length === 0) {
+      console.log(`⚠️ ข้าม ${bettingType.name} เพราะไม่มีเลขผลรางวัล`);
+      continue;
+    }
+
     const resultItem = await LotteryResultItem.create({
       lottery_result_id: lotteryResult._id,
       betting_type_id: bettingType.code,
       name: bettingType.name,
       reward: payoutRate,
-      numbers: numbers,
+      numbers: validNumbers,
       winner_count: 0,
     });
     resultItems.push(resultItem);
@@ -2527,6 +2567,9 @@ async function processlottery_grand_dragon_4d(
       createdBy,
     });
 
+    // อัพเดทสถานะเป็น resulted ทันทีเพื่อป้องกันการประมวลผลซ้ำ
+    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
+
     const betting_types = resulthuay.betting_types;
     const processedBettingTypes = betting_types.map(bettingType => {
       const digitValue = bettingType.digit;
@@ -2568,7 +2611,6 @@ async function processlottery_grand_dragon_4d(
       "หวย Grand Dragon 4D"
     );
 
-    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
     console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
 
     return {
