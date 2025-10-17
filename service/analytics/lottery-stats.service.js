@@ -234,6 +234,11 @@ const getStatsByLotteryType = async (lotteryTypeName, startDate, endDate) => {
     let totalBetAmount = 0;
     let totalPayoutAmount = 0;
     let allPlayers = new Set();
+    
+    // สำหรับคำนวณ summary
+    const allUserBetAmounts = {};  // รวมยอดแทงของแต่ละ user
+    const allUserWinAmounts = {};  // รวมยอดถูกของแต่ละ user
+    const allNumberCounts = {};    // รวมเลขยอดนิยมทั้งหมด
 
     for (const lotterySet of lotterySets) {
       const bets = allBets.filter(bet => bet.lottery_set_id.toString() === lotterySet._id.toString());
@@ -259,6 +264,15 @@ const getStatsByLotteryType = async (lotteryTypeName, startDate, endDate) => {
           };
         }
         userBetAmounts[userId].totalBet += bet.total_bet_amount;
+        
+        // เพิ่มเข้า summary
+        if (!allUserBetAmounts[userId]) {
+          allUserBetAmounts[userId] = {
+            username: bet.user_id.username || bet.user_id.full_name,
+            totalBet: 0
+          };
+        }
+        allUserBetAmounts[userId].totalBet += bet.total_bet_amount;
       });
       const topBetUser = Object.entries(userBetAmounts)
         .sort((a, b) => b[1].totalBet - a[1].totalBet)[0];
@@ -275,6 +289,15 @@ const getStatsByLotteryType = async (lotteryTypeName, startDate, endDate) => {
             };
           }
           userWinAmounts[userId].totalWin += bet.payout_amount;
+          
+          // เพิ่มเข้า summary
+          if (!allUserWinAmounts[userId]) {
+            allUserWinAmounts[userId] = {
+              username: bet.user_id.username || bet.user_id.full_name,
+              totalWin: 0
+            };
+          }
+          allUserWinAmounts[userId].totalWin += bet.payout_amount;
         }
       });
       const topWinUser = Object.entries(userWinAmounts)
@@ -289,12 +312,18 @@ const getStatsByLotteryType = async (lotteryTypeName, startDate, endDate) => {
               numberCounts[num.number] = { number: num.number, count: 0 };
             }
             numberCounts[num.number].count += 1;
+            
+            // เพิ่มเข้า summary
+            if (!allNumberCounts[num.number]) {
+              allNumberCounts[num.number] = { number: num.number, count: 0 };
+            }
+            allNumberCounts[num.number].count += 1;
           });
         });
       });
       const popularNumbers = Object.values(numberCounts)
         .sort((a, b) => b.count - a.count)
-        .slice(0, 5)
+        .slice(0, 10)
         .map(n => n.number);
 
       // รายการออกรางวัล
@@ -335,6 +364,15 @@ const getStatsByLotteryType = async (lotteryTypeName, startDate, endDate) => {
       });
     }
 
+    // คำนวณ summary จาก rounds
+    const summaryTopWinUser = Object.entries(allUserWinAmounts)
+      .sort((a, b) => b[1].totalWin - a[1].totalWin)[0];
+    
+    const summaryPopularNumbers = Object.values(allNumberCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map(n => n.number);
+
     return handleSuccess(
       {
         lotteryTypeName: lotteryType.lottery_type,
@@ -345,7 +383,12 @@ const getStatsByLotteryType = async (lotteryTypeName, startDate, endDate) => {
           totalBetAmount,
           totalPayoutAmount,
           totalProfit: totalBetAmount - totalPayoutAmount,
-          totalPlayers: allPlayers.size
+          totalPlayers: allPlayers.size,
+          topWinUser: summaryTopWinUser ? {
+            username: summaryTopWinUser[1].username,
+            amount: summaryTopWinUser[1].totalWin
+          } : null,
+          popularNumbers: summaryPopularNumbers
         },
         dateRange: {
           startDate: start.toISOString().split('T')[0],

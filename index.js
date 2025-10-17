@@ -13,7 +13,7 @@ require("./cronjob/huay.thai");
 require("./cronjob/huay.magnum4d");
 require("./cronjob/huay.hanoi");
 require("./cronjob/cronjob_set");
-// require('./cronjob/huay.foreign.stock');
+require('./cronjob/huay.foreign.stock');
 
 async function startServer() {
   const app = express();
