@@ -2529,11 +2529,24 @@ async function processlottery_grand_dragon_4d(
 
     const betting_types = resulthuay.betting_types;
     const processedBettingTypes = betting_types.map(bettingType => {
+      const digitValue = bettingType.digit;
+      let digitArray;
+
+      // ตรวจสอบว่า digit เป็น array อยู่แล้วหรือไม่
+      if (Array.isArray(digitValue)) {
+        digitArray = digitValue;
+      } else if (typeof digitValue === "string") {
+        // ถ้าเป็น string ให้แยกด้วย comma
+        digitArray = digitValue.includes(",")
+          ? digitValue.split(",").map(d => d.trim())
+          : [digitValue.trim()];
+      } else {
+        digitArray = [String(digitValue)];
+      }
+
       return {
         ...(bettingType._doc || bettingType),
-        digit: bettingType.digit.includes(",")
-          ? bettingType.digit.split(",").map(d => d.trim())
-          : [bettingType.digit.trim()],
+        digit: digitArray,
       };
     });
     const resultItems = await createLotteryResultItemsLao(
