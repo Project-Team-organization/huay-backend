@@ -161,17 +161,16 @@ exports.getTodayLotteryRounds = async () => {
     const startOfDay = moment().tz("Asia/Bangkok").startOf("day").toDate();
     const endOfDay = moment().tz("Asia/Bangkok").endOf("day").toDate();
 
-    const rounds = await LotterySets.find({
+    const count = await LotterySets.countDocuments({
+      name: "หวยยี่กี",
+      status: "resulted",
       result_time: {
         $gte: startOfDay,
         $lte: endOfDay,
       },
-    })
-      .populate("lottery_type_id", "lottery_type")
-      .sort({ result_time: 1 })
-      .lean();
+    });
 
-    return rounds;
+    return count;
   } catch (error) {
     console.error("Error in getTodayLotteryRounds:", error);
     throw error;
@@ -183,14 +182,15 @@ exports.getTodayLotteryRounds = async () => {
  */
 exports.getDashboardSummary = async () => {
   try {
-    const [totalBets, totalPayouts, netProfit, totalPlayers, lotteryRounds] =
+    const [totalBets, totalPayouts, totalPlayers, lotteryRounds] =
       await Promise.all([
         this.getTodayTotalBets(),
         this.getTodayTotalPayouts(),
-        this.getTodayNetProfit(),
         this.getTodayTotalPlayers(),
         this.getTodayLotteryRounds(),
       ]);
+
+    const netProfit = totalBets - totalPayouts;
 
     return {
       totalBets,
