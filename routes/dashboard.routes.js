@@ -10,4 +10,11 @@ router.get(
   dashboardController.getDashboardSummary
 );
 
+// Player Report - รายงานผู้เล่นพร้อม pagination
+router.get(
+  "/player-report",
+  // authmiddleware.permissionmanageradmin,
+  dashboardController.getPlayerReport
+);
+
 module.exports = router;

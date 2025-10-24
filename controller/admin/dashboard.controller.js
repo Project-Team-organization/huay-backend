@@ -42,3 +42,42 @@ exports.getDashboardSummary = async (req, res) => {
     return res.status(response.status).json(response);
   }
 };
+
+/**
+ * GET /api/dashboard/player-report
+ * ดึงรายงานผู้เล่นพร้อม pagination
+ */
+exports.getPlayerReport = async (req, res) => {
+  const userId = req.user?._id || null;
+  const fullUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+  const ipRaw =
+    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    req.connection.remoteAddress ||
+    req.ip;
+  const ip = normalizeIP(ipRaw);
+  const referrer = req.get("Referer") || null;
+
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const report = await dashboardService.getPlayerReport(page, limit);
+
+    const response = await handleSuccess(report, "ดึงรายงานผู้เล่นสำเร็จ", 200);
+    return res.status(response.status).json(response);
+  } catch (error) {
+    await logAction("player_report_error", {
+      tag: "player_report",
+      userId,
+      fullUrl,
+      ip,
+      referrer,
+      error: error.message,
+    });
+    const response = await handleError(
+      error,
+      "เกิดข้อผิดพลาดในการดึงรายงานผู้เล่น"
+    );
+    return res.status(response.status).json(response);
+  }
+};

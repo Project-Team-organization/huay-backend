@@ -204,3 +204,131 @@ exports.getDashboardSummary = async () => {
     throw error;
   }
 };
+
+/**
+ * 📊 รายงานผู้เล่น (Player Report) พร้อม Pagination
+ * ดึงข้อมูลจาก users และคำนวณจาก usertransactions
+ */
+exports.getPlayerReport = async (page = 1, limit = 10) => {
+  try {
+    const User = require("../../models/user.model");
+    const skip = (page - 1) * limit;
+
+    // ดึงข้อมูล users พร้อม pagination
+    const users = await User.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const totalUsers = await User.countDocuments();
+
+    // คำนวณข้อมูลแต่ละ user จาก transactions
+    const playerReports = await Promise.all(
+      users.map(async user => {
+        // ยอดฝาก
+        const deposits = await UserTransaction.aggregate([
+          {
+            $match: {
+              user_id: user._id,
+              type: "deposit",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+            },
+          },
+        ]);
+
+        // ยอดถอน
+        const withdrawals = await UserTransaction.aggregate([
+          {
+            $match: {
+              user_id: user._id,
+              type: "withdraw",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+            },
+          },
+        ]);
+
+        // ยอดแทง
+        const bets = await UserBet.aggregate([
+          {
+            $match: {
+              user_id: user._id,
+              status: { $ne: "cancelled" },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$total_bet_amount" },
+              count: { $sum: 1 },
+            },
+          },
+        ]);
+
+        // ยอดถูกรางวัล
+        const winnings = await LotteryWinner.aggregate([
+          {
+            $match: {
+              user_id: user._id,
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$payout" },
+              count: { $sum: 1 },
+            },
+          },
+        ]);
+
+        const totalDeposit = deposits.length > 0 ? deposits[0].total : 0;
+        const totalWithdraw = withdrawals.length > 0 ? withdrawals[0].total : 0;
+        const totalBet = bets.length > 0 ? bets[0].total : 0;
+        const betCount = bets.length > 0 ? bets[0].count : 0;
+        const totalWinning = winnings.length > 0 ? winnings[0].total : 0;
+        const winCount = winnings.length > 0 ? winnings[0].count : 0;
+
+        return {
+          userId: user._id,
+          username: user.full_name || user.username,
+          registeredDate: moment(user.createdAt)
+            .tz("Asia/Bangkok")
+            .format("YYYY-MM-DD"),
+          totalDeposit,
+          totalWithdraw,
+          netBalance: totalDeposit - totalWithdraw,
+          betCount,
+          winCount,
+          commission: 0, // ใส่ 0 ไปก่อนตามที่ขอ
+          status: user.active ? "Active" : "Suspended",
+        };
+      })
+    );
+
+    // เรียงตามยอดฝากรวมมากสุด
+    playerReports.sort((a, b) => b.totalDeposit - a.totalDeposit);
+
+    return {
+      data: playerReports,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalUsers / limit),
+        totalItems: totalUsers,
+        itemsPerPage: limit,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getPlayerReport:", error);
+    throw error;
+  }
+};
