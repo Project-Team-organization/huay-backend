@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const lotteryStatsController = require("../controller/analytics/lottery-stats.controller");
+const lotteryOverviewController = require("../controller/analytics/lottery-overview.controller");
 const authmiddleware = require("../middleware/authadmin.middleware");
 
 // Route สำหรับดึงสถิติหวยแต่ละงวด (รายละเอียดเต็ม)
@@ -61,6 +62,14 @@ router.get(
     "/lottery/yeekee",
     authmiddleware.permissionmanageradmin,
     lotteryStatsController.getYeeKeeLotteryStats
+);
+
+// รายงานสรุปภาพรวมหวยทุกประเภท (แบบตาราง)
+// GET /api/analytics/lottery/overview?startDate=2025-10-01&endDate=2025-10-31
+router.get(
+    "/lottery/overview",
+    authmiddleware.permissionmanageradmin,
+    lotteryOverviewController.getLotteryOverviewReport
 );
 
 module.exports = router;
