@@ -206,13 +206,34 @@ exports.getDashboardSummary = async () => {
 };
 
 /**
- * 📊 รายงานผู้เล่น (Player Report) พร้อม Pagination
+ * 📊 รายงานผู้เล่น (Player Report) พร้อม Pagination และ Date Range
  * ดึงข้อมูลจาก users และคำนวณจาก usertransactions
  */
-exports.getPlayerReport = async (page = 1, limit = 10) => {
+exports.getPlayerReport = async (
+  page = 1,
+  limit = 10,
+  startDate = null,
+  endDate = null
+) => {
   try {
     const User = require("../../models/user.model");
     const skip = (page - 1) * limit;
+
+    // สร้าง date range filter
+    let dateFilter = {};
+    if (startDate && endDate) {
+      const start = moment(startDate)
+        .tz("Asia/Bangkok")
+        .startOf("day")
+        .toDate();
+      const end = moment(endDate).tz("Asia/Bangkok").endOf("day").toDate();
+      dateFilter = {
+        created_at: {
+          $gte: start,
+          $lte: end,
+        },
+      };
+    }
 
     // ดึงข้อมูล users พร้อม pagination
     const users = await User.find()
@@ -232,6 +253,7 @@ exports.getPlayerReport = async (page = 1, limit = 10) => {
             $match: {
               user_id: user._id,
               type: "deposit",
+              ...dateFilter,
             },
           },
           {
@@ -248,6 +270,7 @@ exports.getPlayerReport = async (page = 1, limit = 10) => {
             $match: {
               user_id: user._id,
               type: "withdraw",
+              ...dateFilter,
             },
           },
           {
@@ -258,12 +281,28 @@ exports.getPlayerReport = async (page = 1, limit = 10) => {
           },
         ]);
 
-        // ยอดแทง
+        // ยอดแทง (ใช้ bet_date สำหรับ UserBet)
+        let betDateFilter = {};
+        if (startDate && endDate) {
+          const start = moment(startDate)
+            .tz("Asia/Bangkok")
+            .startOf("day")
+            .toDate();
+          const end = moment(endDate).tz("Asia/Bangkok").endOf("day").toDate();
+          betDateFilter = {
+            bet_date: {
+              $gte: start,
+              $lte: end,
+            },
+          };
+        }
+
         const bets = await UserBet.aggregate([
           {
             $match: {
               user_id: user._id,
               status: { $ne: "cancelled" },
+              ...betDateFilter,
             },
           },
           {
@@ -275,11 +314,27 @@ exports.getPlayerReport = async (page = 1, limit = 10) => {
           },
         ]);
 
-        // ยอดถูกรางวัล
+        // ยอดถูกรางวัล (ใช้ createdAt สำหรับ LotteryWinner)
+        let winDateFilter = {};
+        if (startDate && endDate) {
+          const start = moment(startDate)
+            .tz("Asia/Bangkok")
+            .startOf("day")
+            .toDate();
+          const end = moment(endDate).tz("Asia/Bangkok").endOf("day").toDate();
+          winDateFilter = {
+            createdAt: {
+              $gte: start,
+              $lte: end,
+            },
+          };
+        }
+
         const winnings = await LotteryWinner.aggregate([
           {
             $match: {
               user_id: user._id,
+              ...winDateFilter,
             },
           },
           {
@@ -319,7 +374,7 @@ exports.getPlayerReport = async (page = 1, limit = 10) => {
     playerReports.sort((a, b) => b.totalDeposit - a.totalDeposit);
 
     return {
-      data: playerReports,
+      players: playerReports,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(totalUsers / limit),

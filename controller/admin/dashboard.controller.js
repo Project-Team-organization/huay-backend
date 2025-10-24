@@ -60,8 +60,15 @@ exports.getPlayerReport = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const startDate = req.query.startDate || null;
+    const endDate = req.query.endDate || null;
 
-    const report = await dashboardService.getPlayerReport(page, limit);
+    const report = await dashboardService.getPlayerReport(
+      page,
+      limit,
+      startDate,
+      endDate
+    );
 
     const response = await handleSuccess(report, "ดึงรายงานผู้เล่นสำเร็จ", 200);
     return res.status(response.status).json(response);
