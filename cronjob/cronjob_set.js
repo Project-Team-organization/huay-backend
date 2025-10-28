@@ -898,94 +898,94 @@ cron.schedule(
 // ============= หวยยี้กี้ CRONJOBS เปิดเที่ยงคืน =============
 
 // หวยยี้กี้ธรรม - สร้างเที่ยงคืนทุกวัน (96 รอบ/วัน ทุก 15 นาที)
-// cron.schedule(
-//   "14 0 * * *",
-//   async () => {
-//     console.log(
-//       `[${new Date().toLocaleString("th-TH", {
-//         timeZone: "Asia/Bangkok",
-//       })}] 🎲 สร้างหวยยี้กี้ธรรม 96 รอบ...`
-//     );
-//     try {
-//       const {
-//         createYiKeeRoundsWithLog,
-//       } = require("../service/cronjob/cronjob.service");
-//       await createYiKeeRoundsWithLog();
-//       console.log(
-//         `[${new Date().toLocaleString("th-TH", {
-//           timeZone: "Asia/Bangkok",
-//         })}] ✅ สร้างหวยยี้กี้ธรรม 96 รอบสำเร็จ`
-//       );
-//     } catch (error) {
-//       console.error(
-//         `[${new Date().toLocaleString("th-TH", {
-//           timeZone: "Asia/Bangkok",
-//         })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ธรรม:`,
-//         error.message
-//       );
-//     }
-//   },
-//   { timezone: "Asia/Bangkok" }
-// );
+cron.schedule(
+  "14 0 * * *",
+  async () => {
+    console.log(
+      `[${new Date().toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}] 🎲 สร้างหวยยี้กี้ธรรม 96 รอบ...`
+    );
+    try {
+      const {
+        createYiKeeRoundsWithLog,
+      } = require("../service/cronjob/cronjob.service");
+      await createYiKeeRoundsWithLog();
+      console.log(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ✅ สร้างหวยยี้กี้ธรรม 96 รอบสำเร็จ`
+      );
+    } catch (error) {
+      console.error(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ธรรม:`,
+        error.message
+      );
+    }
+  },
+  { timezone: "Asia/Bangkok" }
+);
 
 // // หวยยี้กี้ 4G - สร้างเที่ยงคืนทุกวัน (144 รอบ/วัน ทุก 10 นาที)
-// cron.schedule(
-//   "15 0 * * *",
-//   async () => {
-//     console.log(
-//       `[${new Date().toLocaleString("th-TH", {
-//         timeZone: "Asia/Bangkok",
-//       })}] 🎲 สร้างหวยยี้กี้ 4G 144 รอบ...`
-//     );
-//     try {
-//       const {
-//         createYiKee4GRoundsWithLog,
-//       } = require("../service/cronjob/cronjob.service");
-//       await createYiKee4GRoundsWithLog();
-//       console.log(
-//         `[${new Date().toLocaleString("th-TH", {
-//           timeZone: "Asia/Bangkok",
-//         })}] ✅ สร้างหวยยี้กี้ 4G 144 รอบสำเร็จ`
-//       );
-//     } catch (error) {
-//       console.error(
-//         `[${new Date().toLocaleString("th-TH", {
-//           timeZone: "Asia/Bangkok",
-//         })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ 4G:`,
-//         error.message
-//       );
-//     }
-//   },
-//   { timezone: "Asia/Bangkok" }
-// );
+cron.schedule(
+  "15 0 * * *",
+  async () => {
+    console.log(
+      `[${new Date().toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}] 🎲 สร้างหวยยี้กี้ 4G 144 รอบ...`
+    );
+    try {
+      const {
+        createYiKee4GRoundsWithLog,
+      } = require("../service/cronjob/cronjob.service");
+      await createYiKee4GRoundsWithLog();
+      console.log(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ✅ สร้างหวยยี้กี้ 4G 144 รอบสำเร็จ`
+      );
+    } catch (error) {
+      console.error(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ 4G:`,
+        error.message
+      );
+    }
+  },
+  { timezone: "Asia/Bangkok" }
+);
 
 // // หวยยี้กี้ 5G - สร้างเที่ยงคืนทุกวัน (288 รอบ/วัน ทุก 5 นาที)
-// cron.schedule(
-//   "16 0 * * *",
-//   async () => {
-//     console.log(
-//       `[${new Date().toLocaleString("th-TH", {
-//         timeZone: "Asia/Bangkok",
-//       })}] 🎲 สร้างหวยยี้กี้ 5G 288 รอบ...`
-//     );
-//     try {
-//       const {
-//         createYiKee5GRoundsWithLog,
-//       } = require("../service/cronjob/cronjob.service");
-//       await createYiKee5GRoundsWithLog();
-//       console.log(
-//         `[${new Date().toLocaleString("th-TH", {
-//           timeZone: "Asia/Bangkok",
-//         })}] ✅ สร้างหวยยี้กี้ 5G 288 รอบสำเร็จ`
-//       );
-//     } catch (error) {
-//       console.error(
-//         `[${new Date().toLocaleString("th-TH", {
-//           timeZone: "Asia/Bangkok",
-//         })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ 5G:`,
-//         error.message
-//       );
-//     }
-//   },
-//   { timezone: "Asia/Bangkok" }
-// );
+cron.schedule(
+  "16 0 * * *",
+  async () => {
+    console.log(
+      `[${new Date().toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}] 🎲 สร้างหวยยี้กี้ 5G 288 รอบ...`
+    );
+    try {
+      const {
+        createYiKee5GRoundsWithLog,
+      } = require("../service/cronjob/cronjob.service");
+      await createYiKee5GRoundsWithLog();
+      console.log(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ✅ สร้างหวยยี้กี้ 5G 288 รอบสำเร็จ`
+      );
+    } catch (error) {
+      console.error(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยยี้กี้ 5G:`,
+        error.message
+      );
+    }
+  },
+  { timezone: "Asia/Bangkok" }
+);
