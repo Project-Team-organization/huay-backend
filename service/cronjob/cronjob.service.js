@@ -1366,7 +1366,7 @@ exports.createYiKeeRounds = async function () {
 
       const lotteryData = {
         lottery_type_id: lotteryType._id,
-        name: `หวยยี้กี้ธรรม รอบที่ ${roundNumber}`,
+        name: `หวยยี่กี`,
         openTime: openTime,
         closeTime: closeTime,
         result_time: resultTime,
@@ -1404,7 +1404,7 @@ exports.createYiKee4GRounds = async function () {
 
     // หา lottery_type_id สำหรับหวยยี้กี้ 4G
     const lotteryType = await LotteryType.findOne({
-      lottery_type: "หวยยี่กี 4G",
+      lottery_type: "หวยยี่กี",
     });
     if (!lotteryType) {
       throw new Error("ไม่พบประเภทหวยยี้กี้ 4G ในระบบ");
@@ -1430,7 +1430,7 @@ exports.createYiKee4GRounds = async function () {
 
       const lotteryData = {
         lottery_type_id: lotteryType._id,
-        name: `หวยยี้กี้ 4G รอบที่ ${roundNumber}`,
+        name: `หวยยี่กี 4G`,
         openTime: openTime,
         closeTime: closeTime,
         result_time: resultTime,
@@ -1468,7 +1468,7 @@ exports.createYiKee5GRounds = async function () {
 
     // หา lottery_type_id สำหรับหวยยี้กี้ 5G
     const lotteryType = await LotteryType.findOne({
-      lottery_type: "หวยยี่กี 5G",
+      lottery_type: "หวยยี่กี",
     });
     if (!lotteryType) {
       throw new Error("ไม่พบประเภทหวยยี้กี้ 5G ในระบบ");
@@ -1494,7 +1494,7 @@ exports.createYiKee5GRounds = async function () {
 
       const lotteryData = {
         lottery_type_id: lotteryType._id,
-        name: `หวยยี้กี้ 5G รอบที่ ${roundNumber}`,
+        name: `หวยยี่กี 5G`,
         openTime: openTime,
         closeTime: closeTime,
         result_time: resultTime,
