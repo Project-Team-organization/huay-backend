@@ -1341,9 +1341,9 @@ exports.createYiKeeRounds = async function () {
     console.log("🎲 เริ่มสร้างหวยยี้กี้ธรรม 96 รอบ...");
 
     // หา lottery_type_id สำหรับหวยยี้กี้
-    const lotteryType = await LotteryType.findOne({ slug: "yikee" });
+    const lotteryType = await LotteryType.findOne({ lottery_type: "หวยยี่กี" });
     if (!lotteryType) {
-      throw new Error("ไม่พบประเภทหวยยี้กี้ในระบบ");
+      throw new Error("ไม่พบประเภทหวยยี่กี้ในระบบ");
     }
 
     const now = new Date();
@@ -1403,7 +1403,9 @@ exports.createYiKee4GRounds = async function () {
     console.log("🎲 เริ่มสร้างหวยยี้กี้ 4G 144 รอบ...");
 
     // หา lottery_type_id สำหรับหวยยี้กี้ 4G
-    const lotteryType = await LotteryType.findOne({ slug: "yikee-4g" });
+    const lotteryType = await LotteryType.findOne({
+      lottery_type: "หวยยี่กี 4G",
+    });
     if (!lotteryType) {
       throw new Error("ไม่พบประเภทหวยยี้กี้ 4G ในระบบ");
     }
@@ -1465,7 +1467,9 @@ exports.createYiKee5GRounds = async function () {
     console.log("🎲 เริ่มสร้างหวยยี้กี้ 5G 288 รอบ...");
 
     // หา lottery_type_id สำหรับหวยยี้กี้ 5G
-    const lotteryType = await LotteryType.findOne({ slug: "yikee-5g" });
+    const lotteryType = await LotteryType.findOne({
+      lottery_type: "หวยยี่กี 5G",
+    });
     if (!lotteryType) {
       throw new Error("ไม่พบประเภทหวยยี้กี้ 5G ในระบบ");
     }
