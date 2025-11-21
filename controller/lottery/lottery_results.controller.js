@@ -1,11 +1,11 @@
-const lotteryResultService = require('../../service/lottery/lottery_results.service');
-const { handleSuccess, handleError } = require('../../utils/responseHandler');
+const lotteryResultService = require("../../service/lottery/lottery_results.service");
+const { handleSuccess, handleError } = require("../../utils/responseHandler");
 
 // ประกาศผลหวยและค้นหาผู้ชนะ
 exports.evaluateLotteryResults = async (req, res) => {
   try {
     const { lottery_set_id, results } = req.body;
-    
+
     const result = await lotteryResultService.evaluateLotteryResults(
       lottery_set_id,
       results,
@@ -14,12 +14,12 @@ exports.evaluateLotteryResults = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -29,18 +29,24 @@ exports.getLotteryWinners = async (req, res) => {
   try {
     console.log(req.query);
     const { lottery_result_id } = req.params;
-    const { page = 1, limit = 10 , startDate, endDate} = req.query;
-    const winners = await lotteryResultService.getLotteryWinners(lottery_result_id,page,limit, startDate, endDate );
+    const { page = 1, limit = 10, startDate, endDate } = req.query;
+    const winners = await lotteryResultService.getLotteryWinners(
+      lottery_result_id,
+      page,
+      limit,
+      startDate,
+      endDate
+    );
 
     const response = await handleSuccess(
       winners.data,
-      'ดึงข้อมูลผู้ชนะสำเร็จ',
+      "ดึงข้อมูลผู้ชนะสำเร็จ",
       200,
       winners.pagination
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผู้ชนะได้');
+    const response = await handleError(error, "ไม่สามารถดึงข้อมูลผู้ชนะได้");
     return res.status(response.status).json(response);
   }
 };
@@ -49,20 +55,22 @@ exports.getLotteryWinners = async (req, res) => {
 exports.getLotteryResultItems = async (req, res) => {
   try {
     const { lottery_result_id } = req.params;
-    
-    const resultItems = await lotteryResultService.getLotteryResultItems(lottery_result_id);
+
+    const resultItems = await lotteryResultService.getLotteryResultItems(
+      lottery_result_id
+    );
 
     res.status(200).json({
       success: true,
-      data: resultItems
+      data: resultItems,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
-}; 
+};
 
 // 1. ดึงข้อมูลทั้งหมดแบบ pagination
 exports.getAllLotteryResults = async (req, res) => {
@@ -74,18 +82,18 @@ exports.getAllLotteryResults = async (req, res) => {
       limit: parseInt(limit),
       username,
       startDate,
-      endDate
+      endDate,
     });
 
     const response = await handleSuccess(
       result.data,
-      'ดึงข้อมูลผลรางวัลทั้งหมดสำเร็จ',
+      "ดึงข้อมูลผลรางวัลทั้งหมดสำเร็จ",
       200,
       result.pagination
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผลรางวัลได้');
+    const response = await handleError(error, "ไม่สามารถดึงข้อมูลผลรางวัลได้");
     return res.status(response.status).json(response);
   }
 };
@@ -98,18 +106,18 @@ exports.getLotteryResultById = async (req, res) => {
 
     const result = await lotteryResultService.getLotteryResultById(id, {
       page: parseInt(page),
-      limit: parseInt(limit)
+      limit: parseInt(limit),
     });
 
     const response = await handleSuccess(
       result.data,
-      'ดึงข้อมูลผลรางวัลสำเร็จ',
+      "ดึงข้อมูลผลรางวัลสำเร็จ",
       200,
       result.pagination
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผลรางวัลได้');
+    const response = await handleError(error, "ไม่สามารถดึงข้อมูลผลรางวัลได้");
     return res.status(response.status).json(response);
   }
 };
@@ -118,25 +126,25 @@ exports.getLotteryResultById = async (req, res) => {
 exports.getLotteryResultsByResultId = async (req, res) => {
   try {
     const { lottery_result_id } = req.params;
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 999 } = req.query;
 
     const result = await lotteryResultService.getLotteryResultsByResultId(
       lottery_result_id,
       {
         page: parseInt(page),
-        limit: parseInt(limit)
+        limit: parseInt(limit),
       }
     );
 
     const response = await handleSuccess(
       result.data,
-      'ดึงข้อมูลผลรางวัลสำเร็จ',
+      "ดึงข้อมูลผลรางวัลสำเร็จ",
       200,
       result.pagination
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผลรางวัลได้');
+    const response = await handleError(error, "ไม่สามารถดึงข้อมูลผลรางวัลได้");
     return res.status(response.status).json(response);
   }
 };
@@ -151,19 +159,19 @@ exports.getLotteryResultsByBettingType = async (req, res) => {
       betting_type_id,
       {
         page: parseInt(page),
-        limit: parseInt(limit)
+        limit: parseInt(limit),
       }
     );
 
     const response = await handleSuccess(
       result.data,
-      'ดึงข้อมูลผลรางวัลสำเร็จ',
+      "ดึงข้อมูลผลรางวัลสำเร็จ",
       200,
       result.pagination
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผลรางวัลได้');
+    const response = await handleError(error, "ไม่สามารถดึงข้อมูลผลรางวัลได้");
     return res.status(response.status).json(response);
   }
 };
@@ -172,20 +180,16 @@ exports.getLotteryResultsByBettingType = async (req, res) => {
 exports.deleteLotteryResultAndItems = async (req, res) => {
   try {
     const { lottery_result_id } = req.params;
-    
+
     await lotteryResultService.deleteLotteryResultAndItems(lottery_result_id);
 
-    const response = await handleSuccess(
-      null,
-      'ลบข้อมูลผลรางวัลสำเร็จ',
-      200
-    );
+    const response = await handleSuccess(null, "ลบข้อมูลผลรางวัลสำเร็จ", 200);
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, 'ไม่สามารถลบข้อมูลผลรางวัลได้');
+    const response = await handleError(error, "ไม่สามารถลบข้อมูลผลรางวัลได้");
     return res.status(response.status).json(response);
   }
-}; 
+};
 
 // ค้นหาผู้ชนะตาม lottery set และ user_id
 exports.getWinnersByLotterySetAndUser = async (req, res) => {
@@ -198,19 +202,19 @@ exports.getWinnersByLotterySetAndUser = async (req, res) => {
       user_id,
       {
         page: parseInt(page),
-        limit: parseInt(limit)
+        limit: parseInt(limit),
       }
     );
 
     const response = await handleSuccess(
       result.data,
-      'ดึงข้อมูลผู้ชนะสำเร็จ',
+      "ดึงข้อมูลผู้ชนะสำเร็จ",
       200,
       result.pagination
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผู้ชนะได้');
+    const response = await handleError(error, "ไม่สามารถดึงข้อมูลผู้ชนะได้");
     return res.status(response.status).json(response);
   }
 };
@@ -220,18 +224,19 @@ exports.getLotteryResultItemsByLotterySetId = async (req, res) => {
   try {
     const { lottery_set_id } = req.params;
 
-    const result = await lotteryResultService.getLotteryResultItemsByLotterySetId(
-      lottery_set_id
-    );
+    const result =
+      await lotteryResultService.getLotteryResultItemsByLotterySetId(
+        lottery_set_id
+      );
 
     const response = await handleSuccess(
       result,
-      'ดึงข้อมูลผลรางวัลตาม lottery set สำเร็จ',
+      "ดึงข้อมูลผลรางวัลตาม lottery set สำเร็จ",
       200
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, 'ไม่สามารถดึงข้อมูลผลรางวัลได้');
+    const response = await handleError(error, "ไม่สามารถดึงข้อมูลผลรางวัลได้");
     return res.status(response.status).json(response);
   }
-}; 
+};

@@ -23,17 +23,22 @@ exports.createLotterySets = async function (data) {
 
 exports.getLotterySets = async function (query) {
   try {
-    const { status, limit, page = 1, slug } = query;
+    const { status, limit, page = 1, slug, name } = query;
 
     const filter = {};
     if (status) {
       filter.status = status;
     }
 
+    // เพิ่มการค้นหาตาม name (ถ้ามี)
+    if (name) {
+      filter.name = name; // ค้นหาแบบตรงทุกอักษร
+    }
+
     let lotterySets = await LotterySets.find(filter)
       .skip((parseInt(page) - 1) * (limit ? parseInt(limit) : 0))
       .limit(limit ? parseInt(limit) : undefined)
-      .sort({ result_time: -1 }) // เรียงตามเวลาออกผลล่าสุดก่อน
+      .sort({ createdAt: -1 }) // เรียงตามวันที่สร้างล่าสุดก่อน
       .populate("lottery_type_id");
 
     if (slug) {

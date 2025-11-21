@@ -15,18 +15,26 @@ const fetchAndSaveLaoLottery = async () => {
 
     // ถ้ามีข้อมูลแล้ว และผลหวยออกครบแล้ว (ไม่มี "xxx") ให้ return ข้อมูลเดิม
     if (existingLottery && existingLottery.results) {
-      const hasIncompleteResults = Object.values(existingLottery.results).some(value => {
-        if (typeof value === 'string') {
-          return value.includes('xxx') || value.includes('xx') || value === "" || value === null || value === undefined;
+      const hasIncompleteResults = Object.values(existingLottery.results).some(
+        value => {
+          if (typeof value === "string") {
+            return (
+              value.includes("xxx") ||
+              value.includes("xx") ||
+              value === "" ||
+              value === null ||
+              value === undefined
+            );
+          }
+          return value === null || value === undefined;
         }
-        return value === null || value === undefined;
-      });
-      
+      );
+
       if (!hasIncompleteResults) {
         console.log(`✅ หวยลาวพัฒนา วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
         return existingLottery;
       }
-      
+
       console.log(`⏳ หวยลาวพัฒนา วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
     }
 
@@ -34,7 +42,7 @@ const fetchAndSaveLaoLottery = async () => {
       "https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-lottery/latest"
     );
     const { data } = response.data;
-    
+
     // ถ้า numbers
     if (data.numbers.tail4 == "xxxx") {
       throw new Error(
@@ -77,7 +85,7 @@ const fetchAndSaveLaoLottery = async () => {
 
     // ➤ หา 2 ตัวล่าง (2 หลักหน้า ของ digit4)
     let twoBottom = "";
-     if (data.numbers.digit2_bottom) {
+    if (data.numbers.digit2_bottom) {
       threeTop = data.numbers.digit2_bottom;
     }
     // ➤ 1 ตัวบน (วิ่งบน จาก digit3)
@@ -163,9 +171,14 @@ const fetchAndSaveLaoLottery = async () => {
   }
 };
 
-const getAllLaoLottery = async ({ page, limit, startDate, endDate }) => {
+const getAllLaoLottery = async ({ page, limit, startDate, endDate, name }) => {
   try {
     const query = {};
+
+    // Add name search filter if provided
+    if (name) {
+      query.name = { $regex: name, $options: "i" }; // case-insensitive search
+    }
 
     // Add date range filter if provided
     if (startDate || endDate) {
