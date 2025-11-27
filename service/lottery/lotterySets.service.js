@@ -38,7 +38,7 @@ exports.getLotterySets = async function (query) {
     let lotterySets = await LotterySets.find(filter)
       .skip((parseInt(page) - 1) * (limit ? parseInt(limit) : 0))
       .limit(limit ? parseInt(limit) : undefined)
-      .sort({ createdAt: -1 }) // เรียงตามวันที่สร้างล่าสุดก่อน
+      .sort({ openTime: -1 }) // เรียงตามเวลาเปิดล่าสุดก่อน
       .populate("lottery_type_id");
 
     if (slug) {
@@ -342,7 +342,9 @@ async function checkLotterySetResults() {
     const openLotterySets = await LotterySets.find({
       openTime: { $lte: serverTime },
       status: "scheduled", // เช็คเฉพาะที่มีสถานะ scheduled
-    }).populate("lottery_type_id");
+    })
+      .sort({ openTime: -1 })
+      .populate("lottery_type_id");
 
     if (openLotterySets.length > 0) {
       for (const lotterySet of openLotterySets) {
@@ -364,7 +366,9 @@ async function checkLotterySetResults() {
     const closeLotterySets = await LotterySets.find({
       closeTime: { $lte: serverTime },
       status: "open", // เช็คเฉพาะที่เปิดอยู่
-    }).populate("lottery_type_id");
+    })
+      .sort({ openTime: -1 })
+      .populate("lottery_type_id");
 
     if (closeLotterySets.length > 0) {
       for (const lotterySet of closeLotterySets) {
@@ -389,7 +393,7 @@ async function checkLotterySetResults() {
       status: {
         $nin: ["resulted", "cancelled"], // ไม่เอาสถานะ resulted และ cancelled
       },
-    });
+    }).sort({ openTime: -1 });
 
     if (readyLotterySets.length > 0) {
       const user_id = "685d483a2144647be58f9312";
