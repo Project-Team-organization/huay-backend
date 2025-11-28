@@ -19,9 +19,9 @@ cron.schedule(
 );
 
 // สร้างหวย รัฐบาล
-// สร้างหวยรัฐบาลวันที่ 2 และ 17 ของทุกเดือน เวลา 00:01 น.
+// สร้างหวยรัฐบาลวันที่ 1 และ 16 ของทุกเดือน เวลา 00:01 น.
 cron.schedule(
-  "1 0 2,17 * *",
+  "1 0 1,16 * *",
   async () => {
     console.log(
       `[${new Date().toLocaleString("th-TH", {
@@ -43,6 +43,106 @@ cron.schedule(
         `[${new Date().toLocaleString("th-TH", {
           timeZone: "Asia/Bangkok",
         })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยรัฐบาล:`,
+        error.message
+      );
+    }
+  },
+  { timezone: "Asia/Bangkok" }
+);
+
+// สร้างหวยออมสิน
+// สร้างหวยออมสินวันที่ 1 และ 16 ของทุกเดือน เวลา 00:02 น.
+cron.schedule(
+  "2 0 1,16 * *",
+  async () => {
+    console.log(
+      `[${new Date().toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}] 🏦 สร้างหวยออมสิน...`
+    );
+    try {
+      const {
+        createThaiSavingsLotteryWithLog,
+      } = require("../service/cronjob/cronjob.service");
+      await createThaiSavingsLotteryWithLog();
+      console.log(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ✅ สร้างหวยออมสินสำเร็จ`
+      );
+    } catch (error) {
+      console.error(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยออมสิน:`,
+        error.message
+      );
+    }
+  },
+  { timezone: "Asia/Bangkok" }
+);
+
+// สร้างหวย ธกส
+// สร้างหวย ธกส วันที่ 16 ของทุกเดือน (ยกเว้นมกราคมเป็นวันที่ 17) เวลา 00:03 น.
+// หวย ธกส - เดือนกุมภาพันธ์ถึงธันวาคม (วันที่ 16)
+cron.schedule(
+  "3 0 16 2-12 *",
+  async () => {
+    const now = new Date();
+
+    console.log(
+      `[${now.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}] 🏛️ สร้างหวย ธกส...`
+    );
+    try {
+      const {
+        createThaiGsbLotteryWithLog,
+      } = require("../service/cronjob/cronjob.service");
+      await createThaiGsbLotteryWithLog();
+      console.log(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ✅ สร้างหวย ธกส สำเร็จ`
+      );
+    } catch (error) {
+      console.error(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ❌ เกิดข้อผิดพลาดในการสร้างหวย ธกส:`,
+        error.message
+      );
+    }
+  },
+  { timezone: "Asia/Bangkok" }
+);
+
+// หวย ธกส - เดือนมกราคม (วันที่ 17)
+cron.schedule(
+  "3 0 17 1 *",
+  async () => {
+    const now = new Date();
+
+    console.log(
+      `[${now.toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}] 🏛️ สร้างหวย ธกส...`
+    );
+    try {
+      const {
+        createThaiGsbLotteryWithLog,
+      } = require("../service/cronjob/cronjob.service");
+      await createThaiGsbLotteryWithLog();
+      console.log(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ✅ สร้างหวย ธกส สำเร็จ`
+      );
+    } catch (error) {
+      console.error(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ❌ เกิดข้อผิดพลาดในการสร้างหวย ธกส:`,
         error.message
       );
     }
