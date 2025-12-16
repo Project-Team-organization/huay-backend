@@ -24,6 +24,59 @@ const createBettingTypes = (threeTop, threeToad, twoTop, twoBottom, twoSpecial, 
     return betting_types;
 };
 
+// Helper function สำหรับการตรวจสอบและแปลงวันที่
+const validateAndFormatDate = (dateInput, fieldName = 'lotto_date') => {
+    if (!dateInput) {
+        throw new Error(`${fieldName} is required`);
+    }
+
+    let date;
+    if (typeof dateInput === 'string') {
+        // ตรวจสอบรูปแบบ YYYY-MM-DD
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(dateInput)) {
+            throw new Error(`${fieldName} must be in YYYY-MM-DD format`);
+        }
+        date = new Date(dateInput + 'T00:00:00.000Z');
+    } else if (dateInput instanceof Date) {
+        date = dateInput;
+    } else {
+        throw new Error(`${fieldName} must be a valid date string or Date object`);
+    }
+
+    // ตรวจสอบว่าเป็นวันที่ที่ถูกต้อง
+    if (isNaN(date.getTime())) {
+        throw new Error(`${fieldName} is not a valid date`);
+    }
+
+    // ตรวจสอบว่าไม่เป็นวันที่ในอนาคตเกินไป (เผื่อไว้ 1 วัน)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999);
+    
+    if (date > tomorrow) {
+        throw new Error(`${fieldName} cannot be more than 1 day in the future`);
+    }
+
+    // ตรวจสอบว่าไม่เป็นวันที่ในอดีตเกินไป (เผื่อไว้ 1 ปี)
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    
+    if (date < oneYearAgo) {
+        throw new Error(`${fieldName} cannot be more than 1 year in the past`);
+    }
+
+    return date;
+};
+
+// Helper function สำหรับตรวจสอบความซ้ำซ้อนของวันที่
+const checkDuplicateDate = async (Model, lotto_date, lottery_name) => {
+    const existingRecord = await Model.findOne({ lotto_date });
+    if (existingRecord) {
+        throw new Error(`${lottery_name} สำหรับวันที่ ${lotto_date.toISOString().split('T')[0]} มีอยู่แล้ว`);
+    }
+};
+
 // Helper function เพื่อเพิ่ม optional fields
 const addOptionalFields = (lotteryData, data) => {
     // Required fields - ใส่ค่า default หากไม่มี
@@ -67,6 +120,12 @@ const calculatePermutations = (threeTop) => {
 
 exports.LotteryLaoHd = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoHd, validatedDate, "หวยลาว HD");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -105,7 +164,7 @@ exports.LotteryLaoHd = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-hd",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาว HD",
             results: data.results,
             betting_types,
@@ -132,6 +191,12 @@ exports.LotteryLaoHd = async (data) => {
 
 exports.LotteryLaoRedcross = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoRedcross, validatedDate, "หวยลาวกาชาด");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -182,7 +247,7 @@ exports.LotteryLaoRedcross = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-redcross",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาวกาชาด",
             results: data.results,
             betting_types,
@@ -211,6 +276,12 @@ exports.LotteryLaoRedcross = async (data) => {
 
 exports.LotteryLaoTv = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoTv, validatedDate, "หวยลาว TV");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -276,6 +347,12 @@ exports.LotteryLaoTv = async (data) => {
 
 exports.LotteryLaoVip = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoVip, validatedDate, "หวยลาว VIP");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -314,7 +391,7 @@ exports.LotteryLaoVip = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-vip",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาว VIP",
             results: data.results,
             betting_types,
@@ -341,6 +418,12 @@ exports.LotteryLaoVip = async (data) => {
 
 exports.LotteryLaoStarsVip = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoStarsVip, validatedDate, "หวยลาวสตาร์ VIP");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -379,7 +462,7 @@ exports.LotteryLaoStarsVip = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-stars-vip",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาวสตาร์ VIP",
             results: data.results,
             betting_types,
@@ -398,6 +481,12 @@ exports.LotteryLaoStarsVip = async (data) => {
 
 exports.LotteryLaoThakhek5d = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoThakhek5d, validatedDate, "หวยลาวท่าแขก 5D");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -436,7 +525,7 @@ exports.LotteryLaoThakhek5d = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-thakhek-5d",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาวท่าแขก 5D",
             results: data.results,
             betting_types,
@@ -463,6 +552,12 @@ exports.LotteryLaoThakhek5d = async (data) => {
 
 exports.LotteryLaoThakhekVip = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoThakhekVip, validatedDate, "หวยลาวท่าแขก VIP");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -501,7 +596,7 @@ exports.LotteryLaoThakhekVip = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-thakhek-vip",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาวท่าแขก VIP",
             results: data.results,
             betting_types,
@@ -528,6 +623,12 @@ exports.LotteryLaoThakhekVip = async (data) => {
 
 exports.LotteryLaoExtra = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoExtra, validatedDate, "หวยลาว EXTRA");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -566,7 +667,7 @@ exports.LotteryLaoExtra = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-extra",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาว EXTRA",
             results: data.results,
             betting_types,
@@ -593,6 +694,12 @@ exports.LotteryLaoExtra = async (data) => {
 
 exports.LotteryLao = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLao, validatedDate, "หวยลาวพัฒนา");
+
         // ➤ หา 3 ตัวบน (ใช้ data.results แทน data.numbers)
         let threeTop = "";
         if (data.results?.digit3) {
@@ -631,7 +738,7 @@ exports.LotteryLao = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-lottery",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาวพัฒนา",
             results: data.results,
             betting_types,
@@ -658,6 +765,12 @@ exports.LotteryLao = async (data) => {
 
 exports.LotteryLaoStars = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoStars, validatedDate, "หวยลาวสตาร์");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -697,7 +810,7 @@ exports.LotteryLaoStars = async (data) => {
         let lotteryData = {
             name: data.name || "lao-stars",
             lottery_name: data.lottery_name || "หวยลาวสตาร์",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             results: data.results,
             betting_types,
             derived: {
@@ -723,6 +836,12 @@ exports.LotteryLaoStars = async (data) => {
 
 exports.LotteryLaoUnion = async (data) => {
     try {
+        // ➤ ตรวจสอบและแปลงวันที่
+        const validatedDate = validateAndFormatDate(data.lotto_date);
+        
+        // ➤ ตรวจสอบความซ้ำซ้อนของวันที่
+        await checkDuplicateDate(LotteryLaoUnion, validatedDate, "หวยลาว UNION");
+
         // ➤ หา 3 ตัวบน
         let threeTop = "";
         if (data.results?.digit3) {
@@ -761,7 +880,7 @@ exports.LotteryLaoUnion = async (data) => {
 
         let lotteryData = {
             name: data.name || "lao-union",
-            lotto_date: data.lotto_date,
+            lotto_date: validatedDate,
             lottery_name: data.lottery_name || "หวยลาว UNION",
             results: data.results,
             betting_types,

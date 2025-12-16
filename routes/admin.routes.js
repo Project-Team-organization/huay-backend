@@ -42,9 +42,6 @@ router.put(
   adminController.disactiveadmin
 );
 
-
-
-
 //history user bet
 router.get(
   "/user/bet",
@@ -79,17 +76,10 @@ router.get(
   adminController.getUserTransactionsByUserId
 );
 
-
-
-
 // router.get(
 //   "/user/bet/:user_id",
 //   authmiddleware.permissionmanageradmin,
 //   adminController.getUserBetByIdUser
 // );
-
-
-
-
 
 module.exports = router;

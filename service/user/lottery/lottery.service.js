@@ -9,20 +9,26 @@ exports.getLotteryUserSets = async function (query) {
       filter.status = status;
     }
 
-    let lotterySets = await LotterySets.find(filter)
-      .limit(parseInt(limit) || 10)
-      .populate("lottery_type_id");
+    let queryBuilder = LotterySets.find(filter).populate("lottery_type_id");
+
+    if (limit) {
+      queryBuilder = queryBuilder.limit(parseInt(limit));
+    }
+
+    let lotterySets = await queryBuilder;
 
     if (slug) {
       lotterySets = lotterySets.filter(
         (lottery) => lottery.lottery_type_id?.slug === slug
       );
     }
+
     return lotterySets;
   } catch (error) {
     throw new Error("Error retrieving lottery sets: " + error.message);
   }
 };
+
 
 exports.getLotteryUserSetsById = async function (lotteryId) {
   try {

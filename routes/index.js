@@ -11,9 +11,12 @@ const masterRoutes = require("./master.routes");
 const creditRoutes = require("./credit.routes");
 const promotionRoutes = require("./promotion.routes");
 const withdrawalRoutes = require("./withdrawal.routes");
-const cronjobRoutes = require("./cronjob.routes");
-const { authenticate } = require("../middleware/authadmin.middleware");
 
+const cronjobRoutes = require("./cronjob.routes");
+const dashboardRoutes = require("./dashboard.routes");
+const analyticsRoutes = require("./analytics.routes");
+
+const { authenticate } = require("../middleware/authadmin.middleware");
 
 router.get("/check", (req, res) => {
   console.log("Response  check");
@@ -38,8 +41,8 @@ router.get("/test", (req, res) => {
       environment: process.env.NODE_ENV || "development",
       uptime: process.uptime(),
       memory: process.memoryUsage(),
-      randomNumber: Math.floor(Math.random() * 1000)
-    }
+      randomNumber: Math.floor(Math.random() * 1000),
+    },
   });
 });
 
@@ -72,6 +75,12 @@ router.use("/promotion", promotionRoutes);
 router.use("/withdrawal", withdrawalRoutes);
 
 // ส่วนของ cronjob logs
-router.use("/cronjob", cronjobRoutes);
+// router.use("/cronjob", cronjobRoutes);
+
+// ส่วนของ analytics
+router.use("/analytics", analyticsRoutes);
+
+// ส่วนของ dashboard
+router.use("/dashboard", dashboardRoutes);
 
 module.exports = router;

@@ -8,12 +8,14 @@ const config = require("./config/config");
 const routes = require("./routes");
 
 // Import cron job functions
+
 require("./cronjob/huay.lao");
 require("./cronjob/huay.thai");
 require("./cronjob/huay.magnum4d");
 require("./cronjob/huay.hanoi");
 require("./cronjob/cronjob_set");
 // require('./cronjob/huay.foreign.stock');
+
 
 async function startServer() {
   const app = express();
@@ -52,7 +54,7 @@ async function startServer() {
 }
 
 // run
-startServer().catch((err) => {
+startServer().catch(err => {
   console.error("Failed to start server:", err);
   process.exit(1);
 });
