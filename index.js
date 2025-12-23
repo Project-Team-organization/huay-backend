@@ -58,6 +58,19 @@ async function startServer() {
 
   app.use("/api", routes);
 
+  // Log routes loaded
+  console.log("\n📋 Routes loaded:");
+  console.log("  - /api/authadmin (login, logout, refresh-token)");
+  console.log("  - /api/admin");
+  console.log("  - /api/superadmin");
+  console.log("  - /api/users");
+  console.log("  - /api/lottery");
+  console.log("  - /api/credit");
+  console.log("  - /api/withdrawal");
+  console.log("  - /api/analytics");
+  console.log("  - /api/dashboard");
+  console.log("📋 End of Routes\n");
+
   // start server
   app.listen(config.port, () =>
     console.log(`API running on port ${config.port}`)
