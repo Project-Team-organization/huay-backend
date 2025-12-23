@@ -27,7 +27,18 @@ async function startServer() {
   });
 
   // Middleware
-  app.use(cors());
+  app.use(cors({
+    origin: [
+      'https://admin.kaojing.online',
+      'https://asia.kaojing.online',
+      'https://kaojing.online',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true
+  }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(fileUpload());
