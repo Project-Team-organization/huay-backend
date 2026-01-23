@@ -15,6 +15,7 @@ const withdrawalRoutes = require("./withdrawal.routes");
 const cronjobRoutes = require("./cronjob.routes");
 const dashboardRoutes = require("./dashboard.routes");
 const analyticsRoutes = require("./analytics.routes");
+const reportMasterRoutes = require("./reportmaster.routes");
 
 const { authenticate } = require("../middleware/authadmin.middleware");
 
@@ -82,5 +83,8 @@ router.use("/analytics", analyticsRoutes);
 
 // ส่วนของ dashboard
 router.use("/dashboard", dashboardRoutes);
+
+// ส่วนของ report master
+router.use("/reportmaster", reportMasterRoutes);
 
 module.exports = router;
