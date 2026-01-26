@@ -44,4 +44,5 @@ router.get(
   authmiddleware.isMaster,
   masterController.getCustomerByMaster,
 );
+
 module.exports = router;
