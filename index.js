@@ -30,6 +30,7 @@ async function startServer() {
   app.use(cors({
     origin: [
       'https://admin.kaojing.online',
+      'https://xian.kaojing.online',
       'https://asia.kaojing.online',
       'https://kaojing.online',
       'http://localhost:3000',
