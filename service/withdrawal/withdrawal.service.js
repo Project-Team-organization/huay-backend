@@ -4,6 +4,7 @@ const Withdrawal = require("../../models/withdrawal.models");
 const User = require("../../models/user.model");
 const UserTransaction = require("../../models/user.transection.model");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
+const commissionService = require("../commission/commission.service");
 
 // สร้างคำขอถอนเงิน
 exports.createWithdrawal = async function ({
@@ -34,13 +35,23 @@ exports.createWithdrawal = async function ({
     // คำนวณค่าธรรมเนียม (ตัวอย่าง: 3% ของจำนวนเงิน)
     const fee = amount * 0.03;
     const netAmount = amount - fee;
+    
+    // คำนวณค่าคอมมิชชั่น
+    const commissionData = await commissionService.calculateCommission(user._id, netAmount, 'withdrawal');
 
     // สร้างข้อมูล withdrawal ใหม่
     const newWithdrawal = new Withdrawal({
       user_id: user._id,
+      master_id: commissionData.master_id,
       amount,
       netAmount,
       fee,
+      
+      // ข้อมูลค่าคอมมิชชั่น
+      commission_percentage: commissionData.commission_percentage,
+      commission_amount: commissionData.commission_amount,
+      system_loss: commissionData.system_loss,
+      
       bank_name,
       bank_number,
       account_name,
@@ -70,6 +81,17 @@ exports.createWithdrawal = async function ({
       created_at: new Date()
     });
     await userTransaction.save();
+    
+    // อัพเดท MasterCommission (ถ้ามี master)
+    if (commissionData.master_id) {
+      await commissionService.updateCommissionOnWithdrawal({
+        user_id: user._id,
+        master_id: commissionData.master_id,
+        netAmount: netAmount,
+        commission_amount: commissionData.commission_amount,
+        system_loss: commissionData.system_loss
+      });
+    }
 
     return newWithdrawal;
 

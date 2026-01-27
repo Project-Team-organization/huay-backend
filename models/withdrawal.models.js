@@ -8,6 +8,11 @@ const WithdrawalSchema = new Schema(
       ref: "User",
       required: true,
     },
+    master_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Master",
+      default: null,
+    },
     amount: {
       type: Number,
       required: true,
@@ -21,6 +26,21 @@ const WithdrawalSchema = new Schema(
       required: true,
       default: 0,
     },
+    
+    // ฟิลด์สำหรับคำนวณค่าคอมมิชชั่น
+    commission_percentage: {
+      type: Number,
+      default: 0,
+    },
+    commission_amount: {
+      type: Number,
+      default: 0,
+    },
+    system_loss: {
+      type: Number,
+      default: 0,
+    },
+    
     bank_name: { type: String, default: "" },
     bank_number: { type: String, default: "" },
     account_name: { type: String, default: "" },

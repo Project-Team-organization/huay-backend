@@ -11,6 +11,7 @@ const masterRoutes = require("./master.routes");
 const creditRoutes = require("./credit.routes");
 const promotionRoutes = require("./promotion.routes");
 const withdrawalRoutes = require("./withdrawal.routes");
+const commissionRoutes = require("./commission.routes");
 
 const cronjobRoutes = require("./cronjob.routes");
 const dashboardRoutes = require("./dashboard.routes");
@@ -74,6 +75,9 @@ router.use("/promotion", promotionRoutes);
 
 // ส่วนของการถอนเงิน
 router.use("/withdrawal", withdrawalRoutes);
+
+// ส่วนของ commission
+router.use("/commission", commissionRoutes);
 
 // ส่วนของ cronjob logs
 // router.use("/cronjob", cronjobRoutes);

@@ -1,8 +1,10 @@
 const User = require("../../models/user.model");
 const UserBet = require("../../models/userBetSchema.models");
 const Credit = require("../../models/credit.models");
+const Withdrawal = require("../../models/withdrawal.models");
 const UserTransaction = require("../../models/user.transection.model");
 const Master = require("../../models/master.model");
+const MasterCommission = require("../../models/masterCommission.model");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 
 exports.getReportByMasterId = async (master_id) => {
@@ -16,8 +18,8 @@ exports.getReportByMasterId = async (master_id) => {
     const now = new Date();
     const todayStart = new Date(now.setHours(0, 0, 0, 0));
     const todayEnd = new Date(now.setHours(23, 59, 59, 999));
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
 
     // 1. ดึงข้อมูล users ทั้งหมดที่อยู่ภายใต้ master_id
     const allUsers = await User.find({ master_id }).select("_id username full_name credit active createdAt");
@@ -27,85 +29,108 @@ exports.getReportByMasterId = async (master_id) => {
     const totalUsers = allUsers.length;
     const newUsersToday = allUsers.filter(user => new Date(user.createdAt) >= todayStart).length;
 
-    // 3. ดึงข้อมูลการเดิมพันทั้งหมด
-    const allBets = await UserBet.find({ user_id: { $in: userIds } });
+    // 3. ดึงข้อมูลการเดิมพันวันนี้
     const todayBets = await UserBet.find({ 
       user_id: { $in: userIds },
       bet_date: { $gte: todayStart, $lte: todayEnd }
     });
-    const monthlyBets = await UserBet.find({ 
-      user_id: { $in: userIds },
-      bet_date: { $gte: monthStart, $lte: monthEnd }
-    });
 
-    // 4. หา users ที่เล่นวันนี้ (มีการแทงวันนี้)
+    // 4. หา users ที่เล่นวันนี้
     const usersPlayedToday = [...new Set(todayBets.map(bet => bet.user_id.toString()))].length;
 
-    // 5. หา users ที่เล่นเดือนนี้ (มีการแทงเดือนนี้)
-    const usersPlayedMonthly = [...new Set(monthlyBets.map(bet => bet.user_id.toString()))].length;
-
-    // 6. คำนวณกำไร/ขาดทุน วันนี้
-    let profitToday = 0;
-    todayBets.forEach(bet => {
-      profitToday += (bet.total_bet_amount || 0) - (bet.payout_amount || 0);
+    // 5. ดึงข้อมูล MasterCommission ของเดือนปัจจุบัน
+    const currentMonthCommission = await MasterCommission.findOne({
+      master_id: master_id,
+      year: year,
+      month: month
     });
 
-    // 6.5 คำนวณกำไร/ขาดทุน เดือนนี้
-    let profitMonthly = 0;
-    monthlyBets.forEach(bet => {
-      profitMonthly += (bet.total_bet_amount || 0) - (bet.payout_amount || 0);
-    });
+    // 6. ดึงข้อมูลฝาก-ถอนวันนี้
+    const todayDeposits = await Credit.aggregate([
+      {
+        $match: {
+          master_id: master_id,
+          status: 'success',
+          created_at: { $gte: todayStart, $lte: todayEnd }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total_amount: { $sum: '$netAmount' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
 
-    // 7. คำนวณกำไร/ขาดทุน รวมทั้งหมด
-    let profitTotal = 0;
-    allBets.forEach(bet => {
-      profitTotal += (bet.total_bet_amount || 0) - (bet.payout_amount || 0);
-    });
+    const todayWithdrawals = await Withdrawal.aggregate([
+      {
+        $match: {
+          master_id: master_id,
+          status: 'completed',
+          created_at: { $gte: todayStart, $lte: todayEnd }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total_amount: { $sum: '$netAmount' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
 
-    // 8. ดึงข้อมูลการถอนเงิน
-    const todayWithdrawals = await UserTransaction.find({
-      user_id: { $in: userIds },
-      type: "withdraw",
-      created_at: { $gte: todayStart, $lte: todayEnd }
-    });
-
-    const monthlyWithdrawals = await UserTransaction.find({
-      user_id: { $in: userIds },
-      type: "withdraw",
-      created_at: { $gte: monthStart, $lte: monthEnd }
-    });
+    // 7. คำนวณข้อมูลวันนี้
+    const depositToday = todayDeposits[0]?.total_amount || 0;
+    const withdrawToday = todayWithdrawals[0]?.total_amount || 0;
     
-    const allWithdrawals = await UserTransaction.find({
-      user_id: { $in: userIds },
-      type: "withdraw"
-    });
+    // คำนวณค่าคอมฯ วันนี้
+    const todayDepositCommission = await Credit.aggregate([
+      {
+        $match: {
+          master_id: master_id,
+          status: 'success',
+          created_at: { $gte: todayStart, $lte: todayEnd }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total_commission: { $sum: '$commission_amount' }
+        }
+      }
+    ]);
+    
+    const todayWithdrawalCommission = await Withdrawal.aggregate([
+      {
+        $match: {
+          master_id: master_id,
+          status: 'completed',
+          created_at: { $gte: todayStart, $lte: todayEnd }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total_commission: { $sum: '$commission_amount' }
+        }
+      }
+    ]);
+    
+    const commissionToday = (todayDepositCommission[0]?.total_commission || 0) + (todayWithdrawalCommission[0]?.total_commission || 0);
 
-    let withdrawToday = 0;
-    let withdrawMonthly = 0;
-    let withdrawTotal = 0;
+    // 8. ข้อมูลเดือนนี้ (จาก MasterCommission)
+    const depositMonthly = currentMonthCommission?.total_deposit_amount || 0;
+    const withdrawMonthly = currentMonthCommission?.total_withdrawal_amount || 0;
+    const commissionMonthly = currentMonthCommission?.net_commission || 0; // กำไรของ Master
+    const usersPlayedMonthly = currentMonthCommission?.user_count || 0;
 
-    todayWithdrawals.forEach(trans => {
-      withdrawToday += trans.amount || 0;
-    });
+    // 9. คำนวณเปอร์เซ็นต์กำไร (กำไร Master / ยอดฝาก * 100)
+    const profitPercentage = depositMonthly > 0 
+      ? ((commissionMonthly / depositMonthly) * 100).toFixed(2) 
+      : 0;
 
-    monthlyWithdrawals.forEach(trans => {
-      withdrawMonthly += trans.amount || 0;
-    });
-
-    allWithdrawals.forEach(trans => {
-      withdrawTotal += trans.amount || 0;
-    });
-
-    // 9. คำนวณกำไรสุทธิหลังหักถอน
-    const netProfitAfterWithdrawToday = profitToday - withdrawToday;
-    const netProfitAfterWithdrawMonthly = profitMonthly - withdrawMonthly;
-    const netProfitAfterWithdrawTotal = profitTotal - withdrawTotal;
-
-    // 10. คำนวณเปอร์เซ็นต์กำไร (ใช้ข้อมูลเดือนนี้)
-    const monthlyBetAmount = monthlyBets.reduce((sum, bet) => sum + (bet.total_bet_amount || 0), 0);
-    const profitPercentage = monthlyBetAmount > 0 ? ((profitMonthly / monthlyBetAmount) * 100).toFixed(2) : 0;
-
-    // 11. สรุปข้อมูลตามรูป (ใช้ข้อมูลเดือนนี้)
+    // 10. สรุปข้อมูลตามโครงเดิม
     const reportData = {
       master_info: {
         master_id: master._id,
@@ -120,15 +145,15 @@ exports.getReportByMasterId = async (master_id) => {
       },
       financial_overview: {
         profit_percentage: parseFloat(profitPercentage),
-        net_profit: profitMonthly,
+        net_profit: commissionMonthly, // กำไรของ Master (ค่าคอมฯ)
       },
       income_expense: {
-        profit_today: profitToday,
-        profit_total: profitMonthly,
+        profit_today: commissionToday, // กำไรวันนี้ (ค่าคอมฯ)
+        profit_total: commissionMonthly, // กำไรเดือนนี้ (ค่าคอมฯ)
         withdraw_today: withdrawToday,
         withdraw_total: withdrawMonthly,
       },
-      net_profit_after_withdraw: netProfitAfterWithdrawMonthly,
+      net_profit_after_withdraw: commissionMonthly, // กำไรสุทธิของ Master
     };
 
     return handleSuccess(reportData, "ดึงข้อมูลรายงาน Master สำเร็จ", 200);

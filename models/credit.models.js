@@ -10,6 +10,11 @@ const CreditSchema = new Schema(
       ref: "User",
       required: true,
     },
+    master_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Master",
+      default: null,
+    },
    
     promotion_id: {
       type: Schema.Types.ObjectId,
@@ -32,6 +37,21 @@ const CreditSchema = new Schema(
       type: Number,
       default: 0,
     },
+    
+    // ฟิลด์สำหรับคำนวณค่าคอมมิชชั่น
+    commission_percentage: {
+      type: Number,
+      default: 0,
+    },
+    commission_amount: {
+      type: Number,
+      default: 0,
+    },
+    system_profit: {
+      type: Number,
+      default: 0,
+    },
+    
     channel: {
       type: String,
     },

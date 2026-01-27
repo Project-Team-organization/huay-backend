@@ -6,6 +6,7 @@ const User = require("../../models/user.model");
 const UserPromotion = require("../../models/userPromotions.models");
 const UserTransaction = require("../../models/user.transection.model");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
+const commissionService = require("../commission/commission.service");
 //อันเก่า
 
 exports.createCredit = async function ({
@@ -97,13 +98,23 @@ exports.createCredit = async function ({
 
     // อัพเดท netAmount ใน credit
     const finalAmount = amount + credit_promotion;
+    
+    // คำนวณค่าคอมมิชชั่น
+    const commissionData = await commissionService.calculateCommission(user._id, finalAmount, 'deposit');
+    
     const newCredit = new Credit({
       user_id: user._id,
+      master_id: commissionData.master_id,
       promotion_id: promotion_id,
       amount,
       credit_promotion: credit_promotion,
       netAmount: finalAmount,
       fee: 0,
+      
+      // ข้อมูลค่าคอมมิชชั่น
+      commission_percentage: commissionData.commission_percentage,
+      commission_amount: commissionData.commission_amount,
+      system_profit: commissionData.system_profit,
       
       channel,
       description,
@@ -138,6 +149,17 @@ exports.createCredit = async function ({
     //ทำการเพิ่ม credit ให้กับ user (รวม promotion แล้ว)
     user.credit += finalAmount;
     await user.save();
+    
+    // อัพเดท MasterCommission (ถ้ามี master)
+    if (commissionData.master_id) {
+      await commissionService.updateCommissionOnDeposit({
+        user_id: user._id,
+        master_id: commissionData.master_id,
+        netAmount: finalAmount,
+        commission_amount: commissionData.commission_amount,
+        system_profit: commissionData.system_profit
+      });
+    }
 
     return newCredit;
 
