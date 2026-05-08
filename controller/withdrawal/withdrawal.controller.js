@@ -1,10 +1,12 @@
 const withdrawalService = require("../../service/withdrawal/withdrawal.service");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
+const { optionalFileUpload } = require("../../middleware/upload.middleware");
 
 // สร้างคำขอถอนเงิน
 exports.createWithdrawal = async function (req, res) {
   try {
-    const { amount, bank_name, bank_number, account_name, description } = req.body;
+    const { amount, bank_name, bank_number, account_name, description } =
+      req.body;
     const user_id = req.user._id;
     const withdrawal = await withdrawalService.createWithdrawal({
       user_id,
@@ -14,17 +16,28 @@ exports.createWithdrawal = async function (req, res) {
       account_name,
       description,
     });
-    
+
     if (!withdrawal) {
-      const response = await handleError(null, "Failed to create withdrawal", 400);
+      const response = await handleError(
+        null,
+        "Failed to create withdrawal",
+        400,
+      );
       return res.status(response.status).json(response);
     }
-    
-    const response = await handleSuccess(withdrawal, "สร้างคำขอถอนเงินสำเร็จ");
+
+    const response = await handleSuccess(
+      withdrawal,
+      "สร้างคำขอถอนเงินสำเร็จ รอการอนุมัติ",
+    );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to create withdrawal', 500);
-    return res.status(response.status).json(response); 
+    const response = await handleError(
+      error,
+      error.message || "Failed to create withdrawal",
+      500,
+    );
+    return res.status(response.status).json(response);
   }
 };
 
@@ -33,16 +46,23 @@ exports.getWithdrawalById = async function (req, res) {
   try {
     const { id } = req.params;
     const withdrawal = await withdrawalService.getWithdrawalById(id);
-    
+
     if (!withdrawal) {
       const response = await handleError(null, "ไม่พบข้อมูลการถอนเงิน", 404);
       return res.status(response.status).json(response);
     }
-    
-    const response = await handleSuccess(withdrawal, "ดึงข้อมูลการถอนเงินสำเร็จ");
+
+    const response = await handleSuccess(
+      withdrawal,
+      "ดึงข้อมูลการถอนเงินสำเร็จ",
+    );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to get withdrawal', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to get withdrawal",
+      500,
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -50,7 +70,13 @@ exports.getWithdrawalById = async function (req, res) {
 // ดึงข้อมูลการถอนเงินทั้งหมด
 exports.getAllWithdrawals = async function (req, res) {
   try {
-    const { page = 1, limit = 10, status, startDate, endDate } = req.query || {};
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      startDate,
+      endDate,
+    } = req.query || {};
 
     const result = await withdrawalService.getAllWithdrawals({
       page: parseInt(page, 10),
@@ -64,11 +90,15 @@ exports.getAllWithdrawals = async function (req, res) {
       result.data,
       "ดึงข้อมูลการถอนเงินทั้งหมดสำเร็จ",
       200,
-      result.pagination
+      result.pagination,
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to get all withdrawals', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to get all withdrawals",
+      500,
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -88,11 +118,15 @@ exports.getWithdrawalsByUserId = async function (req, res) {
       result.data,
       "ดึงข้อมูลการถอนเงินของ user สำเร็จ",
       200,
-      result.pagination
+      result.pagination,
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to get user withdrawals', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to get user withdrawals",
+      500,
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -101,7 +135,7 @@ exports.getWithdrawalsBytoken = async function (req, res) {
   try {
     const user_id = req.user._id;
     const { page = 1, limit = 10, status } = req.query || {};
-     const result = await withdrawalService.getWithdrawalsByUserId(user_id, {
+    const result = await withdrawalService.getWithdrawalsByUserId(user_id, {
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
     });
@@ -110,79 +144,82 @@ exports.getWithdrawalsBytoken = async function (req, res) {
       result.data,
       "ดึงข้อมูลการถอนเงินของ user สำเร็จ",
       200,
-      result.pagination
+      result.pagination,
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to get user withdrawals', 500);
-    return res.status(response.status).json(response);
-  }
-}
-
-// อนุมัติการถอนเงิน
-exports.approveWithdrawal = async function (req, res) {
-  try {
-    const { id } = req.params;
-    const { approvedBy } = req.body;
-    
-    const withdrawal = await withdrawalService.approveWithdrawal({ 
-      id, 
-      approvedBy 
-    });
-    
-    const response = await handleSuccess(withdrawal, "อนุมัติการถอนเงินสำเร็จ");
-    return res.status(response.status).json(response);
-  } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to approve withdrawal', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to get user withdrawals",
+      500,
+    );
     return res.status(response.status).json(response);
   }
 };
+
+// อนุมัติการถอนเงิน
+exports.approveWithdrawal = [
+  optionalFileUpload("transfer_slip_image"),
+  async function (req, res) {
+    try {
+      const { id } = req.params;
+      const { approvedBy } = req.body;
+
+      const withdrawal = await withdrawalService.approveWithdrawal({
+        id,
+        approvedBy,
+        transfer_slip_image: req.file ? req.file.path : null,
+        transfer_slip_image_original_name: req.file
+          ? req.file.originalname
+          : null,
+      });
+
+      const response = await handleSuccess(
+        withdrawal,
+        "อนุมัติการถอนเงินสำเร็จ",
+      );
+      return res.status(response.status).json(response);
+    } catch (error) {
+      const response = await handleError(
+        error,
+        error.message || "Failed to approve withdrawal",
+        500,
+      );
+      return res.status(response.status).json(response);
+    }
+  },
+];
 
 // ปฏิเสธการถอนเงิน
 exports.rejectWithdrawal = async function (req, res) {
   try {
     const { id } = req.params;
     const { rejectedReason, approvedBy } = req.body;
-    
-    const withdrawal = await withdrawalService.rejectWithdrawal({ 
-      id, 
-      rejectedReason, 
-      approvedBy 
+
+    const withdrawal = await withdrawalService.rejectWithdrawal({
+      id,
+      rejectedReason,
+      approvedBy,
     });
-    
+
     const response = await handleSuccess(withdrawal, "ปฏิเสธการถอนเงินสำเร็จ");
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to reject withdrawal', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to reject withdrawal",
+      500,
+    );
     return res.status(response.status).json(response);
   }
 };
 
-// ยืนยันการโอนเงินสำเร็จ
-exports.completeWithdrawal = async function (req, res) {
-  try {
-    const { id } = req.params;
-    const { approvedBy } = req.body;
-    
-    const withdrawal = await withdrawalService.completeWithdrawal({ 
-      id, 
-      approvedBy 
-    });
-    
-    const response = await handleSuccess(withdrawal, "ยืนยันการโอนเงินสำเร็จ");
-    return res.status(response.status).json(response);
-  } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to complete withdrawal', 500);
-    return res.status(response.status).json(response);
-  }
-};
-
-// อัพเดทข้อมูลการถอนเงิน
+// ยกเลิกการถอนเงิน
 exports.updateWithdrawal = async function (req, res) {
   try {
     const { id } = req.params;
     const { bank_name, bank_number, account_name, description } = req.body;
-    
+
     const withdrawal = await withdrawalService.updateWithdrawal({
       id,
       bank_name,
@@ -190,11 +227,18 @@ exports.updateWithdrawal = async function (req, res) {
       account_name,
       description,
     });
-    
-    const response = await handleSuccess(withdrawal, "อัพเดทข้อมูลการถอนเงินสำเร็จ");
+
+    const response = await handleSuccess(
+      withdrawal,
+      "อัพเดทข้อมูลการถอนเงินสำเร็จ",
+    );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to update withdrawal', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to update withdrawal",
+      500,
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -203,13 +247,17 @@ exports.updateWithdrawal = async function (req, res) {
 exports.cancelWithdrawal = async function (req, res) {
   try {
     const { id } = req.params;
-    
+
     const withdrawal = await withdrawalService.cancelWithdrawal({ id });
-    
+
     const response = await handleSuccess(withdrawal, "ยกเลิกการถอนเงินสำเร็จ");
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to cancel withdrawal', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to cancel withdrawal",
+      500,
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -218,27 +266,45 @@ exports.cancelWithdrawal = async function (req, res) {
 exports.deleteWithdrawal = async function (req, res) {
   try {
     const { id } = req.params;
-    
+
     const result = await withdrawalService.deleteWithdrawal({ id });
-    
+
     const response = await handleSuccess(result, "ลบข้อมูลการถอนเงินสำเร็จ");
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to delete withdrawal', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to delete withdrawal",
+      500,
+    );
     return res.status(response.status).json(response);
   }
 };
 
-// หักเงินจาก admin 
+// หักเงินจาก admin
 exports.deductFromAdmin = async function (req, res) {
   try {
-    const { user_id, amount, bank_name, bank_number, account_name, description, addcredit_admin_id, addcredit_admin_name, addcredit_admin_role } = req.body;
-    
+    const {
+      user_id,
+      amount,
+      bank_name,
+      bank_number,
+      account_name,
+      description,
+      addcredit_admin_id,
+      addcredit_admin_name,
+      addcredit_admin_role,
+    } = req.body;
+
     if (!addcredit_admin_id || !addcredit_admin_name || !addcredit_admin_role) {
-      const response = await handleError(null, "กรุณาระบุข้อมูล admin ให้ครบถ้วน", 400);
+      const response = await handleError(
+        null,
+        "กรุณาระบุข้อมูล admin ให้ครบถ้วน",
+        400,
+      );
       return res.status(response.status).json(response);
     }
-    
+
     const withdrawal = await withdrawalService.deductFromAdmin({
       user_id,
       amount,
@@ -250,11 +316,46 @@ exports.deductFromAdmin = async function (req, res) {
       addcredit_admin_name,
       addcredit_admin_role,
     });
-    
+
     const response = await handleSuccess(withdrawal, "หักเงินจาก admin สำเร็จ");
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, error.message || 'Failed to deduct from admin', 500);
+    const response = await handleError(
+      error,
+      error.message || "Failed to deduct from admin",
+      500,
+    );
     return res.status(response.status).json(response);
   }
-}; 
+};
+
+// ดูรูปสลิปโอนเงิน
+exports.getWithdrawalSlip = async function (req, res) {
+  try {
+    const { id } = req.params;
+    const withdrawal = await withdrawalService.getWithdrawalById(id);
+
+    if (!withdrawal) {
+      const response = await handleError(null, "ไม่พบข้อมูลการถอนเงิน", 404);
+      return res.status(response.status).json(response);
+    }
+
+    if (!withdrawal.transfer_slip_image) {
+      const response = await handleError(null, "ไม่พบรูปสลิปโอนเงิน", 404);
+      return res.status(response.status).json(response);
+    }
+
+    const response = await handleSuccess(
+      {
+        slip_image_url: `/${withdrawal.transfer_slip_image}`,
+        original_name: withdrawal.transfer_slip_image_original_name,
+      },
+      "ดึงข้อมูลรูปสลิปสำเร็จ",
+    );
+
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error);
+    return res.status(response.status).json(response);
+  }
+};

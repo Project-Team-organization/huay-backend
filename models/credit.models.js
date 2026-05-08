@@ -15,11 +15,11 @@ const CreditSchema = new Schema(
       ref: "Master",
       default: null,
     },
-   
+
     promotion_id: {
       type: Schema.Types.ObjectId,
       ref: "Promotion",
-      default: null, 
+      default: null,
     },
     amount: {
       type: Number,
@@ -33,11 +33,11 @@ const CreditSchema = new Schema(
       type: Number,
       required: true,
     },
-    credit_promotion:{
+    credit_promotion: {
       type: Number,
       default: 0,
     },
-    
+
     // ฟิลด์สำหรับคำนวณค่าคอมมิชชั่น
     commission_percentage: {
       type: Number,
@@ -51,7 +51,7 @@ const CreditSchema = new Schema(
       type: Number,
       default: 0,
     },
-    
+
     channel: {
       type: String,
     },
@@ -71,14 +71,24 @@ const CreditSchema = new Schema(
       type: String,
       required: false,
     },
-    addcredit_admin_role:{
+    addcredit_admin_role: {
       type: String,
-      enum: ["admin", "superadmin",""],
-    } 
+      enum: ["admin", "superadmin", ""],
+    },
+
+    // ฟิลด์สำหรับเก็บรูปสลิป
+    slip_image: {
+      type: String,
+      default: null,
+    },
+    slip_image_original_name: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  }
+  },
 );
 
 const Credit = mongoose.model("Credit", CreditSchema);

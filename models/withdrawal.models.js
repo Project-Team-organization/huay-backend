@@ -26,7 +26,7 @@ const WithdrawalSchema = new Schema(
       required: true,
       default: 0,
     },
-    
+
     // ฟิลด์สำหรับคำนวณค่าคอมมิชชั่น
     commission_percentage: {
       type: Number,
@@ -40,7 +40,7 @@ const WithdrawalSchema = new Schema(
       type: Number,
       default: 0,
     },
-    
+
     bank_name: { type: String, default: "" },
     bank_number: { type: String, default: "" },
     account_name: { type: String, default: "" },
@@ -49,7 +49,7 @@ const WithdrawalSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "completed"],
+      enum: ["pending", "approved", "rejected", "completed", "cancelled"],
       default: "pending",
     },
     approvedBy: {
@@ -73,16 +73,26 @@ const WithdrawalSchema = new Schema(
       type: String,
       required: false,
     },
-    addcredit_admin_role:{
+    addcredit_admin_role: {
       type: String,
-      enum: ["admin", "superadmin",""],
-    } 
+      enum: ["admin", "superadmin", ""],
+    },
+
+    // ฟิลด์สำหรับเก็บรูปสลิปโอนเงิน
+    transfer_slip_image: {
+      type: String,
+      default: null,
+    },
+    transfer_slip_image_original_name: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  }
+  },
 );
 
 const Withdrawal = mongoose.model("Withdrawal", WithdrawalSchema);
 
-module.exports = Withdrawal; 
+module.exports = Withdrawal;
