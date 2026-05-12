@@ -16,7 +16,6 @@ require("./cronjob/huay.hanoi");
 require("./cronjob/cronjob_set");
 // require('./cronjob/huay.foreign.stock');
 
-
 async function startServer() {
   const app = express();
 
@@ -27,22 +26,27 @@ async function startServer() {
   });
 
   // Middleware
-  app.use(cors({
-    origin: [
-      'https://admin.kaojing.online',
-      'https://xian.kaojing.online',
-      'https://asia.kaojing.online',
-      'https://kaojing.online',
-      'http://localhost:3000',
-      'http://localhost:5173'
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    credentials: true
-  }));
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-  app.use(fileUpload());
+  app.use(
+    cors({
+      origin: [
+        "https://admin.kaojing.online",
+        "https://xian.kaojing.online",
+        "https://asia.kaojing.online",
+        "https://kaojing.online",
+        "http://localhost:3000",
+        "http://localhost:5173",
+      ],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+      credentials: true,
+    }),
+  );
+
+  // Body parser - ต้องอยู่ก่อน routes
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+  // Static files
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
   // connect MongoDB
@@ -74,7 +78,7 @@ async function startServer() {
 
   // start server
   app.listen(config.port, () =>
-    console.log(`API running on port ${config.port}`)
+    console.log(`API running on port ${config.port}`),
   );
 }
 

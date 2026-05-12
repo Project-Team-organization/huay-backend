@@ -3,7 +3,7 @@ const config = require("../config/config");
 
 const isUser = (req, res, next) => {
   const token = req.headers["x-access-token"] || req.headers["authorization"];
-
+  console.log(token);
   if (!token) {
     return res.status(403).json({
       message: "ไม่พบ token กรุณาเข้าสู่ระบบ",

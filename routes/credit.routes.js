@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const creditController = require("../controller/credit/credit.controller");
-const { isUser } = require("../middleware/authadmin.middleware");    
-router.post("/create",creditController.createCredit);
+const { isUser } = require("../middleware/authadmin.middleware");
+router.post("/create", creditController.createCredit);
 //ของ user
 router.post("/createuser", isUser, creditController.createCreditUser);
 router.get("/history/getuser", isUser, creditController.getCreditsBytoken);
@@ -20,6 +20,9 @@ router.put("/update/:id", creditController.updateCredit);
 router.put("/approve/:id", creditController.approveCredit);
 router.put("/cancel/:id", creditController.cancelCredit);
 router.delete("/delete/:id", creditController.deleteCredit);
+
+// ดูรูปสลิป
+router.get("/slip/:id", creditController.getCreditSlip);
 
 // ยังไม่ใช้
 router.get("/days/check", creditController.getTopupDays);

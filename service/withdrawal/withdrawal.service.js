@@ -5,6 +5,7 @@ const User = require("../../models/user.model");
 const UserTransaction = require("../../models/user.transection.model");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const commissionService = require("../commission/commission.service");
+const { deleteFile } = require("../../middleware/upload.middleware");
 
 // สร้างคำขอถอนเงิน
 exports.createWithdrawal = async function ({
@@ -32,43 +33,14 @@ exports.createWithdrawal = async function ({
       throw new Error("เงินในบัญชีไม่เพียงพอ");
     }
 
-    // คำนวณค่าธรรมเนียม (ตัวอย่าง: 3% ของจำนวนเงิน)
-    const fee = amount * 0.03;
-    const netAmount = amount - fee;
+    // ไม่มีค่าธรรมเนียม
+    const fee = 0;
+    const netAmount = amount;
 
-    // คำนวณค่าคอมมิชชั่น
-    const commissionData = await commissionService.calculateCommission(
-      user._id,
-      netAmount,
-      "withdrawal",
-    );
+    // ไม่คำนวณค่าคอมมิชชั่นตอนสร้าง รอคำนวณตอนอนุมัติ
 
-    // สร้างข้อมูล withdrawal ใหม่
-    const newWithdrawal = new Withdrawal({
-      user_id: user._id,
-      master_id: commissionData.master_id,
-      amount,
-      netAmount,
-      fee,
-
-      // ข้อมูลค่าคอมมิชชั่น
-      commission_percentage: commissionData.commission_percentage,
-      commission_amount: commissionData.commission_amount,
-      system_loss: commissionData.system_loss,
-
-      bank_name,
-      bank_number,
-      account_name,
-      description,
-      status: "completed",
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-
-    // บันทึกข้อมูล
-    await newWithdrawal.save();
-
-    // หักเงินจาก user ทันที
+    // หักเงินจาก user ทันทีตอนสร้างคำขอ
+    const balanceBefore = user.credit;
     user.credit -= amount;
     await user.save();
 
@@ -77,26 +49,43 @@ exports.createWithdrawal = async function ({
       user_id: user._id,
       type: "withdraw",
       amount: amount,
-      balance_before: user.credit,
-      balance_after: user.credit - amount,
-      ref_id: newWithdrawal._id,
+      balance_before: balanceBefore,
+      balance_after: user.credit,
+      ref_id: null, // จะอัพเดทหลังจากสร้าง withdrawal
       ref_model: "Withdrawal",
       description:
         description || `ถอนเงินไปยัง ${bank_name} เลขที่บัญชี ${bank_number}`,
       created_at: new Date(),
     });
-    await userTransaction.save();
 
-    // อัพเดท MasterCommission (ถ้ามี master)
-    if (commissionData.master_id) {
-      await commissionService.updateCommissionOnWithdrawal({
-        user_id: user._id,
-        master_id: commissionData.master_id,
-        netAmount: netAmount,
-        commission_amount: commissionData.commission_amount,
-        system_loss: commissionData.system_loss,
-      });
-    }
+    // สร้างข้อมูล withdrawal ใหม่ด้วยสถานะ pending (หักเครดิตแล้ว)
+    const newWithdrawal = new Withdrawal({
+      user_id: user._id,
+      master_id: null, // จะอัพเดทตอนอนุมัติ
+      amount,
+      netAmount,
+      fee,
+
+      // ข้อมูลค่าคอมมิชชั่น - จะคำนวณตอนอนุมัติ
+      commission_percentage: 0,
+      commission_amount: 0,
+      system_loss: 0,
+
+      bank_name,
+      bank_number,
+      account_name,
+      description,
+      status: "pending", // หักเงินแล้ว รอ admin อนุมัติ
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
+    // บันทึกข้อมูล
+    await newWithdrawal.save();
+
+    // อัพเดท ref_id ใน transaction
+    userTransaction.ref_id = newWithdrawal._id;
+    await userTransaction.save();
 
     return newWithdrawal;
   } catch (error) {
@@ -104,8 +93,13 @@ exports.createWithdrawal = async function ({
   }
 };
 
-// อนุมัติการถอนเงิน
-exports.approveWithdrawal = async function ({ id, approvedBy }) {
+// อนุมัติการถอนเงิน (อัพสลิปโอนเงิน)
+exports.approveWithdrawal = async function ({
+  id,
+  approvedBy,
+  transfer_slip_image,
+  transfer_slip_image_original_name,
+}) {
   try {
     const withdrawal = await Withdrawal.findById(id);
     if (!withdrawal) {
@@ -113,15 +107,46 @@ exports.approveWithdrawal = async function ({ id, approvedBy }) {
     }
 
     if (withdrawal.status !== "pending") {
+      // ถ้า error ให้ลบไฟล์ที่ upload ไว้
+      if (transfer_slip_image) {
+        deleteFile(transfer_slip_image);
+      }
       throw new Error("ไม่สามารถอนุมัติได้ เนื่องจากสถานะไม่ใช่ pending");
     }
 
-    // อัพเดทสถานะเป็น approved
-    withdrawal.status = "approved";
+    // คำนวณค่าคอมมิชชั่นตอนอนุมัติ
+    const commissionData = await commissionService.calculateCommission(
+      withdrawal.user_id,
+      withdrawal.netAmount,
+      "withdrawal",
+    );
+
+    // อัพเดทข้อมูลค่าคอมมิชชั่นใน withdrawal
+    withdrawal.master_id = commissionData.master_id;
+    withdrawal.commission_percentage = commissionData.commission_percentage;
+    withdrawal.commission_amount = commissionData.commission_amount;
+    withdrawal.system_loss = commissionData.system_loss;
+
+    // อัพเดทสถานะเป็น approved และบันทึกรูปสลิปโอนเงิน
+    withdrawal.status = "completed";
     withdrawal.approvedBy = approvedBy;
     withdrawal.approvedAt = new Date();
+    withdrawal.transfer_slip_image = transfer_slip_image;
+    withdrawal.transfer_slip_image_original_name =
+      transfer_slip_image_original_name;
     withdrawal.updated_at = new Date();
     await withdrawal.save();
+
+    // อัพเดท MasterCommission (ถ้ามี master และมีค่าคอมฯ)
+    if (commissionData.master_id && commissionData.commission_amount !== 0) {
+      await commissionService.updateCommissionOnWithdrawal({
+        user_id: withdrawal.user_id,
+        master_id: commissionData.master_id,
+        netAmount: withdrawal.netAmount,
+        commission_amount: commissionData.commission_amount,
+        system_loss: commissionData.system_loss,
+      });
+    }
 
     return withdrawal;
   } catch (error) {
@@ -129,7 +154,7 @@ exports.approveWithdrawal = async function ({ id, approvedBy }) {
   }
 };
 
-// ปฏิเสธการถอนเงิน
+// ปฏิเสธการถอนเงิน (คืนเงินให้ user)
 exports.rejectWithdrawal = async function ({ id, rejectedReason, approvedBy }) {
   try {
     const withdrawal = await Withdrawal.findById(id);
@@ -141,6 +166,21 @@ exports.rejectWithdrawal = async function ({ id, rejectedReason, approvedBy }) {
       throw new Error("ไม่สามารถปฏิเสธได้ เนื่องจากสถานะไม่ใช่ pending");
     }
 
+    // คืนเงินให้ user (เพราะหักไปแล้วตอนสร้างคำขอ)
+    const user = await User.findById(withdrawal.user_id);
+    if (!user) {
+      throw new Error("ไม่พบข้อมูลผู้ใช้");
+    }
+
+    user.credit += withdrawal.amount;
+    await user.save();
+
+    // ลบ transaction ที่เกี่ยวข้อง
+    await UserTransaction.deleteOne({
+      ref_id: withdrawal._id,
+      type: "withdraw",
+    });
+
     // อัพเดทสถานะเป็น rejected
     withdrawal.status = "rejected";
     withdrawal.rejectedReason = rejectedReason;
@@ -148,55 +188,13 @@ exports.rejectWithdrawal = async function ({ id, rejectedReason, approvedBy }) {
     withdrawal.updated_at = new Date();
     await withdrawal.save();
 
-    // คืนเงินให้ user
-    const user = await User.findById(withdrawal.user_id);
-    if (!user) {
-      throw new Error("ไม่พบข้อมูลผู้ใช้");
-    }
-    user.credit += withdrawal.amount;
-    await user.save();
-
     return withdrawal;
   } catch (error) {
     throw error;
   }
 };
 
-// ยืนยันการโอนเงินสำเร็จ
-exports.completeWithdrawal = async function ({ id, approvedBy }) {
-  try {
-    const withdrawal = await Withdrawal.findById(id).populate("user_id");
-    if (!withdrawal) {
-      throw new Error("ไม่พบข้อมูลการถอนเงิน");
-    }
-
-    if (withdrawal.status !== "approved") {
-      throw new Error("ไม่สามารถยืนยันได้ เนื่องจากสถานะไม่ใช่ approved");
-    }
-
-    // อัพเดทสถานะเป็น completed
-    withdrawal.status = "completed";
-    withdrawal.updated_at = new Date();
-    await withdrawal.save();
-
-    // อัพเดท MasterCommission (ถ้ามี master และมีค่าคอมฯ)
-    if (withdrawal.master_id && withdrawal.commission_amount !== 0) {
-      await commissionService.updateCommissionOnWithdrawal({
-        user_id: withdrawal.user_id._id,
-        master_id: withdrawal.master_id,
-        netAmount: withdrawal.netAmount,
-        commission_amount: withdrawal.commission_amount,
-        system_loss: withdrawal.system_loss,
-      });
-    }
-
-    return withdrawal;
-  } catch (error) {
-    throw error;
-  }
-};
-
-// ดึงข้อมูลตาม id
+// ยกเลิกการถอนเงิน
 exports.getWithdrawalById = async id => {
   try {
     if (!id) {
@@ -317,9 +315,9 @@ exports.deductFromAdmin = async function ({
       throw new Error("จำนวนเงินต้องมากกว่า 0");
     }
 
-    // คำนวณค่าธรรมเนียม (ตัวอย่าง: 3% ของจำนวนเงิน)
-    const fee = amount * 0.03;
-    const netAmount = amount - fee;
+    // ไม่มีค่าธรรมเนียม
+    const fee = 0;
+    const netAmount = amount;
 
     // คำนวณค่าคอมมิชชั่น
     const commissionData = await commissionService.calculateCommission(
@@ -345,7 +343,7 @@ exports.deductFromAdmin = async function ({
       bank_number,
       account_name,
       description,
-      status: "completed", // ถ้าหักจาก admin ถือว่า success ไปเลย
+      status: "approved", // admin หัก = อนุมัติทันที
       approvedBy: addcredit_admin_id,
       approvedAt: new Date(),
       addcredit_admin_id: addcredit_admin_id,
@@ -428,7 +426,7 @@ exports.updateWithdrawal = async function ({
   }
 };
 
-// ยกเลิกการถอนเงิน
+// ยกเลิกการถอนเงิน (เฉพาะสถานะ pending เท่านั้น)
 exports.cancelWithdrawal = async function ({ id }) {
   try {
     const withdrawal = await Withdrawal.findById(id);
@@ -436,22 +434,35 @@ exports.cancelWithdrawal = async function ({ id }) {
       throw new Error("ไม่พบข้อมูลการถอนเงิน");
     }
 
+    if (withdrawal.status === "approved") {
+      throw new Error(
+        "ไม่สามารถยกเลิกได้ เนื่องจากการถอนเงินได้รับการอนุมัติแล้ว",
+      );
+    }
+
     if (withdrawal.status !== "pending") {
       throw new Error("ไม่สามารถยกเลิกได้ เนื่องจากสถานะไม่ใช่ pending");
     }
+
+    // คืนเงินให้ user (เพราะหักไปแล้วตอนสร้างคำขอ)
+    const user = await User.findById(withdrawal.user_id);
+    if (!user) {
+      throw new Error("ไม่พบข้อมูลผู้ใช้");
+    }
+
+    user.credit += withdrawal.amount;
+    await user.save();
+
+    // ลบ transaction ที่เกี่ยวข้อง
+    await UserTransaction.deleteOne({
+      ref_id: withdrawal._id,
+      type: "withdraw",
+    });
 
     // อัพเดทสถานะเป็น cancelled
     withdrawal.status = "cancelled";
     withdrawal.updated_at = new Date();
     await withdrawal.save();
-
-    // คืนเงินให้ user
-    const user = await User.findById(withdrawal.user_id);
-    if (!user) {
-      throw new Error("ไม่พบข้อมูลผู้ใช้");
-    }
-    user.credit += withdrawal.amount;
-    await user.save();
 
     return withdrawal;
   } catch (error) {
@@ -467,14 +478,13 @@ exports.deleteWithdrawal = async function ({ id }) {
       throw new Error("ไม่พบข้อมูลการถอนเงิน");
     }
 
-    // ลบ transaction ที่เกี่ยวข้อง
-    await UserTransaction.deleteOne({
-      ref_id: withdrawal._id,
-      type: "withdraw",
-    });
+    // ลบไฟล์รูปสลิป (ถ้ามี)
+    if (withdrawal.transfer_slip_image) {
+      deleteFile(withdrawal.transfer_slip_image);
+    }
 
-    // ถ้าสถานะเป็น pending ให้คืนเงิน
-    if (withdrawal.status === "pending") {
+    // ถ้าสถานะเป็น pending หรือ approved (หักเงินไปแล้ว) ให้คืนเงิน
+    if (withdrawal.status === "pending" || withdrawal.status === "approved") {
       const user = await User.findById(withdrawal.user_id);
       if (!user) {
         throw new Error("ไม่พบข้อมูลผู้ใช้");
@@ -482,6 +492,12 @@ exports.deleteWithdrawal = async function ({ id }) {
       user.credit += withdrawal.amount;
       await user.save();
     }
+
+    // ลบ transaction ที่เกี่ยวข้อง
+    await UserTransaction.deleteOne({
+      ref_id: withdrawal._id,
+      type: "withdraw",
+    });
 
     // ลบข้อมูล withdrawal
     await Withdrawal.findByIdAndDelete(id);

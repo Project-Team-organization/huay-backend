@@ -1,57 +1,108 @@
 const creditService = require("../../service/credit/credit.service");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
+const {
+  optionalFileUpload,
+  requiredFileUpload,
+} = require("../../middleware/upload.middleware");
 
-exports.createCredit = async function (req, res) {
-  try {
-    const { user_id, amount, channel, description ,addcredit_admin_id,addcredit_admin_name,addcredit_admin_role} = req.body;
+exports.createCredit = [
+  optionalFileUpload("slip_image"),
+  async function (req, res) {
+    try {
+      const {
+        user_id,
+        amount,
+        channel,
+        description,
+        addcredit_admin_id,
+        addcredit_admin_name,
+        addcredit_admin_role,
+      } = req.body;
 
-    const credit = await creditService.createCredit({
-      user_id,
-      amount,
-      channel,
-      description,
-      addcredit_admin_id,
-      addcredit_admin_name,
-      addcredit_admin_role,
-    });
-    if (!credit) {
-      const response = await handleError(null, "Failed to create credit", 400);
+      // ตรวจสอบว่าเป็น admin เติมเงิน หรือ user ฝาก
+      const isAdminTopup =
+        addcredit_admin_id && addcredit_admin_name && addcredit_admin_role;
+
+      // ถ้าไม่ใช่ admin เติมเงิน (เป็น user ฝาก) ต้องมีรูป
+      if (!isAdminTopup && !req.file) {
+        const response = await handleError(
+          null,
+          "กรุณาแนบสลิปการโอนเงิน (User ฝากเงินต้องแนบสลิป)",
+          400,
+        );
+        return res.status(response.status).json(response);
+      }
+
+      const credit = await creditService.createCredit({
+        user_id,
+        amount,
+        channel,
+        description,
+        slip_image: req.file ? req.file.path : null,
+        slip_image_original_name: req.file ? req.file.originalname : null,
+        addcredit_admin_id,
+        addcredit_admin_name,
+        addcredit_admin_role,
+      });
+      if (!credit) {
+        const response = await handleError(
+          null,
+          "Failed to create credit",
+          400,
+        );
+        return res.status(response.status).json(response);
+      }
+
+      // ตรวจสอบว่าเป็น admin เติมเงิน (success) หรือ user ฝาก (pending)
+      const message =
+        credit.status === "success"
+          ? "เติมเงินสำเร็จ"
+          : "สร้างคำขอเติมเงินสำเร็จ รอการอนุมัติ";
+
+      const response = await handleSuccess(credit, message);
+      return res.status(response.status).json(response);
+    } catch (error) {
+      const response = await handleError(error);
       return res.status(response.status).json(response);
     }
-    const response = await handleSuccess(credit, "Credit created successfully");
-    return res.status(response.status).json(response);
-  } catch (error) {
-    const response = await handleError(error);
-    return res.status(response.status).json(response);
-  }
-};
+  },
+];
 
+exports.createCreditUser = [
+  requiredFileUpload("slip_image"),
+  async function (req, res) {
+    try {
+      const { amount, channel, description } = req.body;
+      const user_id = req.user._id;
 
-exports.createCreditUser = async function (req, res) {
-  try {
-    const { amount, channel, description ,addcredit_admin_id,addcredit_admin_name,addcredit_admin_role} = req.body;
-    const user_id = req.user._id;
-    const credit = await creditService.createCredit({
-      user_id,
-      amount,
-      channel,
-      description,
-      addcredit_admin_id,
-      addcredit_admin_name,
-      addcredit_admin_role,
-    });
-    if (!credit) {
-      const response = await handleError(null, "Failed to create credit", 400);
+      // ไฟล์ถูกตรวจสอบแล้วโดย requiredFileUpload middleware
+      const credit = await creditService.createCredit({
+        user_id,
+        amount,
+        channel,
+        description,
+        slip_image: req.file.path,
+        slip_image_original_name: req.file.originalname,
+      });
+      if (!credit) {
+        const response = await handleError(
+          null,
+          "Failed to create credit",
+          400,
+        );
+        return res.status(response.status).json(response);
+      }
+      const response = await handleSuccess(
+        credit,
+        "สร้างคำขอเติมเงินสำเร็จ รอการอนุมัติ",
+      );
+      return res.status(response.status).json(response);
+    } catch (error) {
+      const response = await handleError(error);
       return res.status(response.status).json(response);
     }
-    const response = await handleSuccess(credit, "Credit created successfully");
-    return res.status(response.status).json(response);
-  } catch (error) {
-    const response = await handleError(error);
-    return res.status(response.status).json(response);
-  }
-};
-
+  },
+];
 
 exports.getCreditsByID = async function (req, res) {
   try {
@@ -59,7 +110,7 @@ exports.getCreditsByID = async function (req, res) {
     const credits = await creditService.getCreditById(id);
     const response = await handleSuccess(
       credits,
-      "Get credits by user successful"
+      "Get credits by user successful",
     );
     return res.status(response.status).json(response);
   } catch (error) {
@@ -83,7 +134,7 @@ exports.getAllCredits = async function (req, res) {
       result.data,
       "Get all credits successful",
       200,
-      result.pagination
+      result.pagination,
     );
     return res.status(response.status).json(response);
   } catch (error) {
@@ -107,11 +158,14 @@ exports.getCreditsByUserId = async function (req, res) {
       result.data,
       "Get credits by user ID successful",
       200,
-      result.pagination
+      result.pagination,
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, "Failed to get credits by user ID");
+    const response = await handleError(
+      error,
+      "Failed to get credits by user ID",
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -131,15 +185,17 @@ exports.getCreditsBytoken = async function (req, res) {
       result.data,
       "Get credits by user ID successful",
       200,
-      result.pagination
+      result.pagination,
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, "Failed to get credits by user ID");
+    const response = await handleError(
+      error,
+      "Failed to get credits by user ID",
+    );
     return res.status(response.status).json(response);
   }
-}
-
+};
 
 exports.updateCredit = async function (req, res) {
   try {
@@ -165,10 +221,9 @@ exports.approveCredit = async function (req, res) {
   try {
     const { id } = req.params;
     const credit = await creditService.approveCredit({ id });
-    if (!credit.success) {
-      return res.status(credit.status).json(credit);
-    }
-    return res.status(credit.status).json(credit);
+
+    const response = await handleSuccess(credit, "อนุมัติการฝากเงินสำเร็จ");
+    return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(error);
     return res.status(response.status).json(response);
@@ -179,10 +234,9 @@ exports.cancelCredit = async function (req, res) {
   try {
     const { id } = req.params;
     const credit = await creditService.cancelCredit({ id });
-    if (!credit.success) {
-      return res.status(credit.status).json(credit);
-    }
-    return res.status(credit.status).json(credit);
+
+    const response = await handleSuccess(credit, "ยกเลิกการฝากเงินสำเร็จ");
+    return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(error);
     return res.status(response.status).json(response);
@@ -192,17 +246,18 @@ exports.cancelCredit = async function (req, res) {
 exports.deleteCredit = async function (req, res) {
   try {
     const { id } = req.params;
-    const credit = await creditService.deleteCredit({ id });
-    if (!credit.success) {
-      return res.status(credit.status).json(credit);
-    }
-    return res.status(credit.status).json(credit);
+    const result = await creditService.deleteCredit({ id });
+
+    const response = await handleSuccess(
+      result,
+      result.message || "ลบข้อมูล credit สำเร็จ",
+    );
+    return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(error);
     return res.status(response.status).json(response);
   }
 };
-
 
 // ยังไม่ใช้
 exports.getCreditStats = async function (req, res) {
@@ -212,7 +267,7 @@ exports.getCreditStats = async function (req, res) {
 
     const response = await handleSuccess(
       stats,
-      "Credit stats fetched successfully"
+      "Credit stats fetched successfully",
     );
 
     return res.status(response.status).json(response);
@@ -230,19 +285,19 @@ exports.getTopupDays = async function (req, res) {
       const response = await handleError(
         null,
         "user_id and promotion_id are required",
-        400
+        400,
       );
       return res.status(response.status).json(response);
     }
 
     const uniqueDaysCount = await creditService.getUniqueTopupDays(
       user_id,
-      promotion_id
+      promotion_id,
     );
 
     const response = await handleSuccess(
       { uniqueDaysCount },
-      "Unique topup days fetched successfully"
+      "Unique topup days fetched successfully",
     );
     return res.status(response.status).json(response);
   } catch (error) {
@@ -250,7 +305,6 @@ exports.getTopupDays = async function (req, res) {
     return res.status(response.status).json(response);
   }
 };
-
 
 // ดึง transaction ของ user (สำหรับ admin)
 exports.getUserTransactions = async function (req, res) {
@@ -263,7 +317,7 @@ exports.getUserTransactions = async function (req, res) {
       limit: parseInt(limit, 10),
       type,
       startDate,
-      endDate
+      endDate,
     });
 
     const response = await handleSuccess(
@@ -272,12 +326,15 @@ exports.getUserTransactions = async function (req, res) {
       200,
       {
         ...result.pagination,
-        summary: result.summary
-      }
+        summary: result.summary,
+      },
     );
     return res.status(response.status).json(response);
   } catch (error) {
-    const response = await handleError(error, "Failed to get user transactions");
+    const response = await handleError(
+      error,
+      "Failed to get user transactions",
+    );
     return res.status(response.status).json(response);
   }
 };
@@ -293,7 +350,7 @@ exports.getMyTransactions = async function (req, res) {
       limit: parseInt(limit, 10),
       type,
       startDate,
-      endDate
+      endDate,
     });
 
     const response = await handleSuccess(
@@ -302,8 +359,8 @@ exports.getMyTransactions = async function (req, res) {
       200,
       {
         ...result.pagination,
-        summary: result.summary
-      }
+        summary: result.summary,
+      },
     );
     return res.status(response.status).json(response);
   } catch (error) {
@@ -312,6 +369,35 @@ exports.getMyTransactions = async function (req, res) {
   }
 };
 
-
 //
 
+// ดูรูปสลิป
+exports.getCreditSlip = async function (req, res) {
+  try {
+    const { id } = req.params;
+    const credit = await creditService.getCreditById(id);
+
+    if (!credit) {
+      const response = await handleError(null, "ไม่พบข้อมูล credit", 404);
+      return res.status(response.status).json(response);
+    }
+
+    if (!credit.slip_image) {
+      const response = await handleError(null, "ไม่พบรูปสลิป", 404);
+      return res.status(response.status).json(response);
+    }
+
+    const response = await handleSuccess(
+      {
+        slip_image_url: `/${credit.slip_image}`,
+        original_name: credit.slip_image_original_name,
+      },
+      "ดึงข้อมูลรูปสลิปสำเร็จ",
+    );
+
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error);
+    return res.status(response.status).json(response);
+  }
+};
