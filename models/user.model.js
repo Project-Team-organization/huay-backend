@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   active: { type: Boolean, default: true },
   bank_name: { type: String, default: "" },
   bank_number: { type: String, default: "" },
+  line_id: { type: String, default: "" },
   referral_link: { type: String, default: "" },
   referral_code: { type: String, default: "" },
   referral_by: { type: String, default: "" },
