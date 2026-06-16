@@ -343,7 +343,7 @@ exports.deductFromAdmin = async function ({
       bank_number,
       account_name,
       description,
-      status: "approved", // admin หัก = อนุมัติทันที
+      status: "completed", // admin หัก = อนุมัติทันที
       approvedBy: addcredit_admin_id,
       approvedAt: new Date(),
       addcredit_admin_id: addcredit_admin_id,

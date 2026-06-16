@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   huay-backend:
@@ -9,6 +9,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+    volumes:
+      # ฝั่งซ้าย: เครื่อง Host (ตามใจคุณ) | ฝั่งขวา: ใน Container (ต้องตรงกับที่เจอจริง)
+      - ./uploads:/app/uploads
     restart: unless-stopped
     build:
       context: .
