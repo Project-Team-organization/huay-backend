@@ -138,7 +138,7 @@ exports.getUserBetsById = async function (user_id, lottery_set_id, status) {
       filter.status = status;
     }
     const bets = await UserBet.find(filter)
-      .select("-bets -created_at -updated_at -user_id")
+      .select("-created_at -updated_at -user_id")
       .populate({
         path: "lottery_set_id",
       })
