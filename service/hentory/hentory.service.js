@@ -1,22 +1,24 @@
 const axios = require("axios");
 
-const BASE_URL = process.env.HENTORY_API_URL;
-const USERNAME = process.env.HENTORY_USERNAME;
-const PASSWORD = process.env.HENTORY_PASSWORD;
+function getClient() {
+  const baseURL = process.env.HENTORY_API_URL;
+  const username = process.env.HENTORY_USERNAME;
+  const password = process.env.HENTORY_PASSWORD;
+  const authHeader = "Basic " + Buffer.from(`${username}:${password}`).toString("base64");
 
-const authHeader = "Basic " + Buffer.from(`${USERNAME}:${PASSWORD}`).toString("base64");
-
-const hentoryClient = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    Authorization: authHeader,
-    "Content-Type": "application/json",
-  },
-});
+  return axios.create({
+    baseURL,
+    headers: {
+      Authorization: authHeader,
+      "Content-Type": "application/json",
+    },
+  });
+}
 
 exports.getProducts = async () => {
   try {
-    const response = await hentoryClient.get("/products");
+    const client = getClient();
+    const response = await client.get("/products");
     return response.data;
   } catch (error) {
     console.error("❌ Hentory getProducts error:", error.message);
@@ -26,7 +28,8 @@ exports.getProducts = async () => {
 
 exports.getGames = async (productId) => {
   try {
-    const response = await hentoryClient.get("/games", {
+    const client = getClient();
+    const response = await client.get("/games", {
       params: { productId },
     });
     return response.data;
