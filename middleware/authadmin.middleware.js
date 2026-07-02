@@ -37,7 +37,10 @@ const isUser = (req, res, next) => {
 };
 
 const isMaster = (req, res, next) => {
-  const token = req.headers["x-access-token"] || req.headers["authorization"];
+  const token =
+    req.cookies?.access_token ||
+    req.headers["x-access-token"] ||
+    req.headers["authorization"];
 
   if (!token) {
     return res.status(403).json({
@@ -68,7 +71,10 @@ const isMaster = (req, res, next) => {
 };
 
 const isAdmin = (req, res, next) => {
-  const token = req.headers["x-access-token"] || req.headers["authorization"];
+  const token =
+    req.cookies?.access_token ||
+    req.headers["x-access-token"] ||
+    req.headers["authorization"];
 
   if (!token) {
     return res.status(403).json({
@@ -96,7 +102,10 @@ const isAdmin = (req, res, next) => {
 
 // เช็ค mangagersuperadmin
 const permissionmanagersuperadmin = (req, res, next) => {
-  const token = req.headers["x-access-token"] || req.headers["authorization"];
+  const token =
+    req.cookies?.access_token ||
+    req.headers["x-access-token"] ||
+    req.headers["authorization"];
   if (!token) {
     return res.status(403).json({
       message: "ไม่พบ token กรุณาเข้าสู่ระบบ",
@@ -135,7 +144,10 @@ const permissionmanagersuperadmin = (req, res, next) => {
 };
 // เช็ค manageradmin
 const permissionmanageradmin = (req, res, next) => {
-  const token = req.headers["x-access-token"] || req.headers["authorization"];
+  const token =
+    req.cookies?.access_token ||
+    req.headers["x-access-token"] ||
+    req.headers["authorization"];
   if (!token) {
     return res.status(403).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
   }
@@ -169,7 +181,10 @@ const permissionmanageradmin = (req, res, next) => {
 
 // เช็ค  managermaster
 const permissionmanagermaster = (req, res, next) => {
-  const token = req.headers["x-access-token"] || req.headers["authorization"];
+  const token =
+    req.cookies?.access_token ||
+    req.headers["x-access-token"] ||
+    req.headers["authorization"];
   if (!token) {
     return res.status(403).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
   }
@@ -203,7 +218,10 @@ const permissionmanagermaster = (req, res, next) => {
 
 // เช็ค lotterytype
 const permissionlotterytype = (req, res, next) => {
-  const token = req.headers["x-access-token"] || req.headers["authorization"];
+  const token =
+    req.cookies?.access_token ||
+    req.headers["x-access-token"] ||
+    req.headers["authorization"];
   if (!token) {
     return res.status(403).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
   }
