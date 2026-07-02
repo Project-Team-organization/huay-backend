@@ -17,6 +17,7 @@ const cronjobRoutes = require("./cronjob.routes");
 const dashboardRoutes = require("./dashboard.routes");
 const analyticsRoutes = require("./analytics.routes");
 const reportMasterRoutes = require("./reportmaster.routes");
+const hentoryRoutes = require("./hentory.routes");
 
 const { authenticate } = require("../middleware/authadmin.middleware");
 
@@ -90,5 +91,8 @@ router.use("/dashboard", dashboardRoutes);
 
 // ส่วนของ report master
 router.use("/reportmaster", reportMasterRoutes);
+
+// ส่วนของ Hentory (seamless games)
+router.use("/hentory", hentoryRoutes);
 
 module.exports = router;
