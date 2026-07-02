@@ -18,6 +18,7 @@ const dashboardRoutes = require("./dashboard.routes");
 const analyticsRoutes = require("./analytics.routes");
 const reportMasterRoutes = require("./reportmaster.routes");
 const hentoryRoutes = require("./hentory.routes");
+const hentoryCallbackRoutes = require("./hentory.callback.routes");
 
 const { authenticate } = require("../middleware/authadmin.middleware");
 
@@ -94,5 +95,8 @@ router.use("/reportmaster", reportMasterRoutes);
 
 // ส่วนของ Hentory (seamless games)
 router.use("/hentory", hentoryRoutes);
+
+// Hentory callback (IP whitelist protected)
+router.use("/hentory/callback", hentoryCallbackRoutes);
 
 module.exports = router;
