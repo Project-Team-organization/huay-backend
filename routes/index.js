@@ -93,10 +93,6 @@ router.use("/dashboard", dashboardRoutes);
 // ส่วนของ report master
 router.use("/reportmaster", reportMasterRoutes);
 
-// ส่วนของ Hentory (seamless games)
-router.use("/hentory", hentoryRoutes);
-
-// Hentory callback (IP whitelist protected)
-router.use("/hentory/callback", hentoryCallbackRoutes);
+router.use("/provider", hentoryRoutes);
 
 module.exports = router;
