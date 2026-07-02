@@ -2,6 +2,7 @@ const express = require("express");
 const { lens } = require("@lensjs/express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const path = require("path");
 const connectDB = require("./config/db");
 const config = require("./config/config");
@@ -46,6 +47,7 @@ async function startServer() {
   // Body parser - ต้องอยู่ก่อน routes
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+  app.use(cookieParser());
 
   // Static files
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));

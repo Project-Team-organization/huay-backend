@@ -75,9 +75,25 @@ exports.login = async (req, res) => {
       },
     });
 
-    // ลบ user ออกจาก result
+    // Set token เป็น HTTP-only cookie
+    res.cookie("access_token", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    res.cookie("refresh_token", result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // ลบ user และ token ออกจาก response body
     delete result.user;
-    console.log(result);
+    delete result.token;
+    delete result.refreshToken;
 
     return res.status(result.status).json(result);
   } catch (error) {
@@ -94,26 +110,24 @@ exports.login = async (req, res) => {
 };
 
 exports.refreshToken = async (req, res) => {
-  const authorizationHeader = req.headers["authorization"];
-  if (!authorizationHeader) {
-    const response = await handleAuthError(
-      null,
-      "กรุณาระบุ authorization header",
-      400
-    );
-    return res.status(response.status).json(response);
-  }
-
-  const token = authorizationHeader.split(" ")[1];
+  const token = req.cookies?.refresh_token;
   if (!token) {
-    const response = await handleAuthError(null, "กรุณาระบุ token", 400);
+    const response = await handleAuthError(null, "กรุณาเข้าสู่ระบบ", 401);
     return res.status(response.status).json(response);
   }
 
   try {
-    const result = await handleRefreshToken(token);
+    const newAccessToken = await handleRefreshToken(token);
+
+    res.cookie("access_token", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     const response = await handleAuthSuccess(
-      result,
+      null,
       null,
       null,
       "รีเฟรชโทเค็นสำเร็จ"
@@ -130,24 +144,19 @@ exports.refreshToken = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-  const authorizationHeader = req.headers["authorization"];
-  if (!authorizationHeader) {
-    const response = await handleAuthError(
-      null,
-      "กรุณาระบุ authorization header",
-      400
-    );
-    return res.status(response.status).json(response);
-  }
-
-  const token = authorizationHeader.split(" ")[1];
+  const token = req.cookies?.refresh_token;
   if (!token) {
-    const response = await handleAuthError(null, "กรุณาระบุ token", 400);
+    const response = await handleAuthError(null, "กรุณาเข้าสู่ระบบ", 401);
     return res.status(response.status).json(response);
   }
 
   try {
     const result = await handleLogout(token);
+
+    // ลบ cookies
+    res.clearCookie("access_token");
+    res.clearCookie("refresh_token");
+
     return res.status(result.status).json(result);
   } catch (error) {
     const response = await handleAuthError(error);
