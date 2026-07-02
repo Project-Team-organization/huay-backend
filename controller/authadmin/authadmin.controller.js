@@ -59,8 +59,26 @@ exports.login = async (req, res) => {
               ip,
             },
         });
-        // ลบ user ออกจาก result
+
+        // Set token เป็น HTTP-only cookie
+        res.cookie("access_token", result.token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 24 * 60 * 60 * 1000, // 1 day
+        });
+
+        res.cookie("refresh_token", result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        // ลบ user และ token ออกจาก response body
         delete result.user;
+        delete result.token;
+        delete result.refreshToken;
        
         return res.status(result.status).json(result);
 
@@ -78,22 +96,23 @@ exports.login = async (req, res) => {
 };
 
 exports.refreshToken = async (req, res) => {
-    const authorizationHeader = req.headers["authorization"];
-   
-    if (!authorizationHeader) {
-        const response = await handleAuthError(null, "กรุณาระบุ authorization header", 400);
-        return res.status(response.status).json(response);
-    }
-
-    const token = authorizationHeader.split(" ")[1];
+    const token = req.cookies?.refresh_token;
     if (!token) {
-        const response = await handleAuthError(null, "กรุณาระบุ token", 400);
+        const response = await handleAuthError(null, "กรุณาเข้าสู่ระบบ", 401);
         return res.status(response.status).json(response);
     }
 
     try {
         const newToken = await authadminService.handleRefreshToken(token);
-        const response = await handleAuthSuccess(newToken, null, null, "รีเฟรชโทเค็นสำเร็จ", 200);
+
+        res.cookie("access_token", newToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+
+        const response = await handleAuthSuccess(null, null, null, "รีเฟรชโทเค็นสำเร็จ", 200);
         return res.status(response.status).json(response);
     } catch (error) {
         const response = await handleAuthError(error, "โทเค็นไม่ถูกต้องหรือหมดอายุ", 403);
@@ -102,20 +121,19 @@ exports.refreshToken = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-    const authorizationHeader = req.headers["authorization"];
-    if (!authorizationHeader) {
-        const response = await handleAuthError(null, "กรุณาระบุ authorization header", 400);
-        return res.status(response.status).json(response);
-    }
-
-    const token = authorizationHeader.split(" ")[1];
+    const token = req.cookies?.refresh_token;
     if (!token) {
-        const response = await handleAuthError(null, "กรุณาระบุ token", 400);
+        const response = await handleAuthError(null, "กรุณาเข้าสู่ระบบ", 401);
         return res.status(response.status).json(response);
     }
 
     try {
         const result = await authadminService.logout(token);
+
+        // ลบ cookies
+        res.clearCookie("access_token");
+        res.clearCookie("refresh_token");
+
         return res.status(result.status).json(result);
     } catch (error) {
         const response = await handleAuthError(error);
@@ -169,8 +187,25 @@ exports.loginMaster = async (req, res) => {
             },
         });
 
-        // ลบ user ออกจาก result
+        // Set token เป็น HTTP-only cookie
+        res.cookie("access_token", result.token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+
+        res.cookie("refresh_token", result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        // ลบ user และ token ออกจาก response body
         delete result.user;
+        delete result.token;
+        delete result.refreshToken;
 
         return res.status(result.status).json(result);
     } catch (error) {
