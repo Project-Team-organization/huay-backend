@@ -29,12 +29,19 @@ exports.getProducts = async () => {
 exports.getGames = async (productId) => {
   try {
     const client = getClient();
+    console.log("🔍 HENTORY_API_URL:", process.env.HENTORY_API_URL);
+    console.log("🔍 HENTORY_USERNAME:", process.env.HENTORY_USERNAME);
+    console.log("🔍 HENTORY_PASSWORD:", process.env.HENTORY_PASSWORD ? "***set***" : "NOT SET");
     const response = await client.get("/games", {
       params: { productId },
     });
     return response.data;
   } catch (error) {
     console.error("❌ Hentory getGames error:", error.message);
+    if (error.response) {
+      console.error("❌ Status:", error.response.status);
+      console.error("❌ Data:", JSON.stringify(error.response.data));
+    }
     throw error;
   }
 };
