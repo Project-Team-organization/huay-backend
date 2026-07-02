@@ -2,8 +2,11 @@ const jwt = require("jsonwebtoken");
 const config = require("../config/config");
 
 const isUser = (req, res, next) => {
-  const token = req.headers["x-access-token"] || req.headers["authorization"];
-  console.log(token);
+  const token =
+    req.cookies?.access_token ||
+    req.headers["x-access-token"] ||
+    req.headers["authorization"];
+
   if (!token) {
     return res.status(403).json({
       message: "ไม่พบ token กรุณาเข้าสู่ระบบ",
@@ -234,13 +237,15 @@ const permissionlotterytype = (req, res, next) => {
 
 async function authenticate(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const token =
+      req.cookies?.access_token ||
+      (req.headers.authorization?.startsWith("Bearer ")
+        ? req.headers.authorization.split(" ")[1]
+        : null);
+
+    if (!token) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-
-    const token = authHeader.split(" ")[1];
-    console.log("Token:", token);
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = { id: decoded._id };
