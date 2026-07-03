@@ -45,6 +45,14 @@ async function startServer() {
   );
 
   // Body parser - ต้องอยู่ก่อน routes
+  app.use(
+    "/api/callback/hentory",
+    express.json({
+      verify: (req, res, buf) => {
+        req.rawBody = buf.toString("utf8");
+      },
+    })
+  );
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
   app.use(cookieParser());

@@ -94,5 +94,6 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/reportmaster", reportMasterRoutes);
 
 router.use("/provider", hentoryRoutes);
+router.use("/callback/hentory", hentoryCallbackRoutes);
 
 module.exports = router;

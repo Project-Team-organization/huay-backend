@@ -1,31 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const ipWhitelist = require("../middleware/ipWhitelist.middleware");
+const hentorySignature = require("../middleware/hentorySignature.middleware");
+const hentoryCallbackController = require("../controller/hentory/hentory.callback.controller");
 
 router.use(ipWhitelist);
+router.use(hentorySignature);
 
-router.post("/balance", (req, res) => {
-  // TODO: implement balance check
-  console.log("📥 Hentory callback /balance:", req.body);
-  res.json({ status: 0, balance: 0 });
-});
-
-router.post("/bet", (req, res) => {
-  // TODO: implement bet deduction
-  console.log("📥 Hentory callback /bet:", req.body);
-  res.json({ status: 0, balance: 0 });
-});
-
-router.post("/result", (req, res) => {
-  // TODO: implement result/payout
-  console.log("📥 Hentory callback /result:", req.body);
-  res.json({ status: 0, balance: 0 });
-});
-
-router.post("/cancel", (req, res) => {
-  // TODO: implement cancel/refund
-  console.log("📥 Hentory callback /cancel:", req.body);
-  res.json({ status: 0, balance: 0 });
-});
+router.post("/balance", hentoryCallbackController.getBalance);
+router.post(["/bet", "/placeBets"], hentoryCallbackController.placeBets);
+router.post(["/result", "/settleBets"], hentoryCallbackController.settleBets);
+router.post(["/cancel", "/cancelBets"], hentoryCallbackController.cancelBets);
+router.post(["/adjust", "/adjustBets"], hentoryCallbackController.adjustBets);
+router.post(["/rollback", "/rollbackBets"], hentoryCallbackController.rollbackBets);
+router.post(["/winRewards", "/reward"], hentoryCallbackController.winRewards);
+router.post(["/placeTips", "/tips"], hentoryCallbackController.placeTips);
+router.post(["/cancelTips", "/cancelTip"], hentoryCallbackController.cancelTips);
+router.post(["/voidSettled", "/void"], hentoryCallbackController.voidSettled);
+router.post("/adjustBalance", hentoryCallbackController.adjustBalance);
 
 module.exports = router;
