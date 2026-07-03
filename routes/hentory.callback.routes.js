@@ -4,7 +4,7 @@ const ipWhitelist = require("../middleware/ipWhitelist.middleware");
 const hentorySignature = require("../middleware/hentorySignature.middleware");
 const hentoryCallbackController = require("../controller/hentory/hentory.callback.controller");
 
-router.use(ipWhitelist);
+// router.use(ipWhitelist);
 router.use(hentorySignature);
 
 router.post("/balance", hentoryCallbackController.getBalance);
