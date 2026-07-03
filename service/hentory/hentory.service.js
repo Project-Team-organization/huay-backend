@@ -57,3 +57,18 @@ exports.loginGame = async (data) => {
     throw error;
   }
 };
+
+exports.getBetTransactions = async (params) => {
+  try {
+    const client = getClient();
+    const response = await client.get("/betTransactionsV2", { params });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Hentory getBetTransactions error:", error.message);
+    if (error.response) {
+      console.error("❌ Status:", error.response.status);
+      console.error("❌ Data:", JSON.stringify(error.response.data));
+    }
+    throw error;
+  }
+};
