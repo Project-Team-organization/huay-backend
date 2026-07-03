@@ -42,3 +42,18 @@ exports.getGames = async (productId) => {
     throw error;
   }
 };
+
+exports.loginGame = async (data) => {
+  try {
+    const client = getClient();
+    const response = await client.post("/login", data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Hentory loginGame error:", error.message);
+    if (error.response) {
+      console.error("❌ Status:", error.response.status);
+      console.error("❌ Data:", JSON.stringify(error.response.data));
+    }
+    throw error;
+  }
+};
