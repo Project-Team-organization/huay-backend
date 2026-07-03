@@ -7,7 +7,7 @@ const hentoryCallbackController = require("../controller/hentory/hentory.callbac
 // router.use(ipWhitelist);
 router.use(hentorySignature);
 
-router.post("/balance", hentoryCallbackController.getBalance);
+router.post(["/balance", "/checkBalance"], hentoryCallbackController.getBalance);
 router.post(["/bet", "/placeBets"], hentoryCallbackController.placeBets);
 router.post(["/result", "/settleBets"], hentoryCallbackController.settleBets);
 router.post(["/cancel", "/cancelBets"], hentoryCallbackController.cancelBets);
