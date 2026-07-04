@@ -1,5 +1,5 @@
 const axios = require("axios");
-const LotteryLaoStars = require("../../models/lotterylao.stars.model");
+const LotteryLaoStarsVip = require("../../models/lottery_lao_stars_vip.model");
 
 const apiUrl = 'https://test-lotto-scraper.wnimqo.easypanel.host/api/lottery/lao-stars-vip/latest';
 
@@ -31,9 +31,8 @@ const processLotteryData = async () => {
   try {
     // เช็คถ้าวันนี้มีข้อมูลแล้ว และผลหวยออกครบแล้ว ไม่ต้องอัพอีก
     const today = new Date().toISOString().split("T")[0];
-    const existingLottery = await LotteryLaoStars.findOne({
+    const existingLottery = await LotteryLaoStarsVip.findOne({
       lotto_date: today,
-      type: 'vip',
       results: { $exists: true, $ne: null }
     });
 
@@ -121,7 +120,6 @@ const processLotteryData = async () => {
     const lotteryData = {
       name: data.name || "lao-lottery",
       url: data.url || "https://api.laostars-vip.com",
-      type: 'vip',
       lotto_date: data.lotto_date,
       lottery_name: data.lotteryName || "หวยลาวสตาร์ VIP",
       start_spin: new Date(data.start_spin),
@@ -174,14 +172,14 @@ const processLotteryData = async () => {
     // ถ้ามีข้อมูลเดิมอยู่แล้ว ให้อัพเดท ถ้าไม่มีให้สร้างใหม่
     let lottery;
     if (existingLottery) {
-      lottery = await LotteryLaoStars.findByIdAndUpdate(
+      lottery = await LotteryLaoStarsVip.findByIdAndUpdate(
         existingLottery._id,
         lotteryData,
         { new: true }
       );
       console.log(`🔄 อัพเดทข้อมูลหวยลาวสตาร์ VIP วันนี้`);
     } else {
-      lottery = new LotteryLaoStars(lotteryData);
+      lottery = new LotteryLaoStarsVip(lotteryData);
       await lottery.save();
       console.log(`💾 บันทึกข้อมูลหวยลาวสตาร์ VIP วันนี้ใหม่`);
     }
@@ -210,10 +208,10 @@ const getAllLaoStarsVipLottery = async ({ page, limit, startDate, endDate }) => 
     const skip = (page - 1) * limit;
 
     // Get total count for pagination
-    const total = await LotteryLaoStars.countDocuments(query);
+    const total = await LotteryLaoStarsVip.countDocuments(query);
 
     // Get data with pagination
-    const data = await LotteryLaoStars.find(query)
+    const data = await LotteryLaoStarsVip.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

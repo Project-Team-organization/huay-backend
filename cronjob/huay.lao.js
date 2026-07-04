@@ -17,7 +17,7 @@ const {
 
 
 // ===== CRONJOB สำหรับหวยลาวแต่ละประเภท (ตามเวลาสิ้นสุด) =====
-cron.schedule('30 8 * * *', async () => {
+cron.schedule('32 8 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao Extra lottery data...`);
     try {
         await huaylaoextracronjob();
@@ -47,7 +47,7 @@ cron.schedule('00 14 * * *', async () => {
 }, { timezone: "Asia/Bangkok" }); 
 
 // หวยลาวสตาร์ ทุกวัน เวลา 15:45 น.
-cron.schedule('45 15 * * *', async () => {
+cron.schedule('47 15 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao Stars lottery data...`);
     try {
         await huaylaostarcronjob();
@@ -57,7 +57,7 @@ cron.schedule('45 15 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาวท่าแขก VIP ทุกวัน เวลา 20:00 น.
-cron.schedule('0 20 * * *', async () => {
+cron.schedule('2 20 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao Thakhek VIP lottery data...`);
     try {
         await huaylaothakhekvip();
@@ -67,7 +67,7 @@ cron.schedule('0 20 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาวพัฒนา ทุกวันจันทร์ และพฤหัสบดี เวลา 20:30 น.
-cron.schedule('30 20 * * 1,4', async () => {
+cron.schedule('32 20 * * 1,4', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao lottery data...`);
     try {
         await huaylaocronjob();
@@ -77,7 +77,7 @@ cron.schedule('30 20 * * 1,4', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาวสามัคคี ทุกวันอังคาร พุธ ศุกร์ เสาร์ และอาทิตย์ เวลา 20:40 น.
-cron.schedule('40 20 * * 2,3,5,6,0', async () => {
+cron.schedule('42 20 * * 2,3,5,6,0', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao Union lottery data...`);
     try {
         await huaylaounioncronjob();
@@ -87,7 +87,7 @@ cron.schedule('40 20 * * 2,3,5,6,0', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาว VIP ทุกวัน เวลา 21:30 น.
-cron.schedule('30 21 * * *', async () => {
+cron.schedule('32 21 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao VIP lottery data...`);
     try {
         await huaylaovip();
@@ -97,7 +97,7 @@ cron.schedule('30 21 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาวท่าแขก 5D ทุกวัน เวลา 21:45 น.
-cron.schedule('45 21 * * *', async () => {
+cron.schedule('47 21 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao Thakhek 5D lottery data...`);
     try {
         await huaylaothakhek5d();
@@ -107,7 +107,7 @@ cron.schedule('45 21 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาวสตาร์ VIP ทุกวัน เวลา 22:00 น.
-cron.schedule('0 22 * * *', async () => {
+cron.schedule('7 22 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao Stars VIP lottery data...`);
     try {
         await huaylaostarvip();
@@ -117,7 +117,7 @@ cron.schedule('0 22 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // หวยลาวกาชาด ทุกวัน เวลา 23:30 น.
-cron.schedule('30 23 * * *', async () => {
+cron.schedule('32 23 * * *', async () => {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Lao Redcross lottery data...`);
     try {
         await huylaogachad();

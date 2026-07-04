@@ -14,7 +14,7 @@ const {
 } = require('../service/cronjob/cronjob.service');
 
 // Cronjob สำหรับหวยฮานอยอาเซียน - ทุกวัน เวลา 09:30 น. (เวลาประเทศไทย)
-cron.schedule('30 9 * * *', async () => {
+cron.schedule('32 9 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi ASEAN lottery data...`);
     
@@ -27,7 +27,7 @@ cron.schedule('30 9 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // Cronjob สำหรับหวยฮานอย HD - ทุกวัน เวลา 11:30 น. (เวลาประเทศไทย)
-cron.schedule('30 11 * * *', async () => {
+cron.schedule('32 11 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi HD lottery data...`);
     
@@ -40,7 +40,7 @@ cron.schedule('30 11 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // Cronjob สำหรับหวยฮานอยสตาร์ - ทุกวัน เวลา 12:30 น. (เวลาประเทศไทย)
-cron.schedule('30 12 * * *', async () => {
+cron.schedule('32 12 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi Star lottery data...`);
     
@@ -53,7 +53,7 @@ cron.schedule('30 12 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // Cronjob สำหรับหวยฮานอย TV - ทุกวัน เวลา 14:30 น. (เวลาประเทศไทย)
-cron.schedule('30 14 * * *', async () => {
+cron.schedule('32 14 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi TV lottery data...`);
     
@@ -66,7 +66,7 @@ cron.schedule('30 14 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // Cronjob สำหรับหวยฮานอยเฉพาะกิจ - ทุกวัน เวลา 16:30 น. (เวลาประเทศไทย)
-cron.schedule('30 16 * * *', async () => {
+cron.schedule('32 16 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi Special lottery data...`);
     
@@ -92,7 +92,7 @@ cron.schedule('35 16 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // Cronjob สำหรับหวยฮานอยพิเศษ - ทุกวัน เวลา 17:30 น. (เวลาประเทศไทย)
-cron.schedule('30 17 * * *', async () => {
+cron.schedule('32 17 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi Special API lottery data...`);
     
@@ -118,7 +118,7 @@ cron.schedule('35 18 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // Cronjob สำหรับหวยฮานอยพัฒนา - ทุกวัน เวลา 19:30 น. (เวลาประเทศไทย)
-cron.schedule('30 19 * * *', async () => {
+cron.schedule('32 19 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi Develop lottery data...`);
     
@@ -144,7 +144,7 @@ cron.schedule('35 19 * * *', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // Cronjob สำหรับหวยฮานอย EXTRA - ทุกวัน เวลา 22:15 น. (เวลาประเทศไทย)
-cron.schedule('15 22 * * *', async () => {
+cron.schedule('17 22 * * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Hanoi Extra lottery data...`);
     

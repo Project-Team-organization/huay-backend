@@ -28,7 +28,7 @@ cron.schedule('10 18 * * 2,3,6,0', async () => {
 }, { timezone: "Asia/Bangkok" });
 
 // Cronjob สำหรับหวยสิงคโปร์ 4D - รันวันพุธ วันเสาร์ และวันอาทิตย์ เวลา 18:00 น. (เวลาประเทศไทย)
-cron.schedule('0 17 * * 3,6,0', async () => {
+cron.schedule('2 18 * * 3,6,0', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Singapore 4D lottery data...`);
     
@@ -40,8 +40,8 @@ cron.schedule('0 17 * * 3,6,0', async () => {
   }
 }, { timezone: "Asia/Bangkok" });
 
-// Cronjob สำหรับหวย Grand Dragon 4D - รันวันพุธ วันเสาร์ และวันอาทิตย์ เวลา 17:30 น. (เวลาประเทศไทย)
-cron.schedule('10 18 * * 3,6,0', async () => {
+// Cronjob สำหรับหวย Grand Dragon 4D - รันวันพุธ วันเสาร์ และวันอาทิตย์ เวลา 18:10 น. (เวลาประเทศไทย)
+cron.schedule('12 18 * * 3,6,0', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching Grand Dragon 4D lottery data...`);
     

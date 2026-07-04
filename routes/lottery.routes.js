@@ -78,6 +78,11 @@ router.get(
 router.post("/createHuay", huayController.createHuay); //Create Huay Manual //รอเเก้ไข
 router.post("/createManualHuay", huayController.createManualHuay); // Create Manual Huay with auto-generation
 router.post("/createHuayAPI", huayController.createHuayAPI); // Create Huay from API
+//แก้ออกผลหวย 
+router.post("/createThaiLotteryManual", huayController.createThaiLotteryManual); // Manual Thai Govt Lottery
+router.post("/createGsbManual", huayController.createGsbManual); // Manual GSB (ออมสิน) Lottery
+router.post("/createSavingsManual", huayController.createSavingsManual); // Manual Savings (ธกส) Lottery
+
 router.get("/huay", huayController.getAllHuay); // Get Huay A;;
 router.get("/huay/set/:id", huayController.getHuay); // Get Huay By Lotter Set
 router.get("/huay/:id", huayController.getHuayById); // Get Huay by ID 

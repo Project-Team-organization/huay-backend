@@ -18,8 +18,8 @@ exports.getLotteryByDateAndType = async (req, res) => {
     );
 
     if (!lotteries || lotteries.length === 0) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message: "ไม่พบข้อมูลตามวันที่และประเภทที่ระบุ",
         data: [],
       });

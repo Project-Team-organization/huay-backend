@@ -197,6 +197,444 @@ exports.createHuayAPI = async (req, res) => {
   }
 };
 
+exports.createThaiLotteryManual = async (req, res) => {
+  try {
+    const { lottery_set_id, lotto_date, prize_first, prize_front_three, prize_last_three, prize_last_two } = req.body;
+
+    let target_set_id = lottery_set_id;
+    if (!target_set_id && lotto_date) {
+      const LotterySets = require("../../models/lotterySets.model");
+      const lottoDateObj = new Date(lotto_date);
+      const startOfDay = new Date(lottoDateObj.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(lottoDateObj.setHours(23, 59, 59, 999));
+      
+      const set = await LotterySets.findOne({
+        name: "หวยรัฐบาล",
+        result_time: { $gte: startOfDay, $lte: endOfDay }
+      });
+      if (set) {
+        target_set_id = set._id.toString();
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: `ไม่พบงวดหวยรัฐบาลไทยในวันที่ ${lotto_date} กรุณาสร้างงวดหวยก่อน`
+        });
+      }
+    }
+
+    if (!target_set_id || !prize_first || !prize_front_three || !prize_last_three || !prize_last_two) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: lottery_set_id/lotto_date, prize_first, prize_front_three, prize_last_three, or prize_last_two.",
+      });
+    }
+
+    if (prize_first.length !== 6) {
+      return res.status(400).json({ success: false, message: "prize_first must be 6 digits." });
+    }
+    if (!Array.isArray(prize_front_three) || prize_front_three.length !== 2) {
+      return res.status(400).json({ success: false, message: "prize_front_three must be an array of 2 elements." });
+    }
+    if (!Array.isArray(prize_last_three) || prize_last_three.length !== 2) {
+      return res.status(400).json({ success: false, message: "prize_last_three must be an array of 2 elements." });
+    }
+    if (prize_last_two.length !== 2) {
+      return res.status(400).json({ success: false, message: "prize_last_two must be 2 digits." });
+    }
+
+    const data = {
+      prizes: [
+        { id: "prizeFirst", name: "รางวัลที่ 1", number: [prize_first] },
+        { id: "prizeFrontThree", name: "รางวัลเลขหน้า 3 ตัว", number: prize_front_three }
+      ],
+      runningNumbers: [
+        { name: "รางวัลเลขหน้า 3 ตัว", number: prize_front_three },
+        { name: "รางวัลเลขท้าย 3 ตัว", number: prize_last_three },
+        { name: "รางวัลเลขท้าย 2 ตัว", number: [prize_last_two] }
+      ]
+    };
+
+    const huayData = [];
+
+    const prizeFirstObj = data.prizes.find((prize) => prize.id === "prizeFirst");
+    if (prizeFirstObj && Array.isArray(prizeFirstObj.number)) {
+      huayData.push({
+        lottery_set_id: target_set_id,
+        huay_name: prizeFirstObj.name,
+        huay_number: prizeFirstObj.number,
+        code: "6d_top",
+      });
+
+      huayData.push(
+        ...getFrontThreeFromFirstPrize(prizeFirstObj, target_set_id),
+        ...getLastFourFromFirstPrize(prizeFirstObj, target_set_id),
+        ...getLastTwoFromFirstPrize(prizeFirstObj, target_set_id),
+        ...getTodThreeFromFirstPrize(prizeFirstObj, target_set_id),
+        ...getLastFiveFromFirstPrize(prizeFirstObj, target_set_id),
+        ...getTodFourFromFirstPrize(prizeFirstObj, target_set_id),
+        ...getTodFrontThreeFromFirstPrize(prizeFirstObj, target_set_id),
+        ...getTopThreeFromFirstPrize(prizeFirstObj, target_set_id),
+        ...getOneTopFromFirstPrize(prizeFirstObj, target_set_id)
+      );
+    }
+
+    const prizeFrontThreeObj = data.prizes.find(
+      (prize) => prize.id === "prizeFrontThree"
+    );
+    if (prizeFrontThreeObj && Array.isArray(prizeFrontThreeObj.number)) {
+      huayData.push({
+        lottery_set_id: target_set_id,
+        huay_name: "เลขหน้า 3 ตัว",
+        huay_number: prizeFrontThreeObj.number,
+      });
+    }
+
+    huayData.push(
+      ...data.runningNumbers
+        .filter((running) => Array.isArray(running.number))
+        .map((running) => ({
+          lottery_set_id: target_set_id,
+          huay_name: running.name,
+          huay_number: running.number,
+        }))
+    );
+
+    const frontThreeItem = huayData.find(
+      (item) => item.huay_name === "รางวัลเลขหน้า 3 ตัว"
+    );
+    if (frontThreeItem) {
+      huayData.push(
+        ...getTodFrontThreeFromHuayData(frontThreeItem, target_set_id)
+      );
+    }
+
+    const backThreeItem = huayData.find(
+      (item) => item.huay_name === "รางวัลเลขท้าย 3 ตัว"
+    );
+    if (backThreeItem) {
+      huayData.push(
+        ...getTodBackThreeFromHuayData(backThreeItem, target_set_id)
+      );
+    }
+
+    const twoDigitItem = huayData.find(
+      (item) => item.huay_name === "รางวัลเลขท้าย 2 ตัว"
+    );
+    if (twoDigitItem) {
+      huayData.push(
+        ...getOneBottomFromFirstPrize(twoDigitItem, target_set_id)
+      );
+    }
+
+    if (!huayData.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid huay data to insert.",
+      });
+    }
+
+    const updatedHuayData = await renameHuayNamesAsync(huayData);
+    const result = await huayService.create(updatedHuayData, target_set_id);
+
+    // Trigger evaluation immediately
+    const user_id = "685d483a2144647be58f9312";
+    await huayService.evaluateUserBetsByLotterySet(target_set_id, user_id);
+
+    // Update status to resulted
+    const LotterySets = require("../../models/lotterySets.model");
+    await LotterySets.findByIdAndUpdate(target_set_id, {
+      status: "resulted",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Manual Thai Huay data inserted and evaluated successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("CreateThaiLotteryManual Error:", error.message);
+    return res.status(400).json({
+      success: false,
+      message: "Unable to create manual Thai lottery data.",
+      error: error.message,
+    });
+  }
+};
+
+exports.createGsbManual = async (req, res) => {
+  try {
+    const { lottery_set_id, lotto_date, results } = req.body;
+
+    let target_set_id = lottery_set_id;
+    if (!target_set_id && lotto_date) {
+      const LotterySets = require("../../models/lotterySets.model");
+      const lottoDateObj = new Date(lotto_date);
+      const startOfDay = new Date(lottoDateObj.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(lottoDateObj.setHours(23, 59, 59, 999));
+      
+      const set = await LotterySets.findOne({
+        name: "หวยออมสิน",
+        result_time: { $gte: startOfDay, $lte: endOfDay }
+      });
+      if (set) {
+        target_set_id = set._id.toString();
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: `ไม่พบงวดหวยออมสินในวันที่ ${lotto_date} กรุณาสร้างงวดหวยก่อน`
+        });
+      }
+    }
+
+    if (!target_set_id || !lotto_date || !results) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: lottery_set_id/lotto_date or results.",
+      });
+    }
+
+    const { digit7, digit6, digit5, digit4, digit3_top, digit2_top, digit2_bottom } = results;
+
+    if (!digit7 || !digit6 || !digit5 || !digit4 || !digit3_top || !digit2_top || !digit2_bottom) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing some keys inside results object.",
+      });
+    }
+
+    // ➤ หา 3 ตัวบน
+    let threeTop = digit3_top;
+    
+    // ➤ หา 3 ตัวโต๊ด
+    let threeToad = [];
+    if (threeTop) {
+      const digits = threeTop.split("");
+      const perms = new Set();
+      const permute = (arr, m = []) => {
+        if (arr.length === 0) {
+          perms.add(m.join(""));
+        } else {
+          for (let i = 0; i < arr.length; i++) {
+            const curr = arr.slice();
+            const next = curr.splice(i, 1);
+            permute(curr.slice(), m.concat(next));
+          }
+        }
+      };
+      permute(digits);
+      threeToad = [...perms];
+    }
+
+    // ➤ หา 2 ตัวบน
+    let twoTop = digit2_top;
+
+    // ➤ หา 2 ตัวล่าง
+    let twoBottom = digit2_bottom;
+    
+    // ➤ 1 ตัวบน
+    let oneTop = "";
+    if (threeTop && threeTop.length === 3) {
+      oneTop = threeTop.split("").join(",");
+    }
+
+    // ➤ 1 ตัวล่าง
+    let oneBottom = "";
+    if (twoBottom && twoBottom.length === 2) {
+      oneBottom = twoBottom.split("").join(",");
+    }
+
+    const betting_types = [
+      { code: "3top", name: "3 ตัวบน", digit: threeTop },
+      { code: "3toad", name: "3 ตัวโต๊ด", digit: threeToad.join(",") },
+      { code: "2top", name: "2 ตัวบน", digit: twoTop },
+      { code: "2bottom", name: "2 ตัวล่าง", digit: twoBottom },
+      { code: "1top", name: "วิ่งบน", digit: oneTop },
+      { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
+    ];
+
+    const LotteryThaiGsb = require("../../models/lottery_thai_gsb.model");
+    const LotterySets = require("../../models/lotterySets.model");
+
+    const set = await LotterySets.findById(target_set_id);
+    if (!set) {
+      return res.status(404).json({ success: false, message: "Lottery set not found." });
+    }
+
+    const lotteryData = {
+      name: "thai-gsb",
+      url: "",
+      lotto_date,
+      lottery_name: set.name || "หวยออมสิน",
+      start_spin: new Date(),
+      show_result: new Date(),
+      results,
+      betting_types,
+    };
+
+    const lottery = new LotteryThaiGsb(lotteryData);
+    await lottery.save();
+
+    // Trigger evaluation
+    const user_id = "685d483a2144647be58f9312";
+    await huayService.evaluateUserBetsByLotterySet(target_set_id, user_id);
+
+    // Update status to resulted
+    await LotterySets.findByIdAndUpdate(target_set_id, {
+      status: "resulted",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "GSB Manual lottery results saved and evaluated successfully",
+      data: lottery,
+    });
+  } catch (error) {
+    console.error("CreateGsbManual Error:", error.message);
+    return res.status(400).json({
+      success: false,
+      message: "Unable to create manual GSB lottery data.",
+      error: error.message,
+    });
+  }
+};
+
+exports.createSavingsManual = async (req, res) => {
+  try {
+    const { lottery_set_id, lotto_date, results } = req.body;
+
+    let target_set_id = lottery_set_id;
+    if (!target_set_id && lotto_date) {
+      const LotterySets = require("../../models/lotterySets.model");
+      const lottoDateObj = new Date(lotto_date);
+      const startOfDay = new Date(lottoDateObj.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(lottoDateObj.setHours(23, 59, 59, 999));
+      
+      const set = await LotterySets.findOne({
+        name: "หวย ธกส",
+        result_time: { $gte: startOfDay, $lte: endOfDay }
+      });
+      if (set) {
+        target_set_id = set._id.toString();
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: `ไม่พบงวดหวย ธกส ในวันที่ ${lotto_date} กรุณาสร้างงวดหวยก่อน`
+        });
+      }
+    }
+
+    if (!target_set_id || !lotto_date || !results) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: lottery_set_id/lotto_date or results.",
+      });
+    }
+
+    const { digit4_top, digit3_top, digit2_top, digit2_bottom, prize1_full, prize2_full } = results;
+
+    if (!digit4_top || !digit3_top || !digit2_top || !digit2_bottom || !prize1_full || !prize2_full) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing some keys inside results object.",
+      });
+    }
+
+    // ➤ หา 3 ตัวบน
+    let threeTop = digit3_top;
+    
+    // ➤ หา 3 ตัวโต๊ด
+    let threeToad = [];
+    if (threeTop) {
+      const digits = threeTop.split("");
+      const perms = new Set();
+      const permute = (arr, m = []) => {
+        if (arr.length === 0) {
+          perms.add(m.join(""));
+        } else {
+          for (let i = 0; i < arr.length; i++) {
+            const curr = arr.slice();
+            const next = curr.splice(i, 1);
+            permute(curr.slice(), m.concat(next));
+          }
+        }
+      };
+      permute(digits);
+      threeToad = [...perms];
+    }
+
+    // ➤ หา 2 ตัวบน
+    let twoTop = digit2_top;
+
+    // ➤ หา 2 ตัวล่าง
+    let twoBottom = digit2_bottom;
+    
+    // ➤ 1 ตัวบน
+    let oneTop = "";
+    if (threeTop && threeTop.length === 3) {
+      oneTop = threeTop.split("").join(",");
+    }
+
+    // ➤ 1 ตัวล่าง
+    let oneBottom = "";
+    if (twoBottom && twoBottom.length === 2) {
+      oneBottom = twoBottom.split("").join(",");
+    }
+
+    const betting_types = [
+      { code: "3top", name: "3 ตัวบน", digit: threeTop },
+      { code: "3toad", name: "3 ตัวโต๊ด", digit: threeToad.join(",") },
+      { code: "2top", name: "2 ตัวบน", digit: twoTop },
+      { code: "2bottom", name: "2 ตัวล่าง", digit: twoBottom },
+      { code: "1top", name: "วิ่งบน", digit: oneTop },
+      { code: "1bottom", name: "วิ่งล่าง", digit: oneBottom },
+    ];
+
+    const LotteryThaiSavings = require("../../models/lottery_thai_savings.model");
+    const LotterySets = require("../../models/lotterySets.model");
+
+    const set = await LotterySets.findById(target_set_id);
+    if (!set) {
+      return res.status(404).json({ success: false, message: "Lottery set not found." });
+    }
+
+    const lotteryData = {
+      name: "thai-savings",
+      url: "",
+      lotto_date,
+      lottery_name: set.name || "หวย ธกส",
+      start_spin: new Date(),
+      show_result: new Date(),
+      results,
+      betting_types,
+    };
+
+    const lottery = new LotteryThaiSavings(lotteryData);
+    await lottery.save();
+
+    // Trigger evaluation
+    const user_id = "685d483a2144647be58f9312";
+    await huayService.evaluateUserBetsByLotterySet(target_set_id, user_id);
+
+    // Update status to resulted
+    await LotterySets.findByIdAndUpdate(target_set_id, {
+      status: "resulted",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Savings Manual lottery results saved and evaluated successfully",
+      data: lottery,
+    });
+  } catch (error) {
+    console.error("CreateSavingsManual Error:", error.message);
+    return res.status(400).json({
+      success: false,
+      message: "Unable to create manual Savings lottery data.",
+      error: error.message,
+    });
+  }
+};
+
 exports.getHuay = async (req, res) => {
   try {
     const lottery_set_id = req.params.id;

@@ -9,7 +9,7 @@ cron.schedule('20 11 16 * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching ธกส lottery data...`);
     
-    await huaythaigsb();
+    await huaythaisavings();
     
     console.log('✅ ธกส lottery data fetched and saved successfully');
   } catch (error) {
@@ -22,7 +22,7 @@ cron.schedule('25 11 1,16 * *', async () => {
   try {
     console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] Fetching ออมสิน lottery data...`);
     
-    await huaythaisavings();
+    await huaythaigsb();
     
     console.log('✅ ออมสิน lottery data fetched and saved successfully');
   } catch (error) {

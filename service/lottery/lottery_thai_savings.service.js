@@ -22,11 +22,11 @@ const fetchAndSaveThaiSavingsLottery = async () => {
       });
       
       if (!hasIncompleteResults) {
-        console.log(`✅ หวยไทยออมสิน วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
+        console.log(`✅ หวยไทย ธกส วันนี้มีข้อมูลครบแล้ว ไม่ต้องอัพเดท`);
         return existingLottery;
       }
       
-      console.log(`⏳ หวยไทยออมสิน วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
+      console.log(`⏳ หวยไทย ธกส วันนี้มีข้อมูลแต่ยังไม่ออกครบ จะอัพเดทใหม่`);
     }
 
     const response = await axios.get(
@@ -37,7 +37,7 @@ const fetchAndSaveThaiSavingsLottery = async () => {
     // ถ้า results ยังไม่ออก
     if (!data.results.digit4_top) {
       throw new Error(
-        `Failed to fetch and save Thai Savings lottery: หวยออมสินวันนี้ยังไม่ออกผล`
+        `Failed to fetch and save Thai Savings lottery: หวยธกสวันนี้ยังไม่ออกผล`
       );
     }
 
@@ -150,11 +150,11 @@ const fetchAndSaveThaiSavingsLottery = async () => {
         lotteryData,
         { new: true }
       );
-      console.log(`🔄 อัพเดทข้อมูลหวยไทยออมสิน วันนี้`);
+      console.log(`🔄 อัพเดทข้อมูลหวยไทย ธกส วันนี้`);
     } else {
       lottery = new LotteryThaiSavings(lotteryData);
       await lottery.save();
-      console.log(`💾 บันทึกข้อมูลหวยไทยออมสิน วันนี้ใหม่`);
+      console.log(`💾 บันทึกข้อมูลหวยไทย ธกส วันนี้ใหม่`);
     }
     return lottery;
   } catch (error) {
@@ -195,7 +195,7 @@ const getAllThaiSavingsLottery = async ({ page, limit, startDate, endDate }) => 
     };
   } catch (error) {
     console.error("Error in getAllThaiSavingsLottery service:", error);
-    throw new Error("เกิดข้อผิดพลาดในการดึงข้อมูลหวยออมสิน");
+    throw new Error("เกิดข้อผิดพลาดในการดึงข้อมูลหวย ธกส");
   }
 };
 

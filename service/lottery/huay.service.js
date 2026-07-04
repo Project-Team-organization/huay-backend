@@ -649,7 +649,7 @@ exports.evaluateUserBetsByLotterySet = async function (
       return result;
     } else if (lottery_set.name === "หวยออมสิน") {
       console.log("🇹🇭 ประมวลผลหวยออมสิน");
-      const result = await processlottery_thai_savings(
+      const result = await processlottery_thai_gsb(
         lottery_set_id,
         createdBy,
         lottery_set,
@@ -658,7 +658,7 @@ exports.evaluateUserBetsByLotterySet = async function (
       return result;
     } else if (lottery_set.name === "หวย ธกส") {
       console.log("🇹🇭 ประมวลผลหวย ธกส");
-      const result = await processlottery_thai_gsb(
+      const result = await processlottery_thai_savings(
         lottery_set_id,
         createdBy,
         lottery_set,
@@ -1753,6 +1753,9 @@ async function processlotterylaostars(
       createdBy,
     });
 
+    // อัพเดทสถานะเป็น resulted ทันทีเพื่อป้องกันการประมวลผลซ้ำ
+    await markLotterySetAsResulted(lottery_set_id);
+
     const betting_types = resulthuay.betting_types;
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
@@ -1781,7 +1784,6 @@ async function processlotterylaostars(
       "หวยลาวสตาร์"
     );
 
-    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
     console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
 
     return {
@@ -1885,6 +1887,9 @@ async function processlotterylaostars_vip(
       createdBy,
     });
 
+    // อัพเดทสถานะเป็น resulted ทันทีเพื่อป้องกันการประมวลผลซ้ำ
+    await markLotterySetAsResulted(lottery_set_id);
+
     const betting_types = resulthuay.betting_types;
     const processedBettingTypes = betting_types.map(bettingType => {
       return {
@@ -1913,7 +1918,6 @@ async function processlotterylaostars_vip(
       "หวยลาวสตาร์ VIP"
     );
 
-    await LotterySets.findByIdAndUpdate(lottery_set_id, { status: "resulted" });
     console.log(`🏆 ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
 
     return {
