@@ -9,7 +9,7 @@ const config = require("./config/config");
 const routes = require("./routes");
 
 // Import cron job functions
-require("./cronjob/cronjob_set");
+// require("./cronjob/cronjob_set");
 require("./cronjob/cleanup.logs");
 
 async function startServer() {
