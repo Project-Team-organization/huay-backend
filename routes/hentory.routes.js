@@ -6,5 +6,6 @@ const basicAuth = require("../middleware/basicAuth.middleware");
 router.get("/catalog", basicAuth, hentoryController.getProducts);
 router.get("/list", basicAuth, hentoryController.getGames);
 router.post("/enter", basicAuth, hentoryController.loginGame);
+router.get("/history", basicAuth, hentoryController.getBetTransactions);
 
 module.exports = router;

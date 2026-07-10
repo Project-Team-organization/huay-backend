@@ -1,6 +1,30 @@
 const hentoryService = require("../../service/hentory/hentory.service");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const { v4: uuidv4 } = require("uuid");
+const Joi = require("joi");
+
+const loginGameSchema = Joi.object({
+  username: Joi.string().required().messages({
+    "string.empty": "กรุณาระบุ username",
+    "any.required": "กรุณาระบุ username",
+  }),
+  productId: Joi.string().required().messages({
+    "string.empty": "กรุณาระบุ productId",
+    "any.required": "กรุณาระบุ productId",
+  }),
+  gameCode: Joi.string().required().messages({
+    "string.empty": "กรุณาระบุ gameCode",
+    "any.required": "กรุณาระบุ gameCode",
+  }),
+  isMobileLogin: Joi.boolean().required().messages({
+    "any.required": "กรุณาระบุ isMobileLogin",
+  }),
+  limit: Joi.number().optional(),
+  currency: Joi.string().optional(),
+  language: Joi.string().max(5).optional(),
+  callbackUrl: Joi.string().uri().optional(),
+  betLimit: Joi.array().items(Joi.object()).optional(),
+});
 
 exports.getProducts = async (req, res) => {
   try {
@@ -33,12 +57,15 @@ exports.getGames = async (req, res) => {
 
 exports.loginGame = async (req, res) => {
   try {
-    const { username, productId, gameCode, isMobileLogin, limit, currency, language, callbackUrl, betLimit } = req.body;
+    const { error, value } = loginGameSchema.validate(req.body, { abortEarly: false });
 
-    if (!username || !productId || !gameCode || isMobileLogin === undefined) {
-      const response = await handleError(null, "กรุณาระบุ username, productId, gameCode, isMobileLogin", 400);
+    if (error) {
+      const messages = error.details.map((d) => d.message).join(", ");
+      const response = await handleError(null, messages, 400);
       return res.status(response.status).json(response);
     }
+
+    const { username, productId, gameCode, isMobileLogin, limit, currency, language, callbackUrl, betLimit } = value;
 
     const sessionToken = uuidv4();
 
@@ -61,6 +88,35 @@ exports.loginGame = async (req, res) => {
     return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(error, "เกิดข้อผิดพลาดในการเข้าสู่เกม");
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getBetTransactions = async (req, res) => {
+  try {
+    const { productId, date, startTime, endTime, nextId } = req.query;
+
+    if (!productId) {
+      const response = await handleError(null, "กรุณาระบุ productId", 400);
+      return res.status(response.status).json(response);
+    }
+
+    if (!date && (!startTime || !endTime)) {
+      const response = await handleError(null, "กรุณาระบุ date หรือ startTime และ endTime", 400);
+      return res.status(response.status).json(response);
+    }
+
+    const params = { productId };
+    if (date) params.date = date;
+    if (startTime) params.startTime = startTime;
+    if (endTime) params.endTime = endTime;
+    if (nextId) params.nextId = nextId;
+
+    const result = await hentoryService.getBetTransactions(params);
+    const response = await handleSuccess(result, "ดึงข้อมูล transactions สำเร็จ");
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึง transactions");
     return res.status(response.status).json(response);
   }
 };
