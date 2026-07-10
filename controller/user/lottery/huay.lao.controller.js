@@ -2,32 +2,40 @@ const huayLaoService = require("../../../service/user/lottery/huay.lao.service")
 
 exports.getLotteryByDateAndType = async (req, res) => {
   try {
-    const { lotto_date, lottory_type } = req.query;
+    const { lotto_date, startDate, endDate, lottory_type, page, limit } = req.query;
 
-    if (!lotto_date) {
+    const parsedStartDate = startDate || lotto_date;
+    const parsedEndDate = endDate || lotto_date;
+
+    if (!parsedStartDate) {
       return res.status(400).json({
         success: false,
-        message: "กรุณาระบุ lotto_date",
+        message: "กรุณาระบุ lotto_date หรือ startDate",
         data: null,
       });
     }
 
-    const lotteries = await huayLaoService.fetchLotteryByDateAndType(
-      lotto_date,
-      lottory_type
+    const { results, pagination } = await huayLaoService.fetchLotteryByDateAndType(
+      parsedStartDate,
+      parsedEndDate,
+      lottory_type,
+      page ? parseInt(page) : 1,
+      limit ? parseInt(limit) : 10
     );
 
-    if (!lotteries || lotteries.length === 0) {
+    if (!results || results.length === 0) {
       return res.status(200).json({
         success: true,
         message: "ไม่พบข้อมูลตามวันที่และประเภทที่ระบุ",
         data: [],
+        pagination,
       });
     }
     return res.status(200).json({
       success: true,
       message: "ดึงข้อมูลสำเร็จ",
-      data: lotteries,
+      data: results,
+      pagination,
     });
   } catch (error) {
     return res.status(400).json({

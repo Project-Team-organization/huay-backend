@@ -8,11 +8,11 @@ const {
 // 📄 ฟังก์ชันเดิม (ไม่มี log): ดูไฟล์ cronjob_set.backup.js
 // 💾 ตาราง logs: models/cronjob.log.model.js
 
-// ออกผลหวย ทุกนาที (สำหรับตรวจสอบผลหวยอื่นๆ)
+// ตรวจเช็คการเปิด-ปิดหวยตามช่วงเวลา ทุกนาที
 cron.schedule(
   "* * * * *",
   async () => {
-    // console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ออกผลหวย ทุกนาที...`);
+    // console.log(`[${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}] ตรวจสอบเปิด-ปิดหวย...`);
     await checkLotterySetResults();
   },
   { timezone: "Asia/Bangkok" }

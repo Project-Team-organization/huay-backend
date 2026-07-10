@@ -969,8 +969,7 @@ async function processlotterythai(lottery_set_id, createdBy, lottery_set) {
             // ตรวจว่าถูกรางวัลไหม
             const isWin = matchedResult.numbers.includes(userNumber);
             console.log(
-              `➡️ แทงเลข: ${userNumber}, จำนวน: ${amount} | ${
-                isWin ? "✅ ถูก" : "❌ ไม่ถูก"
+              `➡️ แทงเลข: ${userNumber}, จำนวน: ${amount} | ${isWin ? "✅ ถูก" : "❌ ไม่ถูก"
               }`
             );
 
@@ -1201,8 +1200,7 @@ async function processlotterylaohd(
             // ตรวจว่าถูกรางวัลไหม
             const isWin = matchedResult.numbers.includes(userNumber);
             console.log(
-              `➡️ แทงเลข: ${userNumber}, จำนวน: ${amount} | ${
-                isWin ? "✅ ถูก" : "❌ ไม่ถูก"
+              `➡️ แทงเลข: ${userNumber}, จำนวน: ${amount} | ${isWin ? "✅ ถูก" : "❌ ไม่ถูก"
               }`
             );
 
@@ -1276,17 +1274,15 @@ async function processlotterylaohd(
           user_id: user._id,
           type: "payout",
           amount: totalWinAmount,
-          detail: `ถูกรางวัลหวยลาว HD งวดวันที่ ${
-            new Date().toISOString().split("T")[0]
-          }`,
+          detail: `ถูกรางวัลหวยลาว HD งวดวันที่ ${new Date().toISOString().split("T")[0]
+            }`,
           status: "success",
           balance_before: user.credit - totalWinAmount,
           balance_after: user.credit,
           ref_id: userBet._id,
           ref_model: "UserBet",
-          description: `ถูกรางวัลหวยลาว HD งวดวันที่ ${
-            new Date().toISOString().split("T")[0]
-          }`,
+          description: `ถูกรางวัลหวยลาว HD งวดวันที่ ${new Date().toISOString().split("T")[0]
+            }`,
         });
 
         console.log(
@@ -1472,8 +1468,7 @@ const processLotteryWinners = async (
           // ตรวจว่าถูกรางวัลไหม
           const isWin = matchedResult.numbers.includes(userNumber);
           console.log(
-            `➡️ แทงเลข: ${userNumber}, จำนวน: ${amount} | ${
-              isWin ? "✅ ถูก" : "❌ ไม่ถูก"
+            `➡️ แทงเลข: ${userNumber}, จำนวน: ${amount} | ${isWin ? "✅ ถูก" : "❌ ไม่ถูก"
             }`
           );
 
@@ -1547,17 +1542,15 @@ const processLotteryWinners = async (
         user_id: user._id,
         type: "payout",
         amount: totalWinAmount,
-        detail: `ถูกรางวัล${lotteryName} งวดวันที่ ${
-          new Date().toISOString().split("T")[0]
-        }`,
+        detail: `ถูกรางวัล${lotteryName} งวดวันที่ ${new Date().toISOString().split("T")[0]
+          }`,
         status: "success",
         balance_before: user.credit - totalWinAmount,
         balance_after: user.credit,
         ref_id: userBet._id,
         ref_model: "UserBet",
-        description: `ถูกรางวัล${lotteryName} งวดวันที่ ${
-          new Date().toISOString().split("T")[0]
-        }`,
+        description: `ถูกรางวัล${lotteryName} งวดวันที่ ${new Date().toISOString().split("T")[0]
+          }`,
       });
 
       console.log(`💰 เพิ่มเครดิต ${totalWinAmount} บาท ให้ ${user.username}`);
@@ -2424,9 +2417,9 @@ async function processlottery_magnum_4d(
         const str = String(rawDigit);
         normalizedDigits = str.includes(",")
           ? str
-              .split(",")
-              .map(d => d.trim())
-              .filter(Boolean)
+            .split(",")
+            .map(d => d.trim())
+            .filter(Boolean)
           : [str.trim()].filter(Boolean);
       }
       return {
@@ -2504,9 +2497,9 @@ async function processlottery_singapore_4d(
         const str = String(rawDigit);
         normalizedDigits = str.includes(",")
           ? str
-              .split(",")
-              .map(d => d.trim())
-              .filter(Boolean)
+            .split(",")
+            .map(d => d.trim())
+            .filter(Boolean)
           : [str.trim()].filter(Boolean);
       }
       return {
@@ -4058,3 +4051,99 @@ async function saveYiKeeResultsToHuay(
     throw error;
   }
 }
+
+// ประเมินผลการแทงหวยแบบระบุตัวเลขเอง (Manual)
+exports.evaluateUserBetsManual = async function (
+  lottery_set_id,
+  results,
+  createdBy
+) {
+  try {
+    if (!lottery_set_id) {
+      throw new Error("ต้องระบุ lottery_set_id");
+    }
+    if (!results) {
+      throw new Error("ต้องระบุ results สำหรับตรวจรางวัล");
+    }
+
+    const lottery_set = await LotterySets.findById(lottery_set_id);
+    if (!lottery_set) {
+      throw new Error("ไม่พบข้อมูล lottery_set");
+    }
+
+    const lottery_type = await LotteryType.findById(lottery_set.lottery_type_id);
+    if (!lottery_type) {
+      throw new Error("ไม่พบข้อมูล lottery_type");
+    }
+
+    // 1. สร้าง LotteryResult
+    const lotteryResult = await LotteryResult.create({
+      lottery_set_id,
+      draw_date: new Date(),
+      status: "published",
+      createdBy,
+    });
+
+    // 2. อัปเดตสถานะงวดเป็น resulted เพื่อป้องกันการทำงานซ้ำ
+    await markLotterySetAsResulted(lottery_set_id);
+
+    // 3. สร้าง LotteryResultItems ตามประเภทการเล่นใน lottery_type
+    const resultItems = [];
+    const bettingTypes = lottery_type.betting_types || [];
+
+    for (const bettingType of bettingTypes) {
+      const code = bettingType.code;
+      const inputVal = results[code];
+
+      // ถ้าในผลลัพธ์ที่ส่งเข้ามามีเลขของประเภทนี้
+      if (inputVal !== undefined && inputVal !== null) {
+        let validNumbers = [];
+        if (Array.isArray(inputVal)) {
+          validNumbers = inputVal.map(num => String(num).trim()).filter(num => num !== "");
+        } else if (typeof inputVal === "string") {
+          validNumbers = inputVal.split(",").map(num => num.trim()).filter(num => num !== "");
+        } else {
+          validNumbers = [String(inputVal).trim()];
+        }
+
+        if (validNumbers.length > 0) {
+          const resultItem = await LotteryResultItem.create({
+            lottery_result_id: lotteryResult._id,
+            betting_type_id: code,
+            name: bettingType.name,
+            reward: bettingType.payout_rate || 0,
+            numbers: validNumbers,
+            winner_count: 0,
+          });
+          resultItems.push(resultItem);
+        }
+      }
+    }
+
+    // 4. ค้นหาโพยหวยที่ค้างอยู่ (status = 'pending')
+    const pendingBets = await UserBet.find({
+      lottery_set_id,
+      status: "pending",
+    });
+
+    // 5. ตรวจรางวัลและจ่ายเงิน
+    const winners = await processLotteryWinners(
+      pendingBets,
+      resultItems,
+      lottery_set_id,
+      lottery_set.name
+    );
+
+    console.log(`🏆 [Manual Draw] ประมวลผลเสร็จสิ้น พบผู้ชนะ ${winners.length} รายการ`);
+
+    return {
+      lottery_result: lotteryResult,
+      result_items: resultItems,
+      winners: winners,
+    };
+  } catch (error) {
+    console.error("❌ evaluateUserBetsManual error:", error.message);
+    throw error;
+  }
+};
+

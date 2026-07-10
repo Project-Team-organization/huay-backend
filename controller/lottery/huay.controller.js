@@ -1225,3 +1225,41 @@ const getOneBottomFromFirstPrize = (twoDigitItem, lottery_set_id) => {
     return [];
   }
 };
+
+// ประเมินผลหวยแบบระบุตัวเลขเอง (Manual)
+exports.evaluateLotteryResultsManual = async (req, res) => {
+  try {
+    const { lottery_set_id, results } = req.body;
+    const user_id = req.user._id;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required.",
+      });
+    }
+
+    if (!lottery_set_id || !results) {
+      return res.status(400).json({
+        success: false,
+        message: "lottery_set_id and results are required.",
+      });
+    }
+
+    const result = await huayService.evaluateUserBetsManual(
+      lottery_set_id,
+      results,
+      user_id
+    );
+
+    const response = await handleSuccess("ออกผลหวยแบบ Manual สำเร็จ", result);
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(
+      error,
+      "เกิดข้อผิดพลาดในการออกผลหวยแบบ Manual",
+      400
+    );
+    return res.status(response.status).json(response);
+  }
+};

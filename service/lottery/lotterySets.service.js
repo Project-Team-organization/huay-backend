@@ -386,8 +386,8 @@ async function checkLotterySetResults() {
       }
     }
 
-    // ออกผลหวย
-
+    // ปิดการออกผลหวยอัตโนมัติ (เปลี่ยนไปใช้แมนนวลอย่างเดียวตามที่แจ้ง)
+    /*
     const readyLotterySets = await LotterySets.find({
       result_time: { $lte: serverTime },
       status: {
@@ -432,6 +432,7 @@ async function checkLotterySetResults() {
         }
       }
     }
+    */
   } catch (error) {
     console.error("Error checking lottery set results:", error);
   }

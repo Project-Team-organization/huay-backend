@@ -95,6 +95,10 @@ router.get("/huay/latest/result", huayController.getLatestResultedHuay);
 
 router.post("/getLotteryResult", isAdmin, huayController.evaluateLotteryResults); // ออกผลหวย
 
+//ผลหวยกรอกมือ
+router.post("/evaluateLotteryResultsManual", isAdmin, huayController.evaluateLotteryResultsManual); // ออกผลหวยแบบ Manual
+
+
 
 
 
