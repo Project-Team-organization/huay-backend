@@ -386,13 +386,13 @@ async function checkLotterySetResults() {
       }
     }
 
-    // ปิดการออกผลหวยอัตโนมัติ (เปลี่ยนไปใช้แมนนวลอย่างเดียวตามที่แจ้ง)
-    /*
+    // ออกผลหวยยี่กีอัตโนมัติ (เปลี่ยนเฉพาะยี่กีที่ออกผลเองเป็น Auto ส่วนหวยอื่นยังคงเป็น Manual)
     const readyLotterySets = await LotterySets.find({
       result_time: { $lte: serverTime },
       status: {
         $nin: ["resulted", "cancelled"], // ไม่เอาสถานะ resulted และ cancelled
       },
+      name: { $regex: /ยี่กี|ยิกี/ } // ดึงเฉพาะหวยตระกูลยี่กี
     }).sort({ openTime: -1 });
 
     if (readyLotterySets.length > 0) {
@@ -401,18 +401,7 @@ async function checkLotterySetResults() {
       // Process each lottery set
       for (const lotterySet of readyLotterySets) {
         try {
-          if (lotterySet.name === "หวยรัฐบาล") {
-            //ให้ไปเช็ค huayService ว่ามีข้อมูลหวยหรือยัง
-            const huayData = await huay.find({
-              lottery_set_id: lotterySet._id,
-            });
-            if (huayData.length <= 0) {
-              console.log(`📥 ดึงข้อมูลหวยจาก API สำหรับ: ${lotterySet.name}`);
-              await createHuayFromAPI(lotterySet._id);
-              console.log(`✅ บันทึกข้อมูลหวยสำเร็จ: ${lotterySet.name}`);
-            }
-          }
-          console.log(`🔍 ออกผลหวย: ${lotterySet.name}`);
+          console.log(`🔍 ออกผลหวยยี่กีอัตโนมัติ: ${lotterySet.name}`);
           await huayService.evaluateUserBetsByLotterySet(
             lotterySet._id,
             user_id
@@ -423,16 +412,15 @@ async function checkLotterySetResults() {
             status: "resulted",
           });
 
-          console.log(`🔍 ประมวลผลรางวัลสำเร็จ: ${lotterySet.name}`);
+          console.log(`🔍 ประมวลผลรางวัลหวยยี่กีสำเร็จ: ${lotterySet.name}`);
         } catch (error) {
           console.error(
-            `Error processing lottery set ${lotterySet._id}:`,
+            `Error processing automatic YiKee lottery set ${lotterySet._id}:`,
             error.message
           );
         }
       }
     }
-    */
   } catch (error) {
     console.error("Error checking lottery set results:", error);
   }
