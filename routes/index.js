@@ -19,6 +19,7 @@ const analyticsRoutes = require("./analytics.routes");
 const reportMasterRoutes = require("./reportmaster.routes");
 const hentoryRoutes = require("./hentory.routes");
 const hentoryCallbackRoutes = require("./hentory.callback.routes");
+const logoRoutes = require("./logo.routes");
 
 const { authenticate } = require("../middleware/authadmin.middleware");
 
@@ -95,5 +96,7 @@ router.use("/reportmaster", reportMasterRoutes);
 
 router.use("/provider", hentoryRoutes);
 router.use("/callback/hentory", hentoryCallbackRoutes);
+
+router.use("/logo", logoRoutes);
 
 module.exports = router;
