@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const hentoryController = require("../controller/hentory/hentory.controller");
-const basicAuth = require("../middleware/basicAuth.middleware");
+const { isUser } = require("../middleware/authadmin.middleware");
 
-router.get("/catalog", basicAuth, hentoryController.getProducts);
-router.get("/list", basicAuth, hentoryController.getGames);
-router.post("/enter", basicAuth, hentoryController.loginGame);
-router.get("/history", basicAuth, hentoryController.getBetTransactions);
+router.get("/catalog", isUser, hentoryController.getProducts);
+router.get("/list", isUser, hentoryController.getGames);
+router.post("/enter", isUser, hentoryController.loginGame);
+router.get("/history", isUser, hentoryController.getBetTransactions);
 
 module.exports = router;
