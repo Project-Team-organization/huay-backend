@@ -24,6 +24,7 @@ const loginGameSchema = Joi.object({
   language: Joi.string().max(5).optional(),
   callbackUrl: Joi.string().uri().optional(),
   betLimit: Joi.array().items(Joi.object()).optional(),
+  sessionToken: Joi.string().optional(),
 });
 
 exports.getProducts = async (req, res) => {
@@ -65,23 +66,49 @@ exports.loginGame = async (req, res) => {
       return res.status(response.status).json(response);
     }
 
-    const { username, productId, gameCode, isMobileLogin, limit, currency, language, callbackUrl, betLimit } = value;
+    const { username, productId, gameCode, isMobileLogin, currency, language, callbackUrl, sessionToken } = value;
 
-    const sessionToken = uuidv4();
+    let selectedLimit = 1;
+    try {
+      const limitsResponse = await hentoryService.getBetLimitsV2(productId);
+      if (
+        limitsResponse &&
+        limitsResponse.code === 0 &&
+        Array.isArray(limitsResponse.data) &&
+        limitsResponse.data.length > 0 &&
+        limitsResponse.data[0] &&
+        Array.isArray(limitsResponse.data[0].BetLimit) &&
+        limitsResponse.data[0].BetLimit.length > 0
+      ) {
+        const betLimits = limitsResponse.data[0].BetLimit;
+        let minLimitObj = betLimits[0];
+        for (let i = 1; i < betLimits.length; i++) {
+          if (betLimits[i].Min < minLimitObj.Min) {
+            minLimitObj = betLimits[i];
+          }
+        }
+        if (minLimitObj && minLimitObj.limit !== undefined) {
+          selectedLimit = minLimitObj.limit;
+        }
+      }
+    } catch (limitError) {
+      console.error("⚠️ Failed to fetch bet limits from Hentory, falling back to limit 1:", limitError.message);
+    }
+
+    const finalSessionToken = sessionToken || uuidv4();
 
     const data = {
       username,
       productId,
       gameCode,
       isMobileLogin,
-      sessionToken,
+      sessionToken: finalSessionToken,
+      limit: selectedLimit,
     };
 
-    if (limit !== undefined) data.limit = limit;
     if (currency) data.currency = currency;
     if (language) data.language = language;
     if (callbackUrl) data.callbackUrl = callbackUrl;
-    if (betLimit) data.betLimit = betLimit;
 
     const result = await hentoryService.loginGame(data);
     const response = await handleSuccess(result, "เข้าสู่เกมสำเร็จ");

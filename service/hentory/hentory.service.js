@@ -43,6 +43,23 @@ exports.getGames = async (productId) => {
   }
 };
 
+exports.getBetLimitsV2 = async (productId) => {
+  try {
+    const client = getClient();
+    const response = await client.get("/betLimitsV2", {
+      params: { productId },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Hentory getBetLimitsV2 error:", error.message);
+    if (error.response) {
+      console.error("❌ Status:", error.response.status);
+      console.error("❌ Data:", JSON.stringify(error.response.data));
+    }
+    throw error;
+  }
+};
+
 exports.loginGame = async (data) => {
   try {
     const client = getClient();
