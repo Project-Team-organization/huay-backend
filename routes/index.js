@@ -20,6 +20,7 @@ const reportMasterRoutes = require("./reportmaster.routes");
 const hentoryRoutes = require("./hentory.routes");
 const hentoryCallbackRoutes = require("./hentory.callback.routes");
 const logoRoutes = require("./logo.routes");
+const seamlessAdminRoutes = require("./seamless.admin.routes");
 
 const { authenticate } = require("../middleware/authadmin.middleware");
 
@@ -98,5 +99,6 @@ router.use("/provider", hentoryRoutes);
 router.use("/callback/hentory", hentoryCallbackRoutes);
 
 router.use("/logo", logoRoutes);
+router.use("/admin/seamless", seamlessAdminRoutes);
 
 module.exports = router;

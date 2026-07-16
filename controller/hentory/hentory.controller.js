@@ -147,3 +147,47 @@ exports.getBetTransactions = async (req, res) => {
     return res.status(response.status).json(response);
   }
 };
+
+exports.getAgentCredit = async (req, res) => {
+  try {
+    const result = await hentoryService.getAgentCredit();
+    const response = await handleSuccess(result, "ดึงข้อมูลเครดิตเอเย่นต์สำเร็จ");
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงเครดิตเอเย่นต์");
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getBetTransactionsV2 = async (req, res) => {
+  try {
+    const { productId, date, startTime, endTime, nextId } = req.query;
+
+    if (!productId) {
+      const response = await handleError(null, "กรุณาระบุ productId", 400);
+      return res.status(response.status).json(response);
+    }
+
+    const params = { productId };
+    if (date) {
+      params.date = date;
+    } else if (startTime) {
+      params.startTime = startTime;
+      if (endTime) params.endTime = endTime;
+    } else if (endTime) {
+      params.endTime = endTime;
+    } else {
+      const tzOffset = 7 * 60 * 60 * 1000;
+      const localDate = new Date(Date.now() + tzOffset);
+      params.date = localDate.toISOString().split('T')[0];
+    }
+    if (nextId) params.nextId = nextId;
+
+    const result = await hentoryService.getBetTransactions(params);
+    const response = await handleSuccess(result, "ดึงข้อมูลรายการเดิมพันสำเร็จ");
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงรายการเดิมพัน");
+    return res.status(response.status).json(response);
+  }
+};

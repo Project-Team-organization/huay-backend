@@ -89,3 +89,18 @@ exports.getBetTransactions = async (params) => {
     throw error;
   }
 };
+
+exports.getAgentCredit = async () => {
+  try {
+    const client = getClient();
+    const response = await client.get("/getAgentCredit");
+    return response.data;
+  } catch (error) {
+    console.error("❌ Hentory getAgentCredit error:", error.message);
+    if (error.response) {
+      console.error("❌ Status:", error.response.status);
+      console.error("❌ Data:", JSON.stringify(error.response.data));
+    }
+    throw error;
+  }
+};
