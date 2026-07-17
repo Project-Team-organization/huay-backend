@@ -162,12 +162,30 @@ exports.getAgentCredit = async (req, res) => {
 
 exports.getBetTransactionsV2 = async (req, res) => {
   try {
-    const { productId, date, startTime, endTime } = req.query;
+    const { productId, date, startTime, endTime, search } = req.query;
 
     let query = { category: "game" };
 
     if (productId && productId !== "ALL") {
       query.provider_name = productId;
+    }
+
+    if (search) {
+      const User = require("../../models/user.model");
+      const matchedUsers = await User.find({
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { phone: { $regex: search, $options: "i" } },
+          { full_name: { $regex: search, $options: "i" } }
+        ]
+      }).select("_id");
+      
+      if (matchedUsers.length > 0) {
+        query.user_id = { $in: matchedUsers.map(u => u._id) };
+      } else {
+        const response = await handleSuccess({ data: { txns: [] } }, "ดึงข้อมูลรายการเดิมพันสำเร็จ");
+        return res.status(response.status).json(response);
+      }
     }
 
     if (date) {
@@ -220,6 +238,146 @@ exports.getBetTransactionsV2 = async (req, res) => {
     return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงรายการเดิมพัน");
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const { startDate, endDate, search } = req.query;
+
+    let query = { category: "game" };
+
+    if (search) {
+      const User = require("../../models/user.model");
+      const matchedUsers = await User.find({
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { phone: { $regex: search, $options: "i" } },
+          { full_name: { $regex: search, $options: "i" } }
+        ]
+      }).select("_id");
+      
+      if (matchedUsers.length > 0) {
+        query.user_id = { $in: matchedUsers.map(u => u._id) };
+      } else {
+        const response = await handleSuccess({
+          data: {
+            totalBetsCount: 0,
+            totalStakeAmount: 0,
+            totalPayoutAmount: 0,
+            totalProfitAmount: 0,
+            providers: [],
+            topGames: []
+          }
+        }, "ดึงสถิติแดชบอร์ดสำเร็จ");
+        return res.status(response.status).json(response);
+      }
+    }
+
+    if (startDate || endDate) {
+      query.created_at = {};
+      if (startDate) query.created_at.$gte = new Date(startDate + "T00:00:00.000Z");
+      if (endDate) query.created_at.$lte = new Date(endDate + "T23:59:59.999Z");
+    } else {
+      // Default to last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      query.created_at = { $gte: thirtyDaysAgo };
+    }
+
+    const txns = await UserTransaction.find(query).lean();
+
+    let totalBetsCount = 0;
+    let totalStakeAmount = 0;
+    let totalPayoutAmount = 0;
+    const providers = {};
+    const games = {};
+
+    for (const t of txns) {
+      const stake = t.amount || 0;
+      const payout = t.payout_amount || 0;
+      const provider = t.provider_name || "Unknown";
+      const game = t.game_name || "Unknown";
+
+      if (t.type === "bet" || t.category === "game") {
+        // Count each unique bet transaction
+        if (t.type === "bet") totalBetsCount++;
+      }
+
+      totalStakeAmount += stake;
+      totalPayoutAmount += payout;
+
+      // Group by provider
+      if (!providers[provider]) {
+        providers[provider] = { provider, stake: 0, payout: 0, betsCount: 0 };
+      }
+      providers[provider].stake += stake;
+      providers[provider].payout += payout;
+      if (t.type === "bet") providers[provider].betsCount++;
+
+      // Group by game
+      if (!games[game]) {
+        games[game] = { game, provider, stake: 0, payout: 0, betsCount: 0 };
+      }
+      games[game].stake += stake;
+      games[game].payout += payout;
+      if (t.type === "bet") games[game].betsCount++;
+    }
+
+    // Map to list and calculate profit
+    const providerList = Object.values(providers).map(p => ({
+      ...p,
+      profit: p.stake - p.payout
+    })).sort((a, b) => b.stake - a.stake);
+
+    const gameList = Object.values(games).map(g => ({
+      ...g,
+      profit: g.stake - g.payout
+    })).sort((a, b) => b.stake - a.stake).slice(0, 10); // top 10 games
+
+    const response = await handleSuccess({
+      data: {
+        totalBetsCount,
+        totalStakeAmount,
+        totalPayoutAmount,
+        totalProfitAmount: totalStakeAmount - totalPayoutAmount,
+        providers: providerList,
+        topGames: gameList
+      }
+    }, "ดึงสถิติแดชบอร์ดสำเร็จ");
+
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงสถิติแดชบอร์ด");
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.searchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      const response = await handleSuccess({ users: [] }, "ดึงข้อมูลผู้เล่นสำเร็จ");
+      return res.status(response.status).json(response);
+    }
+
+    const User = require("../../models/user.model");
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        { phone: { $regex: query, $options: "i" } },
+        { full_name: { $regex: query, $options: "i" } }
+      ]
+    })
+    .select("username phone full_name")
+    .limit(10)
+    .lean();
+
+    const response = await handleSuccess({ data: { users } }, "ดึงข้อมูลผู้เล่นสำเร็จ");
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูลผู้เล่น");
     return res.status(response.status).json(response);
   }
 };

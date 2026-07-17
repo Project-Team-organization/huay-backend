@@ -495,16 +495,21 @@ exports.getUserTransactionById = async function (transactionId) {
   }
 };
 
-exports.getUserTransactionsByUserId = async function (userId, { page = 1, limit = 10, type, startDate, endDate } = {}) {
+exports.getUserTransactionsByUserId = async function (userId, { page = 1, limit = 10, type, category, startDate, endDate } = {}) {
   try {
+    const mongoose = require("mongoose");
     const skip = (page - 1) * limit;
 
     // สร้าง query object
-    let query = { user_id: userId };
+    let query = { user_id: new mongoose.Types.ObjectId(userId) };
 
     // เพิ่มเงื่อนไขการค้นหาตาม type ถ้ามีการระบุ
     if (type) {
       query.type = type;
+    }
+
+    if (category) {
+      query.category = category;
     }
 
     // เพิ่มเงื่อนไขการค้นหาตามช่วงวันที่
@@ -541,7 +546,42 @@ exports.getUserTransactionsByUserId = async function (userId, { page = 1, limit 
         $group: {
           _id: "$type",
           total: { $sum: "$amount" },
+          totalPayout: { $sum: "$payout_amount" },
           count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // คำนวณยอดรวมแยกตาม category
+    const categorySummary = await UserTransaction.aggregate([
+      { $match: { user_id: new mongoose.Types.ObjectId(userId) } },
+      {
+        $group: {
+          _id: "$category",
+          totalStake: {
+            $sum: {
+              $cond: [
+                { $eq: ["$type", "bet"] },
+                "$amount",
+                0
+              ]
+            }
+          },
+          totalPayout: {
+            $sum: {
+              $cond: [
+                { $eq: ["$category", "game"] },
+                "$payout_amount",
+                {
+                  $cond: [
+                    { $in: ["$type", ["payout", "refund"]] },
+                    "$amount",
+                    0
+                  ]
+                }
+              ]
+            }
+          }
         }
       }
     ]);
@@ -549,6 +589,7 @@ exports.getUserTransactionsByUserId = async function (userId, { page = 1, limit 
     return {
       data: transactions,
       summary,
+      categorySummary,
       pagination: {
         total,
         page,
