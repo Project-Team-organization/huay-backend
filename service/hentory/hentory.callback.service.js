@@ -153,6 +153,11 @@ exports.placeBets = async (body, headers, rawBody, path) => {
       amount: totalBetAmount,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "PENDING",
       description: `Hentory Bet: ${txns.map(t => `${t.gameCode} (Round:${t.roundId})`).join(', ')}`,
       created_at: new Date()
     });
@@ -276,6 +281,11 @@ exports.settleBets = async (body, headers, rawBody, path) => {
       amount: totalBetAmount,
       balance_before: balanceBefore,
       balance_after: balanceBefore - totalBetAmount,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "LOSS",
       description: `Hentory Bet (Single State): ${gameList}`,
       created_at: new Date()
     });
@@ -289,6 +299,11 @@ exports.settleBets = async (body, headers, rawBody, path) => {
       amount: totalPayoutAmount,
       balance_before: balanceBeforePayout,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "WIN",
       description: `Hentory Payout: ${gameList}`,
       created_at: new Date()
     });
@@ -383,6 +398,11 @@ exports.cancelBets = async (body, headers, rawBody, path) => {
       amount: totalRefundAmount,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "CANCEL",
       description: `Hentory Cancel/Refund: ${txns.map(t => `${t.gameCode} (Round:${t.roundId}, Status:${t.status})`).join(', ')}`,
       created_at: new Date()
     });
@@ -518,6 +538,11 @@ exports.adjustBets = async (body, headers, rawBody, path) => {
       amount: totalNetChange,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "CANCEL",
       description: `Hentory Bet Adjust Refund: ${gameList}`,
       created_at: new Date()
     });
@@ -528,6 +553,11 @@ exports.adjustBets = async (body, headers, rawBody, path) => {
       amount: Math.abs(totalNetChange),
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "LOSS",
       description: `Hentory Bet Adjust Charge: ${gameList}`,
       created_at: new Date()
     });
@@ -644,6 +674,11 @@ exports.rollbackBets = async (body, headers, rawBody, path) => {
       amount: totalDeductionAmount,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "CANCEL",
       description: `Hentory Rollback: ${txns.map(t => `${t.gameCode} (Round:${t.roundId})`).join(', ')}`,
       created_at: new Date()
     });
@@ -734,6 +769,11 @@ exports.winRewards = async (body, headers, rawBody, path) => {
       amount: totalRewardAmount,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "WIN",
       description: `Hentory Win Reward: ${txns.map(t => `${t.gameCode} (Round:${t.roundId})`).join(', ')}`,
       created_at: new Date()
     });
@@ -843,6 +883,11 @@ exports.placeTips = async (body, headers, rawBody, path) => {
       amount: totalTipAmount,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: "Dealer Tip",
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "LOSS",
       description: `Hentory Dealer Tip: ${txns.map(t => `Round:${t.roundId}`).join(', ')}`,
       created_at: new Date()
     });
@@ -933,6 +978,11 @@ exports.cancelTips = async (body, headers, rawBody, path) => {
       amount: totalRefundAmount,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: "Dealer Tip",
+      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+      status: "CANCEL",
       description: `Hentory Cancel Tip Refund: ${txns.map(t => `Round:${t.roundId}`).join(', ')}`,
       created_at: new Date()
     });
@@ -1046,6 +1096,11 @@ exports.voidSettled = async (body, headers, rawBody, path) => {
         amount: totalNetChange,
         balance_before: balanceBefore,
         balance_after: balanceAfter,
+        category: "game",
+        provider_name: productId || "HENTORY",
+        game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+        bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+        status: "CANCEL",
         description,
         created_at: new Date()
       });
@@ -1056,6 +1111,11 @@ exports.voidSettled = async (body, headers, rawBody, path) => {
         amount: Math.abs(totalNetChange),
         balance_before: balanceBefore,
         balance_after: balanceAfter,
+        category: "game",
+        provider_name: productId || "HENTORY",
+        game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
+        bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
+        status: "LOSS",
         description,
         created_at: new Date()
       });
@@ -1185,6 +1245,11 @@ exports.adjustBalance = async (body, headers, rawBody, path) => {
       amount: logTxn.amount,
       balance_before: balanceBefore,
       balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: "Adjust Balance",
+      bet_id: logTxn.refId || "",
+      status: logTxn.type === "bet" ? "LOSS" : "WIN",
       description: `Hentory Adjust Balance ${logTxn.type === "bet" ? "DEBIT" : "CREDIT"} (Ref: ${logTxn.refId})`,
       created_at: new Date()
     });

@@ -1049,6 +1049,11 @@ async function processlotterythai(lottery_set_id, createdBy, lottery_set) {
           balance_after: user.credit,
           ref_id: userBet._id,
           ref_model: "UserBet",
+          category: "lottery",
+          provider_name: "LOTTERY",
+          game_name: lottery_set?.name || "หวยรัฐบาล",
+          bet_id: userBet._id.toString(),
+          status: "WIN",
           description: `ถูกรางวัลหวย งวดวันที่ ${huayResults.date}`,
         });
 
@@ -1281,6 +1286,11 @@ async function processlotterylaohd(
           balance_after: user.credit,
           ref_id: userBet._id,
           ref_model: "UserBet",
+          category: "lottery",
+          provider_name: "LOTTERY",
+          game_name: lottery_set?.name || "หวยลาว HD",
+          bet_id: userBet._id.toString(),
+          status: "WIN",
           description: `ถูกรางวัลหวยลาว HD งวดวันที่ ${new Date().toISOString().split("T")[0]
             }`,
         });
@@ -1549,6 +1559,11 @@ const processLotteryWinners = async (
         balance_after: user.credit,
         ref_id: userBet._id,
         ref_model: "UserBet",
+        category: "lottery",
+        provider_name: "LOTTERY",
+        game_name: lotteryName || "หวย",
+        bet_id: userBet._id.toString(),
+        status: "WIN",
         description: `ถูกรางวัล${lotteryName} งวดวันที่ ${new Date().toISOString().split("T")[0]
           }`,
       });
