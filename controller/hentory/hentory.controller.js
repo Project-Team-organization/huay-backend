@@ -191,55 +191,32 @@ exports.getBetTransactionsV2 = async (req, res) => {
       .sort({ created_at: -1 })
       .lean();
 
-    const grouped = {};
-    for (const t of txns) {
-      const bId = t.bet_id || t._id.toString();
-      if (!grouped[bId]) {
-        grouped[bId] = {
-          id: bId,
-          betId: bId,
-          username: t.user_id?.username || t.user_id?.phone || "Unknown",
-          currency: "THB",
-          accountingDate: t.created_at || t.createdAt,
-          updatedDate: t.created_at || t.createdAt,
-          stake: 0,
-          payout: 0,
-          productId: t.provider_name || "GAME",
-          gameCode: t.game_name || "",
-          gameName: t.game_name || "",
-          roundId: bId,
-          betStatus: t.status || "LOSE",
-          payoutStatus: t.status || "LOSE",
-          commission: 0
-        };
+    const formattedTxns = txns.map(t => {
+      let statusStr = t.status || "LOSE";
+      if (statusStr === "PENDING" && (t.payout_amount || 0) > 0) {
+        statusStr = "WIN";
       }
 
-      if (t.type === "bet") {
-        grouped[bId].stake += t.amount || 0;
-      } else if (t.type === "payout") {
-        grouped[bId].payout += t.amount || 0;
-      } else if (t.type === "refund") {
-        grouped[bId].payout += t.amount || 0;
-        grouped[bId].payoutStatus = "CANCEL";
-        grouped[bId].betStatus = "CANCEL";
-      }
+      return {
+        id: t.bet_id || t._id.toString(),
+        betId: t.bet_id || t._id.toString(),
+        username: t.user_id?.username || t.user_id?.phone || "Unknown",
+        currency: "THB",
+        accountingDate: t.created_at || t.createdAt,
+        updatedDate: t.created_at || t.createdAt,
+        stake: t.amount || 0,
+        payout: t.payout_amount || 0,
+        productId: t.provider_name || "GAME",
+        gameCode: t.game_name || "",
+        gameName: t.game_name || "",
+        roundId: t.bet_id || t._id.toString(),
+        betStatus: statusStr,
+        payoutStatus: statusStr,
+        commission: 0
+      };
+    });
 
-      if (grouped[bId].payoutStatus !== "CANCEL") {
-        if (grouped[bId].payout > 0) {
-          grouped[bId].payoutStatus = "WIN";
-          grouped[bId].betStatus = "WIN";
-        } else if (t.status === "PENDING" || grouped[bId].betStatus === "PENDING") {
-          grouped[bId].payoutStatus = "PENDING";
-          grouped[bId].betStatus = "PENDING";
-        } else {
-          grouped[bId].payoutStatus = "LOSE";
-          grouped[bId].betStatus = "LOSE";
-        }
-      }
-    }
-
-    const txnsList = Object.values(grouped);
-    const response = await handleSuccess({ txns: txnsList }, "ดึงข้อมูลรายการเดิมพันสำเร็จ");
+    const response = await handleSuccess({ data: { txns: formattedTxns } }, "ดึงข้อมูลรายการเดิมพันสำเร็จ");
     return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงรายการเดิมพัน");

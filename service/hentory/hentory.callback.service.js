@@ -147,20 +147,20 @@ exports.placeBets = async (body, headers, rawBody, path) => {
 
   // Log the transaction
   if (totalBetAmount > 0) {
-    await UserTransaction.create({
-      user_id: user._id,
-      type: "bet",
-      amount: totalBetAmount,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      category: "game",
-      provider_name: productId || "HENTORY",
-      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
-      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
-      status: "PENDING",
-      description: `Hentory Bet: ${txns.map(t => `${t.gameCode} (Round:${t.roundId})`).join(', ')}`,
-      created_at: new Date()
-    });
+    for (const txn of txns) {
+      if (txn.skipBalanceUpdate !== true) {
+        await logGameTransaction({
+          user_id: user._id,
+          productId,
+          txn,
+          type: "bet",
+          amount: txn.betAmount || 0,
+          balanceBefore,
+          balanceAfter,
+          description: `Hentory Bet: ${txn.gameCode} (Round:${txn.roundId})`
+        });
+      }
+    }
   }
 
   responseData = {
@@ -273,40 +273,44 @@ exports.settleBets = async (body, headers, rawBody, path) => {
   const balanceAfter = updatedUser.credit || 0;
 
   // Log user transactions
-  const gameList = txns.map(t => `${t.gameCode} (Round:${t.roundId})`).join(', ');
-  if (totalBetAmount > 0) {
-    await UserTransaction.create({
-      user_id: user._id,
-      type: "bet",
-      amount: totalBetAmount,
-      balance_before: balanceBefore,
-      balance_after: balanceBefore - totalBetAmount,
-      category: "game",
-      provider_name: productId || "HENTORY",
-      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
-      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
-      status: "LOSS",
-      description: `Hentory Bet (Single State): ${gameList}`,
-      created_at: new Date()
-    });
-  }
-
-  if (totalPayoutAmount > 0) {
-    const balanceBeforePayout = totalBetAmount > 0 ? (balanceBefore - totalBetAmount) : balanceBefore;
-    await UserTransaction.create({
-      user_id: user._id,
-      type: "payout",
-      amount: totalPayoutAmount,
-      balance_before: balanceBeforePayout,
-      balance_after: balanceAfter,
-      category: "game",
-      provider_name: productId || "HENTORY",
-      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
-      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
-      status: "WIN",
-      description: `Hentory Payout: ${gameList}`,
-      created_at: new Date()
-    });
+  for (const txn of txns) {
+    if (txn.skipBalanceUpdate !== true) {
+      if (txn.isSingleState === true) {
+        await logGameTransaction({
+          user_id: user._id,
+          productId,
+          txn,
+          type: "bet",
+          amount: txn.betAmount || 0,
+          balanceBefore,
+          balanceAfter,
+          description: `Hentory Bet (Single State): ${txn.gameCode} (Round:${txn.roundId})`
+        });
+        if ((txn.payoutAmount || 0) > 0) {
+          await logGameTransaction({
+            user_id: user._id,
+            productId,
+            txn,
+            type: "payout",
+            amount: txn.payoutAmount || 0,
+            balanceBefore,
+            balanceAfter,
+            description: `Hentory Payout: ${txn.gameCode} (Round:${txn.roundId})`
+          });
+        }
+      } else {
+        await logGameTransaction({
+          user_id: user._id,
+          productId,
+          txn,
+          type: "payout",
+          amount: txn.payoutAmount || 0,
+          balanceBefore,
+          balanceAfter,
+          description: `Hentory Settle Payout: ${txn.gameCode} (Round:${txn.roundId})`
+        });
+      }
+    }
   }
 
   responseData = {
@@ -392,20 +396,18 @@ exports.cancelBets = async (body, headers, rawBody, path) => {
 
   // Log user transaction as refund
   if (totalRefundAmount > 0) {
-    await UserTransaction.create({
-      user_id: user._id,
-      type: "refund",
-      amount: totalRefundAmount,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      category: "game",
-      provider_name: productId || "HENTORY",
-      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
-      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
-      status: "CANCEL",
-      description: `Hentory Cancel/Refund: ${txns.map(t => `${t.gameCode} (Round:${t.roundId}, Status:${t.status})`).join(', ')}`,
-      created_at: new Date()
-    });
+    for (const txn of txns) {
+      await logGameTransaction({
+        user_id: user._id,
+        productId,
+        txn,
+        type: "refund",
+        amount: txn.betAmount || 0,
+        balanceBefore,
+        balanceAfter,
+        description: `Hentory Cancel/Refund: ${txn.gameCode} (Round:${txn.roundId})`
+      });
+    }
   }
 
   responseData = {
@@ -530,37 +532,30 @@ exports.adjustBets = async (body, headers, rawBody, path) => {
   const balanceAfter = updatedUser.credit || 0;
 
   // Log the transaction in UserTransaction
-  const gameList = txns.map(t => `${t.gameCode} (Round:${t.roundId})`).join(', ');
-  if (totalNetChange > 0) {
-    await UserTransaction.create({
-      user_id: user._id,
-      type: "refund",
-      amount: totalNetChange,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      category: "game",
-      provider_name: productId || "HENTORY",
-      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
-      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
-      status: "CANCEL",
-      description: `Hentory Bet Adjust Refund: ${gameList}`,
-      created_at: new Date()
-    });
-  } else if (totalNetChange < 0) {
-    await UserTransaction.create({
-      user_id: user._id,
-      type: "bet",
-      amount: Math.abs(totalNetChange),
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      category: "game",
-      provider_name: productId || "HENTORY",
-      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
-      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
-      status: "LOSS",
-      description: `Hentory Bet Adjust Charge: ${gameList}`,
-      created_at: new Date()
-    });
+  for (const txn of txns) {
+    if (totalNetChange > 0) {
+      await logGameTransaction({
+        user_id: user._id,
+        productId,
+        txn,
+        type: "refund",
+        amount: totalNetChange,
+        balanceBefore,
+        balanceAfter,
+        description: `Hentory Bet Adjust Refund: ${txn.gameCode} (Round:${txn.roundId})`
+      });
+    } else if (totalNetChange < 0) {
+      await logGameTransaction({
+        user_id: user._id,
+        productId,
+        txn,
+        type: "bet",
+        amount: Math.abs(totalNetChange),
+        balanceBefore,
+        balanceAfter,
+        description: `Hentory Bet Adjust Charge: ${txn.gameCode} (Round:${txn.roundId})`
+      });
+    }
   }
 
   responseData = {
@@ -668,20 +663,21 @@ exports.rollbackBets = async (body, headers, rawBody, path) => {
 
   // Log the transaction in UserTransaction
   if (totalDeductionAmount > 0) {
-    await UserTransaction.create({
-      user_id: user._id,
-      type: "bet",
-      amount: totalDeductionAmount,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      category: "game",
-      provider_name: productId || "HENTORY",
-      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
-      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
-      status: "CANCEL",
-      description: `Hentory Rollback: ${txns.map(t => `${t.gameCode} (Round:${t.roundId})`).join(', ')}`,
-      created_at: new Date()
-    });
+    for (const txn of txns) {
+      if (txn.skipBalanceUpdate !== true) {
+        const rollbackAmount = (txn.payoutAmount || 0) + (txn.betAmount || 0);
+        await logGameTransaction({
+          user_id: user._id,
+          productId,
+          txn,
+          type: "refund",
+          amount: -rollbackAmount,
+          balanceBefore,
+          balanceAfter,
+          description: `Hentory Rollback: ${txn.gameCode} (Round:${txn.roundId})`
+        });
+      }
+    }
   }
 
   responseData = {
@@ -763,20 +759,18 @@ exports.winRewards = async (body, headers, rawBody, path) => {
   const balanceAfter = updatedUser.credit || 0;
 
   if (totalRewardAmount > 0) {
-    await UserTransaction.create({
-      user_id: user._id,
-      type: "payout",
-      amount: totalRewardAmount,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      category: "game",
-      provider_name: productId || "HENTORY",
-      game_name: txns.map(t => t.gameCode || "").filter(Boolean).join(', '),
-      bet_id: txns.map(t => t.id || t.roundId || "").filter(Boolean).join(', '),
-      status: "WIN",
-      description: `Hentory Win Reward: ${txns.map(t => `${t.gameCode} (Round:${t.roundId})`).join(', ')}`,
-      created_at: new Date()
-    });
+    for (const txn of txns) {
+      await logGameTransaction({
+        user_id: user._id,
+        productId,
+        txn,
+        type: "payout",
+        amount: txn.payoutAmount || 0,
+        balanceBefore,
+        balanceAfter,
+        description: `Hentory Win Reward: ${txn.gameCode} (Round:${txn.roundId})`
+      });
+    }
   }
 
   responseData = {
@@ -1276,3 +1270,56 @@ exports.adjustBalance = async (body, headers, rawBody, path) => {
 
   return responseData;
 };
+
+async function logGameTransaction({
+  user_id,
+  productId,
+  txn,
+  type,
+  amount,
+  balanceBefore,
+  balanceAfter,
+  description
+}) {
+  const betId = txn.id || txn.roundId || "";
+  if (!betId) return;
+
+  let existing = await UserTransaction.findOne({ bet_id: betId, category: "game" });
+
+  if (existing) {
+    if (type === "payout") {
+      existing.payout_amount = (existing.payout_amount || 0) + amount;
+    } else if (type === "bet") {
+      existing.amount = (existing.amount || 0) + amount;
+    } else if (type === "refund") {
+      existing.payout_amount = (existing.payout_amount || 0) + amount;
+      existing.status = "CANCEL";
+    }
+
+    if (existing.status !== "CANCEL") {
+      existing.status = existing.payout_amount > 0 ? "WIN" : "LOSE";
+    }
+
+    existing.balance_after = balanceAfter;
+    if (description) existing.description = description;
+    await existing.save();
+    return existing;
+  } else {
+    const newTxn = await UserTransaction.create({
+      user_id,
+      type: type === "payout" ? "payout" : "bet",
+      amount: type === "bet" ? amount : (txn.betAmount || 0),
+      payout_amount: type === "payout" ? amount : (txn.payoutAmount || 0),
+      balance_before: balanceBefore,
+      balance_after: balanceAfter,
+      category: "game",
+      provider_name: productId || "HENTORY",
+      game_name: txn.gameCode || "",
+      bet_id: betId,
+      status: type === "refund" ? "CANCEL" : (type === "payout" ? "WIN" : ((txn.payoutAmount || 0) > 0 ? "WIN" : "LOSE")),
+      description: description || `Hentory ${type}`,
+      created_at: new Date()
+    });
+    return newTxn;
+  }
+}

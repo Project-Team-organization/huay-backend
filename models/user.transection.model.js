@@ -54,6 +54,10 @@ const userTransactionSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  payout_amount: {
+    type: Number,
+    default: 0,
+  },
   description: {
     type: String,
     default: "",
