@@ -1025,3 +1025,37 @@ cron.schedule(
   },
   { timezone: "Asia/Bangkok" }
 );
+
+// ==========================================
+// 💸 คืนยอดเสียรายสัปดาห์ (ทุกวันจันทร์ เวลา 00:05 น.)
+// ==========================================
+cron.schedule(
+  "5 0 * * 1",
+  async () => {
+    console.log(
+      `[${new Date().toLocaleString("th-TH", {
+        timeZone: "Asia/Bangkok",
+      })}] 💸 เริ่มรันกระบวนการคืนยอดเสียรายสัปดาห์...`
+    );
+    try {
+      const {
+        calculateAndProcessWeeklyCashback,
+      } = require("../service/cashback/cashback.service");
+      const result = await calculateAndProcessWeeklyCashback();
+      console.log(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ✅ คืนยอดเสียสำเร็จ: ${result.message}`
+      );
+    } catch (error) {
+      console.error(
+        `[${new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        })}] ❌ เกิดข้อผิดพลาดในการคืนยอดเสีย:`,
+        error.message
+      );
+    }
+  },
+  { timezone: "Asia/Bangkok" }
+);
+
