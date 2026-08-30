@@ -401,3 +401,69 @@ exports.getCreditSlip = async function (req, res) {
     return res.status(response.status).json(response);
   }
 };
+
+// สรุปยอดภาพรวม เติมเงิน - ถอนเงิน
+exports.getFinancialSummary = async function (req, res) {
+  try {
+    const Credit = require("../../models/credit.models");
+    const Withdrawal = require("../../models/withdrawal.models");
+
+    const { period = "month", month } = req.query; // 'month' (default), 'today', 'all', or specific month e.g. '2026-08'
+
+    let dateMatch = {};
+    const now = new Date();
+
+    if (month && /^\d{4}-\d{2}$/.test(month)) {
+      const [year, m] = month.split("-").map(Number);
+      const startOfMonth = new Date(year, m - 1, 1, 0, 0, 0, 0);
+      const endOfMonth = new Date(year, m, 0, 23, 59, 59, 999);
+      dateMatch = { created_at: { $gte: startOfMonth, $lte: endOfMonth } };
+    } else if (period === "today") {
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      dateMatch = { created_at: { $gte: startOfDay, $lte: endOfDay } };
+    } else if (period === "month") {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      dateMatch = { created_at: { $gte: startOfMonth, $lte: endOfMonth } };
+    }
+    // period === 'all' -> dateMatch remains {}
+
+    const depositMatch = { status: "success", ...dateMatch };
+    const withdrawalMatch = { status: { $in: ["completed", "approved"] }, ...dateMatch };
+
+    const depositAgg = await Credit.aggregate([
+      { $match: depositMatch },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]);
+
+    const withdrawalAgg = await Withdrawal.aggregate([
+      { $match: withdrawalMatch },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]);
+
+    const totalDeposit = depositAgg.length > 0 ? depositAgg[0].totalAmount : 0;
+    const totalDepositCount = depositAgg.length > 0 ? depositAgg[0].count : 0;
+
+    const totalWithdrawal = withdrawalAgg.length > 0 ? withdrawalAgg[0].totalAmount : 0;
+    const totalWithdrawalCount = withdrawalAgg.length > 0 ? withdrawalAgg[0].count : 0;
+
+    const netAmount = totalDeposit - totalWithdrawal;
+
+    const data = {
+      period: month || period,
+      total_deposit: totalDeposit,
+      total_deposit_count: totalDepositCount,
+      total_withdrawal: totalWithdrawal,
+      total_withdrawal_count: totalWithdrawalCount,
+      net_amount: netAmount,
+    };
+
+    const response = await handleSuccess(data, "ดึงข้อมูลสรุปการเงินสำเร็จ");
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูลสรุปการเงิน");
+    return res.status(response.status).json(response);
+  }
+};
+
