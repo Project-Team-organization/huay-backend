@@ -21,6 +21,30 @@ exports.getSystemBank = async (req, res) => {
   }
 };
 
+// Public: ดึงข้อมูลบัญชีธนาคารสำหรับหน้าบ้าน (เฉพาะที่เปิดใช้งาน)
+exports.getPublicSystemBank = async (req, res) => {
+  try {
+    const bank = await SystemBank.findOne({ is_active: true });
+    if (!bank) {
+      const response = await handleSuccess(null, "ไม่พบบัญชีธนาคารระบบที่เปิดใช้งาน");
+      return res.status(response.status).json(response);
+    }
+    const response = await handleSuccess(
+      {
+        bank_name: bank.bank_name,
+        bank_code: bank.bank_code,
+        account_name: bank.account_name,
+        account_number: bank.account_number,
+      },
+      "ดึงข้อมูลบัญชีธนาคารระบบสำเร็จ"
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูลบัญชีธนาคารระบบ");
+    return res.status(response.status).json(response);
+  }
+};
+
 exports.updateSystemBank = async (req, res) => {
   try {
     const { bank_name, bank_code, account_name, account_number, is_active } = req.body;
