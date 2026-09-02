@@ -20,35 +20,35 @@ cron.schedule(
 
 // สร้างหวย รัฐบาล
 // สร้างหวยรัฐบาลวันที่ 1 และ 16 ของทุกเดือน เวลา 00:01 น.
-cron.schedule(
-  "1 0 1,16 * *",
-  async () => {
-    console.log(
-      `[${new Date().toLocaleString("th-TH", {
-        timeZone: "Asia/Bangkok",
-      })}] 🏛️ สร้างหวยรัฐบาล...`
-    );
-    try {
-      const {
-        createThaiGovernmentLotteryWithLog,
-      } = require("../service/cronjob/cronjob.service");
-      await createThaiGovernmentLotteryWithLog();
-      console.log(
-        `[${new Date().toLocaleString("th-TH", {
-          timeZone: "Asia/Bangkok",
-        })}] ✅ สร้างหวยรัฐบาลสำเร็จ`
-      );
-    } catch (error) {
-      console.error(
-        `[${new Date().toLocaleString("th-TH", {
-          timeZone: "Asia/Bangkok",
-        })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยรัฐบาล:`,
-        error.message
-      );
-    }
-  },
-  { timezone: "Asia/Bangkok" }
-);
+// cron.schedule(
+//   "1 0 1,16 * *",
+//   async () => {
+//     console.log(
+//       `[${new Date().toLocaleString("th-TH", {
+//         timeZone: "Asia/Bangkok",
+//       })}] 🏛️ สร้างหวยรัฐบาล...`
+//     );
+//     try {
+//       const {
+//         createThaiGovernmentLotteryWithLog,
+//       } = require("../service/cronjob/cronjob.service");
+//       await createThaiGovernmentLotteryWithLog();
+//       console.log(
+//         `[${new Date().toLocaleString("th-TH", {
+//           timeZone: "Asia/Bangkok",
+//         })}] ✅ สร้างหวยรัฐบาลสำเร็จ`
+//       );
+//     } catch (error) {
+//       console.error(
+//         `[${new Date().toLocaleString("th-TH", {
+//           timeZone: "Asia/Bangkok",
+//         })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยรัฐบาล:`,
+//         error.message
+//       );
+//     }
+//   },
+//   { timezone: "Asia/Bangkok" }
+// );
 
 // สร้างหวยออมสิน
 // สร้างหวยออมสินวันที่ 1 และ 16 ของทุกเดือน เวลา 00:02 น.
@@ -401,35 +401,35 @@ cron.schedule(
 // );
 
 // หวยลาวพัฒนา - สร้างเวลา 20:20 ทุกวัน (วันจันทร์ พุธ ศุกร์) // crojobs ผ่าน
-cron.schedule(
-  "20 20 * * 1,3,5",
-  async () => {
-    console.log(
-      `[${new Date().toLocaleString("th-TH", {
-        timeZone: "Asia/Bangkok",
-      })}] 🇱🇦 สร้างหวยลาวพัฒนา...`
-    );
-    try {
-      const {
-        createLaoDevelopLotteryWithLog,
-      } = require("../service/cronjob/cronjob.service");
-      await createLaoDevelopLotteryWithLog();
-      console.log(
-        `[${new Date().toLocaleString("th-TH", {
-          timeZone: "Asia/Bangkok",
-        })}] ✅ สร้างหวยลาวพัฒนา สำเร็จ`
-      );
-    } catch (error) {
-      console.error(
-        `[${new Date().toLocaleString("th-TH", {
-          timeZone: "Asia/Bangkok",
-        })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยลาวพัฒนา:`,
-        error.message
-      );
-    }
-  },
-  { timezone: "Asia/Bangkok" }
-);
+// cron.schedule(
+//   "20 20 * * 1,3,5",
+//   async () => {
+//     console.log(
+//       `[${new Date().toLocaleString("th-TH", {
+//         timeZone: "Asia/Bangkok",
+//       })}] 🇱🇦 สร้างหวยลาวพัฒนา...`
+//     );
+//     try {
+//       const {
+//         createLaoDevelopLotteryWithLog,
+//       } = require("../service/cronjob/cronjob.service");
+//       await createLaoDevelopLotteryWithLog();
+//       console.log(
+//         `[${new Date().toLocaleString("th-TH", {
+//           timeZone: "Asia/Bangkok",
+//         })}] ✅ สร้างหวยลาวพัฒนา สำเร็จ`
+//       );
+//     } catch (error) {
+//       console.error(
+//         `[${new Date().toLocaleString("th-TH", {
+//           timeZone: "Asia/Bangkok",
+//         })}] ❌ เกิดข้อผิดพลาดในการสร้างหวยลาวพัฒนา:`,
+//         error.message
+//       );
+//     }
+//   },
+//   { timezone: "Asia/Bangkok" }
+// );
 
 // หวยลาว Extra - สร้างเวลา 08:25 ทุกวัน   // crojobs ผ่าน
 // cron.schedule(
