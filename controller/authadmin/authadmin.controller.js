@@ -115,7 +115,7 @@ exports.refreshToken = async (req, res) => {
         const response = await handleAuthSuccess(null, null, null, "รีเฟรชโทเค็นสำเร็จ", 200);
         return res.status(response.status).json(response);
     } catch (error) {
-        const response = await handleAuthError(error, "โทเค็นไม่ถูกต้องหรือหมดอายุ", 403);
+        const response = await handleAuthError(error, "โทเค็นไม่ถูกต้องหรือหมดอายุ", 401);
         return res.status(response.status).json(response);
     }
 };

@@ -8,7 +8,7 @@ const isUser = (req, res, next) => {
     req.headers["authorization"];
 
   if (!token) {
-    return res.status(403).json({
+    return res.status(401).json({
       message: "ไม่พบ token กรุณาเข้าสู่ระบบ",
     });
   }
@@ -43,7 +43,7 @@ const isMaster = (req, res, next) => {
     req.headers["authorization"];
 
   if (!token) {
-    return res.status(403).json({
+    return res.status(401).json({
       message: "ไม่พบ token กรุณาเข้าสู่ระบบ",
     });
   }
@@ -77,7 +77,7 @@ const isAdmin = (req, res, next) => {
     req.headers["authorization"];
 
   if (!token) {
-    return res.status(403).json({
+    return res.status(401).json({
       message: "ไม่พบ token กรุณาเข้าสู่ระบบ",
     });
   }
@@ -107,7 +107,7 @@ const permissionmanagersuperadmin = (req, res, next) => {
     req.headers["x-access-token"] ||
     req.headers["authorization"];
   if (!token) {
-    return res.status(403).json({
+    return res.status(401).json({
       message: "ไม่พบ token กรุณาเข้าสู่ระบบ",
     });
   }
@@ -149,7 +149,7 @@ const permissionmanageradmin = (req, res, next) => {
     req.headers["x-access-token"] ||
     req.headers["authorization"];
   if (!token) {
-    return res.status(403).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
+    return res.status(401).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
   }
 
   try {
@@ -186,7 +186,7 @@ const permissionmanagermaster = (req, res, next) => {
     req.headers["x-access-token"] ||
     req.headers["authorization"];
   if (!token) {
-    return res.status(403).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
+    return res.status(401).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
   }
 
   try {
@@ -223,7 +223,7 @@ const permissionlotterytype = (req, res, next) => {
     req.headers["x-access-token"] ||
     req.headers["authorization"];
   if (!token) {
-    return res.status(403).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
+    return res.status(401).json({ message: "ไม่พบ token กรุณาเข้าสู่ระบบ" });
   }
 
   try {
@@ -272,7 +272,7 @@ async function authenticate(req, res, next) {
   } catch (err) {
     console.log("JWT Verify Error:", err);
     return res
-      .status(403)
+      .status(401)
       .json({ success: false, message: "Token ไม่ถูกต้องหรือหมดอายุ" });
   }
 }
