@@ -1,10 +1,20 @@
 const { normalizeIP } = require("../utils/utils");
 const HentoryLog = require("../models/hentoryLog.model");
 
-const WHITELISTED_IPS = (process.env.HENTORY_WHITELIST_IPS || "")
+// IP ทางการของค่ายเกม Hentory ทั้งหมด (AWS & Alibaba Cloud)
+const DEFAULT_HENTORY_IPS = [
+  "52.77.44.100",
+  "54.179.77.241",
+  "52.74.201.149",
+  "47.131.243.144",
+];
+
+const ENV_IPS = (process.env.HENTORY_WHITELIST_IPS || "")
   .split(",")
   .map((ip) => ip.trim())
   .filter(Boolean);
+
+const WHITELISTED_IPS = Array.from(new Set([...DEFAULT_HENTORY_IPS, ...ENV_IPS]));
 
 const ipWhitelist = async (req, res, next) => {
   const ipRaw =
