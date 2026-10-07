@@ -84,6 +84,45 @@ exports.getPromotionById = async function (promotionId) {
   return await Promotion.findById(promotionId).populate("images");
 };
 
+exports.updatePromotion = async function (id, updateData) {
+  try {
+    const promotion = await Promotion.findById(id);
+    if (!promotion) {
+      throw new Error("Promotion not found");
+    }
+
+    const normalizedType = (updateData.type || promotion.type || "").trim().toLowerCase();
+    const normalizedTarget = (updateData.target || promotion.target || "").trim().toLowerCase();
+
+    // เช็คซ้ำ: ต้องไม่มี promotion อื่นที่ type และ target ซ้ำกัน (ยกเว้นตัวมันเอง)
+    const exists = await Promotion.findOne({
+      _id: { $ne: id },
+      type: { $regex: new RegExp(`^${normalizedType}$`, "i") },
+      target: { $regex: new RegExp(`^${normalizedTarget}$`, "i") },
+    });
+    if (exists) {
+      throw new Error("ประเภทโปรโมชั่นและกลุ่มเป้าหมายนี้ถูกใช้ไปแล้ว");
+    }
+    if (updateData.type) updateData.type = normalizedType;
+    if (updateData.target) updateData.target = normalizedTarget;
+
+    if (updateData.target === "specific" && updateData.specificUsers) {
+      await validateSpecificUsers(updateData.specificUsers || []);
+    }
+
+    const updated = await Promotion.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).populate("images");
+
+    return updated;
+  } catch (error) {
+    console.error("❌ Failed to update promotion:", error.message);
+    throw error;
+  }
+};
+
 exports.getAllPromotions = async function ({ page = 1, limit = 10 }) {
   try {
     const skip = (page - 1) * limit;
