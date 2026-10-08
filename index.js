@@ -30,7 +30,7 @@ async function startServer() {
         "https://asia.kaojing.online",
         "https://kaojing.online",
         "https://admin.luckyk168.com",
-        "https://asian.luckyk168.com",
+        "https://sain.luckyk168.com",
         "https://www.luckyk168.com",
         "https://luckyk168.com",
         "http://localhost:3000",
