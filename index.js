@@ -35,6 +35,7 @@ async function startServer() {
         "https://luckyk168.com",
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://asian.luckyk168.com",
       ],
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
