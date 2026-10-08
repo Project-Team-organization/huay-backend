@@ -1101,7 +1101,13 @@ exports.getUserTransactions = async function (
 
     // เพิ่มเงื่อนไขการค้นหาตาม type ถ้ามีการระบุ
     if (type) {
-      query.type = type;
+      if (Array.isArray(type)) {
+        query.type = { $in: type };
+      } else if (typeof type === "string" && type.includes(",")) {
+        query.type = { $in: type.split(",").map((t) => t.trim()) };
+      } else {
+        query.type = type;
+      }
     }
 
     // เพิ่มเงื่อนไขการค้นหาตามช่วงวันที่

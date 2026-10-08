@@ -404,7 +404,13 @@ exports.getUserTransactions = async function ({ page = 1, limit = 10, type, star
 
     // เพิ่มเงื่อนไขการค้นหาตาม type ถ้ามีการระบุ
     if (type) {
-      query.type = type;
+      if (Array.isArray(type)) {
+        query.type = { $in: type };
+      } else if (typeof type === "string" && type.includes(",")) {
+        query.type = { $in: type.split(",").map((t) => t.trim()) };
+      } else {
+        query.type = type;
+      }
     }
 
     // เพิ่มเงื่อนไขการค้นหาตามช่วงวันที่
@@ -505,7 +511,13 @@ exports.getUserTransactionsByUserId = async function (userId, { page = 1, limit 
 
     // เพิ่มเงื่อนไขการค้นหาตาม type ถ้ามีการระบุ
     if (type) {
-      query.type = type;
+      if (Array.isArray(type)) {
+        query.type = { $in: type };
+      } else if (typeof type === "string" && type.includes(",")) {
+        query.type = { $in: type.split(",").map((t) => t.trim()) };
+      } else {
+        query.type = type;
+      }
     }
 
     if (category) {
