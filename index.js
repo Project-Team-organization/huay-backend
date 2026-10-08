@@ -30,11 +30,12 @@ async function startServer() {
         "https://asia.kaojing.online",
         "https://kaojing.online",
         "https://admin.luckyk168.com",
-        "https://asian.luckyk168.com",
+        "https://sain.luckyk168.com",
         "https://www.luckyk168.com",
         "https://luckyk168.com",
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://asian.luckyk168.com",
       ],
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -43,8 +44,16 @@ async function startServer() {
   );
 
   // Body parser - ต้องอยู่ก่อน routes
-  app.use(express.json({ limit: "10mb" }));
-  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+  app.use(
+    "/api/callback/hentory",
+    express.json({
+      verify: (req, res, buf) => {
+        req.rawBody = buf.toString("utf8");
+      },
+    })
+  );
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "50mb" }));
   app.use(cookieParser());
 
   // Static files

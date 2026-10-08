@@ -119,7 +119,7 @@ exports.refreshToken = async (req, res) => {
         const response = await handleAuthSuccess(bodyToken, null, null, "รีเฟรชโทเค็นสำเร็จ", 200);
         return res.status(response.status).json(response);
     } catch (error) {
-        const response = await handleAuthError(error, "โทเค็นไม่ถูกต้องหรือหมดอายุ", 403);
+        const response = await handleAuthError(error, "โทเค็นไม่ถูกต้องหรือหมดอายุ", 401);
         return res.status(response.status).json(response);
     }
 };
@@ -135,8 +135,16 @@ exports.logout = async (req, res) => {
         const result = await authadminService.logout(token);
 
         // ลบ cookies
-        res.clearCookie("access_token");
-        res.clearCookie("refresh_token");
+        res.clearCookie("access_token", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        });
+        res.clearCookie("refresh_token", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        });
 
         return res.status(result.status).json(result);
     } catch (error) {

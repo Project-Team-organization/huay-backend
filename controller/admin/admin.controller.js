@@ -467,7 +467,7 @@ exports.getUserTransactionById = async function (req, res) {
 exports.getUserTransactionsByUserId = async function (req, res) {
   try {
     const { user_id } = req.params;
-    const { page, limit, type, startDate, endDate } = req.query;
+    const { page, limit, type, category, startDate, endDate } = req.query;
 
     if (!user_id) {
       const response = await handleError(null, "กรุณาระบุ ID ของผู้ใช้", 400);
@@ -478,6 +478,7 @@ exports.getUserTransactionsByUserId = async function (req, res) {
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
       type,
+      category,
       startDate,
       endDate
     });
@@ -488,7 +489,8 @@ exports.getUserTransactionsByUserId = async function (req, res) {
       200,
       {
         ...result.pagination,
-        summary: result.summary
+        summary: result.summary,
+        categorySummary: result.categorySummary
       }
     );
     return res.status(response.status).json(response);

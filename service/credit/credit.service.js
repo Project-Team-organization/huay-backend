@@ -28,9 +28,12 @@ exports.createCredit = async function ({
       throw new Error("ไม่พบผู้ใช้งานในระบบ");
     }
 
+    // แปลง amount เป็นตัวเลขเพื่อป้องกันปัญหา string concatenation (เช่น "5000" + 0 = "50000")
+    amount = Number(amount);
+
     // เช็คว่า amount มีค่ามากกว่า 0 หรือไม่
-    if (amount <= 0) {
-      throw new Error("จำนวนเงินต้องมากกว่า 0");
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error("จำนวนเงินต้องมากกว่า 0 และเป็นตัวเลขที่ถูกต้อง");
     }
 
     // เช็คว่ามีี  userPromotions  หรือยัง  ถ้าไม่มีให้สร้าง
@@ -1098,7 +1101,13 @@ exports.getUserTransactions = async function (
 
     // เพิ่มเงื่อนไขการค้นหาตาม type ถ้ามีการระบุ
     if (type) {
-      query.type = type;
+      if (Array.isArray(type)) {
+        query.type = { $in: type };
+      } else if (typeof type === "string" && type.includes(",")) {
+        query.type = { $in: type.split(",").map((t) => t.trim()) };
+      } else {
+        query.type = type;
+      }
     }
 
     // เพิ่มเงื่อนไขการค้นหาตามช่วงวันที่

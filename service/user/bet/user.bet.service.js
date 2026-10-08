@@ -115,6 +115,11 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
       balance_after,
       ref_id: bet._id,
       ref_model: "UserBet",
+      category: "lottery",
+      provider_name: "LOTTERY",
+      game_name: lotterySet?.name || "หวย",
+      bet_id: bet._id.toString(),
+      status: "PENDING",
       description: "แทงหวย",
       created_at: new Date(),
     });
@@ -311,7 +316,7 @@ exports.cancelUserBet = async function (user_id, bet_id) {
       _id: bet_id,
       user_id,
       status: "pending",
-    });
+    }).populate("lottery_set_id");
     if (!userBet) {
       return null;
     }
@@ -339,6 +344,11 @@ exports.cancelUserBet = async function (user_id, bet_id) {
       balance_after,
       ref_id: userBet._id,
       ref_model: "UserBet",
+      category: "lottery",
+      provider_name: "LOTTERY",
+      game_name: userBet.lottery_set_id?.name || "หวย",
+      bet_id: userBet._id.toString(),
+      status: "CANCEL",
       description: "ยกเลิกการแทงหวยและคืนเครดิต",
       created_at: new Date(),
     });

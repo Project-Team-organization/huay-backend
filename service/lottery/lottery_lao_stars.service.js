@@ -221,50 +221,8 @@ const getAllLaoStarsLottery = async ({
   }
 };
 
-const getAllLaoStarsVipLottery = async ({
-  page = 1,
-  limit = 10,
-  startDate,
-  endDate,
-}) => {
-  try {
-    const query = { type: 'vip' };
-
-    // Add date range filter if provided
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) {
-        query.createdAt.$gte = new Date(startDate);
-      }
-      if (endDate) {
-        query.createdAt.$lte = new Date(endDate);
-      }
-    }
-
-    // Calculate skip value for pagination
-    const skip = (page - 1) * limit;
-
-    // Get total count for pagination
-    const total = await LotteryLaoStars.countDocuments(query);
-
-    // Get data with pagination
-    const data = await LotteryLaoStars.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    return {
-      data,
-      total,
-    };
-  } catch (error) {
-    console.error("Error in getAllLaoStarsVipLottery service:", error);
-    throw new Error("เกิดข้อผิดพลาดในการดึงข้อมูลหวยลาวสตาร์ VIP");
-  }
-};
-
 // Import VIP service functions
-const { fetchAndSaveLaoStarsVipLottery } = require('./lottery_lao_stars_vip.service');
+const { fetchAndSaveLaoStarsVipLottery, getAllLaoStarsVipLottery } = require('./lottery_lao_stars_vip.service');
 
 module.exports = {
   fetchAndSaveLaoStarsLottery,

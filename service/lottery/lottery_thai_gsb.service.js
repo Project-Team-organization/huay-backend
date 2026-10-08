@@ -37,7 +37,7 @@ const fetchAndSaveThaiGsbLottery = async () => {
     // ถ้า results ยังไม่ออก
     if (!data.results.digit7) {
       throw new Error(
-        `Failed to fetch and save Thai GSB lottery: หวยธกสวันนี้ยังไม่ออกผล`
+        `Failed to fetch and save Thai GSB lottery: หวยออมสินวันนี้ยังไม่ออกผล`
       );
     }
 

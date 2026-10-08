@@ -33,6 +33,31 @@ const userTransactionSchema = new mongoose.Schema({
     required: false,
     enum: ['UserBet', 'Credit', 'Withdrawal']
   },
+  category: {
+    type: String,
+    enum: ["lottery", "game", "transaction"],
+    default: "transaction",
+  },
+  provider_name: {
+    type: String,
+    default: "",
+  },
+  game_name: {
+    type: String,
+    default: "",
+  },
+  bet_id: {
+    type: String,
+    default: "",
+  },
+  status: {
+    type: String,
+    default: "",
+  },
+  payout_amount: {
+    type: Number,
+    default: 0,
+  },
   description: {
     type: String,
     default: "",

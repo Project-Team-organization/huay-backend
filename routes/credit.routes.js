@@ -14,6 +14,7 @@ router.get("/transactions/my", isUser, creditController.getMyTransactions); // �
 router.get("/get", creditController.getAllCredits);
 router.get("/getbyid/:id", creditController.getCreditsByID);
 router.get("/user/:user_id", creditController.getCreditsByUserId);
+router.get("/financial-summary", creditController.getFinancialSummary);
 
 // เพิ่ม routes ใหม่
 router.put("/update/:id", creditController.updateCredit);

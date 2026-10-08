@@ -71,6 +71,42 @@ exports.getPromotionById = async (req, res) => {
   }
 };
 
+exports.updatePromotion = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      const response = await handleError(
+        "Invalid ObjectId",
+        "Invalid promotion ID format",
+        400
+      );
+      return res.status(400).json(response);
+    }
+
+    const updatedPromotion = await promotionService.updatePromotion(id, req.body);
+
+    if (!updatedPromotion) {
+      const response = await handleError(null, "Promotion not found", 404);
+      return res.status(404).json(response);
+    }
+
+    const response = await handleSuccess(
+      updatedPromotion,
+      "Promotion updated successfully",
+      200
+    );
+    return res.status(200).json(response);
+  } catch (error) {
+    const response = await handleError(
+      error,
+      error.message || "Failed to update promotion",
+      400
+    );
+    return res.status(400).json(response);
+  }
+};
+
 exports.getAllPromotions = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query || {};

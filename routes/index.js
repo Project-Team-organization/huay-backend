@@ -21,6 +21,10 @@ const hentoryRoutes = require("./hentory.routes");
 const hentoryCallbackRoutes = require("./hentory.callback.routes");
 const logoRoutes = require("./logo.routes");
 const promoBannerRoutes = require("./promoBanner.routes");
+const seamlessAdminRoutes = require("./seamless.admin.routes");
+const cashbackRoutes = require("./cashback.routes");
+const systemBankRoutes = require("./systemBank.routes");
+const bannerRoutes = require("./banner.routes");
 
 const { authenticate } = require("../middleware/authadmin.middleware");
 
@@ -96,8 +100,13 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/reportmaster", reportMasterRoutes);
 
 router.use("/provider", hentoryRoutes);
+router.use("/callback/hentory", hentoryCallbackRoutes);
 
 router.use("/logo", logoRoutes);
+router.use("/admin/seamless", seamlessAdminRoutes);
+router.use("/cashback", cashbackRoutes);
+router.use("/system-bank", systemBankRoutes);
+router.use("/banner", bannerRoutes);
 
 router.use("/promo-banner", promoBannerRoutes);
 

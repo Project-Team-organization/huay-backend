@@ -29,253 +29,111 @@ const Huay = require("../../../models/huay.model");
 
 
 
+const LotteryResult = require("../../../models/lottery_results.model");
+const LotteryResultItem = require("../../../models/lottery_result_items.model");
+const LotterySets = require("../../../models/lotterySets.model");
+const LotteryType = require("../../../models/lotteryType.model");
+
 const isValidYYYYMMDD = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
-exports.fetchLotteryByDateAndType = async (lotto_date, lottory_type) => {
+exports.fetchLotteryByDateAndType = async (startDate, endDate, lottory_type, page = 1, limit = 10) => {
   try {
-    if (!lotto_date || !lottory_type) {
-      throw new Error('ต้องส่ง "lotto_date" และ "lottory_type"');
+    if (!startDate || !endDate || !lottory_type) {
+      throw new Error('ต้องส่ง "startDate", "endDate" และ "lottory_type"');
     }
-    if (!isValidYYYYMMDD(lotto_date)) {
-      throw new Error('Invalid "lotto_date": ต้องอยู่ในรูปแบบ YYYY-MM-DD');
+    if (!isValidYYYYMMDD(startDate) || !isValidYYYYMMDD(endDate)) {
+      throw new Error('รูปแบบวันที่ต้องเป็น YYYY-MM-DD');
     }
 
-    // 📌 Lao lottery
+    // 1. หาประเภทหวยที่สัมพันธ์กับ lottory_type
+    let queryConditions = {};
     if (lottory_type === "lao-lottery") {
-      const start = new Date(`${lotto_date}T00:00:00.000Z`);
-      const end = new Date(`${lotto_date}T23:59:59.999Z`);
-
-      const [
-        lao,
-        extra,
-        stars,
-        starsVip,
-        union,
-        redcross,
-        thakhek5d,
-        thakhekVip,
-        tv,
-        vip,
-        hd,
-        singapore4d,
-        magnum4d,
-        grandDragon4d,
-      ] = await Promise.all([
-        LotteryLao.find({ show_result: { $gte: start, $lte: end } })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
-          .lean(),
-        LotteryLaoExtra.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
-          .lean(),
-        LotteryLaoStars.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
-          .lean(),
-        LotteryLaoStarsVip.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
-          .lean(),
-        LotteryLaoUnion.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v")
-          .lean(),
-        LotteryLaoRedcross.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryLaoThakhek5d.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryLaoThakhekVip.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryLaoTv.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryLaoVip.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryLaoHd.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotterySingapore4d.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryMagnum4d.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryGrandDragon4d.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-      ]);
-
-      const data = [
-        ...lao,
-        ...extra,
-        ...stars,
-        ...starsVip,
-        ...union,
-        ...redcross,
-        ...thakhek5d,
-        ...thakhekVip,
-        ...tv,
-        ...vip,
-        ...hd,
-        ...singapore4d,
-        ...magnum4d,
-        ...grandDragon4d,
-      ];
-
-      if (!data.length) {
-        return [];
-      }
-
-      return data;
+      queryConditions = { lottery_type: /ลาว/ };
+    } else if (lottory_type === "thai-lottery") {
+      queryConditions = { lottery_type: /ไทย|รัฐบาล|ออมสิน|ธกส/ };
+    } else if (lottory_type === "hanoi-lottery") {
+      queryConditions = { lottery_type: /ฮานอย/ };
     }
 
-    // 📌 Thai lottery
-    if (lottory_type === "thai-lottery") {
-      const start = new Date(`${lotto_date}T00:00:00.000Z`);
-      const end = new Date(`${lotto_date}T23:59:59.999Z`);
+    const matchedTypes = await LotteryType.find(queryConditions).select("_id");
+    const matchedTypeIds = matchedTypes.map(t => t._id);
 
-      const codesToShow = ["6d_top", "3d_front_2", "3d_bottom", "2d_bottom"];
+    // 2. หางวดหวยที่สัมพันธ์กับประเภทหวย
+    const matchedSets = await LotterySets.find({ lottery_type_id: { $in: matchedTypeIds } }).select("_id");
+    const matchedSetIds = matchedSets.map(s => s._id);
 
-      const [huayList, thaiGsb, thaiSavings] = await Promise.all([
-        Huay.find({
-          createdAt: { $gte: start, $lte: end },
-          code: { $in: codesToShow },
-        })
-          .sort({ createdAt: -1 })
-          .lean(),
-        LotteryThaiGsb.find({
-          createdAt: { $gte: start, $lte: end }
-        })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryThaiSavings.find({
-          createdAt: { $gte: start, $lte: end }
-        })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean()
-      ]);
+    // 3. ค้นหาผลรางวัลในช่วงวันที่
+    const start = new Date(`${startDate}T00:00:00.000Z`);
+    const end = new Date(`${endDate}T23:59:59.999Z`);
 
-      const grouped = huayList.reduce((acc, doc) => {
-        const setId = doc.lottery_set_id.toString();
-        if (!acc[setId]) {
-          acc[setId] = {
-            lottery_set_id: setId,
-            name: "thai-lottery",
-            numbers: {},
-            createdAt: doc.createdAt,
-            updatedAt: doc.updatedAt,
-          };
+    const query = {
+      lottery_set_id: { $in: matchedSetIds },
+      draw_date: { $gte: start, $lte: end }
+    };
+
+    const total = await LotteryResult.countDocuments(query);
+    const results = await LotteryResult.find(query)
+      .sort({ draw_date: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate("lottery_set_id")
+      .lean();
+
+    // 4. ดึงผลรางวัลย่อย และแปลงรูปแบบให้อยู่ในโครงสร้างที่หน้าบ้านใช้งานได้
+    const formattedResults = [];
+    for (const res of results) {
+      const items = await LotteryResultItem.find({ lottery_result_id: res._id }).lean();
+      
+      const findNumber = (candidates) => {
+        const match = items.find(it => candidates.includes(it.betting_type_id));
+        return match && match.numbers && match.numbers.length > 0 ? match.numbers[0] : "-";
+      };
+
+      const findNumberArray = (candidates) => {
+        const match = items.find(it => candidates.includes(it.betting_type_id));
+        return match && match.numbers ? match.numbers : [];
+      };
+
+      const formatted = {
+        _id: res._id,
+        lottery_set_id: res.lottery_set_id ? res.lottery_set_id._id : null,
+        lottery_name: res.lottery_set_id ? res.lottery_set_id.name : "หวย",
+        lotto_date: res.draw_date ? new Date(res.draw_date).toISOString().split("T")[0] : startDate,
+        show_result: res.draw_date,
+        createdAt: res.createdAt,
+        items: items,
+        results: {
+          digit5: findNumber(["5d", "5d_top", "5digit"]),
+          digit4: findNumber(["4d", "4d_top", "4digit"]),
+          digit3: findNumber(["3d", "3top", "3d_top", "digit3"]),
+          digit2_top: findNumber(["2d_top", "2top", "digit2_top"]),
+          digit2_bottom: findNumber(["2d_bottom", "2bottom", "digit2_bottom"]),
+          // สำหรับฮานอย
+          prize_1st: findNumber(["5d", "5d_top", "5digit"]),
+          digit3_top: findNumber(["3d", "3top", "3d_top", "digit3"]),
+        },
+        numbers: {
+          "6d_top": findNumberArray(["6d_top", "6top"]),
+          "3d_front_2": findNumberArray(["3d_front_2", "3d_front"]),
+          "3d_bottom": findNumberArray(["3d_bottom", "3bottom"]),
+          "2d_bottom": findNumberArray(["2d_bottom", "2bottom"]),
+          "3top": findNumberArray(["3top"]),
+          "2top": findNumberArray(["2top"]),
+          "2bottom": findNumberArray(["2bottom"])
         }
-        acc[setId].numbers[doc.code] = doc.huay_number;
-        return acc;
-      }, {});
-
-      const huayData = Object.values(grouped);
-      const thaiData = [...thaiGsb, ...thaiSavings];
-
-      return [...huayData, ...thaiData];
+      };
+      formattedResults.push(formatted);
     }
 
-    // 📌 Hanoi lottery
-    if (lottory_type === "hanoi-lottery") {
-      const [
-        hanoiAsean,
-        hanoiHd,
-        hanoiStar,
-        hanoiTv,
-        hanoiSpecial,
-        hanoiRedcross,
-        hanoiSpecialApi,
-        hanoi,
-        hanoiDevelop,
-        hanoiVip,
-        hanoiExtra,
-      ] = await Promise.all([
-        LotteryHanoiAsean.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiHd.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiStar.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiTv.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiSpecial.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiRedcross.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiSpecialApi.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoi.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiDevelop.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiVip.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-        LotteryHanoiExtra.find({ lotto_date })
-          .sort({ createdAt: -1 })
-          .select("-url -betting_types -__v -scraper -scrapedAt")
-          .lean(),
-      ]);
-
-      const data = [
-        ...hanoiAsean,
-        ...hanoiHd,
-        ...hanoiStar,
-        ...hanoiTv,
-        ...hanoiSpecial,
-        ...hanoiRedcross,
-        ...hanoiSpecialApi,
-        ...hanoi,
-        ...hanoiDevelop,
-        ...hanoiVip,
-        ...hanoiExtra,
-      ];
-
-      if (!data.length) {
-        return [];
+    return {
+      results: formattedResults,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
       }
-
-      return data;
-    }
-
-    // 📌 Default
-    return [];
+    };
   } catch (err) {
     console.error("Error in fetchLotteryByDateAndType:", err.message);
     throw err;

@@ -292,7 +292,7 @@ exports.huaygranddragon4d = async function () {
   );
 };
 
-// หวยไทย GSB
+// หวยออมสิน
 exports.huaythaigsb = async function () {
   return await retryWithDelay(
     () => lotteryThaiGsbService.fetchAndSaveThaiGsbLottery(),
@@ -300,7 +300,7 @@ exports.huaythaigsb = async function () {
   );
 };
 
-// หวยไทยออมสิน
+// หวย ธกส
 exports.huaythaisavings = async function () {
   return await retryWithDelay(
     () => lotteryThaiSavingsService.fetchAndSaveThaiSavingsLottery(),

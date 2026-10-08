@@ -23,9 +23,12 @@ exports.createWithdrawal = async function ({
       throw new Error("ไม่พบผู้ใช้งานในระบบ");
     }
 
+    // แปลง amount เป็นตัวเลขเพื่อป้องกันปัญหาจากประเภทข้อมูล (string)
+    amount = Number(amount);
+
     // เช็คว่า amount มีค่ามากกว่า 0 หรือไม่
-    if (amount <= 0) {
-      throw new Error("จำนวนเงินต้องมากกว่า 0");
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error("จำนวนเงินต้องมากกว่า 0 และเป็นตัวเลขที่ถูกต้อง");
     }
 
     // เช็คว่า user มีเงินเพียงพอหรือไม่
@@ -310,9 +313,12 @@ exports.deductFromAdmin = async function ({
       throw new Error("ไม่พบผู้ใช้งานในระบบ");
     }
 
+    // แปลง amount เป็นตัวเลขเพื่อป้องกันปัญหาจากประเภทข้อมูล (string)
+    amount = Number(amount);
+
     // เช็คว่า amount มีค่ามากกว่า 0 หรือไม่
-    if (amount <= 0) {
-      throw new Error("จำนวนเงินต้องมากกว่า 0");
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error("จำนวนเงินต้องมากกว่า 0 และเป็นตัวเลขที่ถูกต้อง");
     }
 
     // ไม่มีค่าธรรมเนียม
@@ -357,6 +363,7 @@ exports.deductFromAdmin = async function ({
     await newWithdrawal.save();
 
     // หักเงินจาก user ทันที
+    const balanceBefore = user.credit;
     user.credit -= amount;
     await user.save();
 
@@ -365,8 +372,8 @@ exports.deductFromAdmin = async function ({
       user_id: user._id,
       type: "withdraw",
       amount: amount,
-      balance_before: user.credit,
-      balance_after: user.credit - amount,
+      balance_before: balanceBefore,
+      balance_after: user.credit,
       ref_id: newWithdrawal._id,
       ref_model: "Withdrawal",
       description:

@@ -11,7 +11,10 @@ router.get("/", promotionController.getAllPromotions);
 router.get("/user", promotionController.getAllUserPromotions);
 router.get("/user/:id", promotionController.getUserPromotionsById);
 router.get("/:id", promotionController.getPromotionById);
+router.put("/:id", promotionController.updatePromotion);
+router.patch("/:id", promotionController.updatePromotion);
 router.post("/upload/:id", promotionController.uploadFile);
 router.delete("/:id", promotionController.deletePromotionById);
+router.delete("/delete/:id", promotionController.deletePromotionById);
 
 module.exports = router;
