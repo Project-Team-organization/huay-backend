@@ -42,6 +42,7 @@ router.put(
 router.get(
   "/getcustomer/:id",
   authmiddleware.isMaster,
+  authmiddleware.ensureOwnMaster("id"),
   masterController.getCustomerByMaster,
 );
 

@@ -322,7 +322,10 @@ exports.getCustomerByMaster = async (masterId) => {
       return handleError(null, "กรุณาระบุ ID ของ Master", 400);
     }
 
-    const result = await user.find({ master_id: masterId });
+    const result = await user
+      .find({ master_id: masterId })
+      .select("-password")
+      .sort({ createdAt: -1 });
 
     if (!result || result.length === 0) {
       return handleError(null, "ไม่พบข้อมูลผู้ใช้", 404);

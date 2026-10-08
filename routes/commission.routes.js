@@ -7,6 +7,7 @@ const authmiddleware = require("../middleware/authadmin.middleware");
 router.get(
   "/master/:master_id",
   authmiddleware.isMaster,
+  authmiddleware.ensureOwnMaster("master_id"),
   commissionController.getMasterCommission,
 );
 
@@ -14,7 +15,16 @@ router.get(
 router.get(
   "/master/:master_id/current",
   authmiddleware.isMaster,
+  authmiddleware.ensureOwnMaster("master_id"),
   commissionController.getCurrentMonthCommission,
+);
+
+// ดึงธุรกรรมฝาก-ถอนทั้งหมดของ Master (ไม่ผูกเดือน)
+router.get(
+  "/master/:master_id/transactions",
+  authmiddleware.isMaster,
+  authmiddleware.ensureOwnMaster("master_id"),
+  commissionController.getMasterTransactions,
 );
 
 // ดึงรายละเอียด transactions ของ commission (สำหรับ Master)
