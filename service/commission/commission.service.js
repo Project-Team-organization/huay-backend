@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const MasterCommission = require("../../models/masterCommission.model");
 const Master = require("../../models/master.model");
 const User = require("../../models/user.model");
@@ -587,6 +588,157 @@ exports.getCommissionTransactions = async (commissionId, filters = {}) => {
     );
   } catch (error) {
     console.error("Error in getCommissionTransactions:", error);
+    return handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูล transactions");
+  }
+};
+
+/**
+ * ดึงธุรกรรมฝาก-ถอนทั้งหมดของ Master (ไม่ผูกเดือน) พร้อม filter
+ */
+exports.getMasterTransactions = async (masterId, filters = {}) => {
+  try {
+    // ตรวจ input ทั้งหมดก่อนแตะ DB
+    if (!mongoose.isValidObjectId(masterId)) {
+      return handleError(null, "Master ID ไม่ถูกต้อง", 400);
+    }
+
+    const { type, startDate, endDate, username } = filters;
+
+    if (type && type !== "deposit" && type !== "withdrawal") {
+      return handleError(null, "type ไม่ถูกต้อง", 400);
+    }
+
+    const page = Math.min(Math.max(parseInt(filters.page) || 1, 1), 1000);
+    const perPage = Math.min(Math.max(parseInt(filters.perPage) || 20, 1), 100);
+    const skip = (page - 1) * perPage;
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const created_at = {};
+    if (startDate) {
+      if (!dateRegex.test(startDate)) {
+        return handleError(null, "startDate ไม่ถูกต้อง", 400);
+      }
+      const start = new Date(`${startDate}T00:00:00.000+07:00`);
+      if (isNaN(start.getTime())) {
+        return handleError(null, "startDate ไม่ถูกต้อง", 400);
+      }
+      created_at.$gte = start;
+    }
+    if (endDate) {
+      if (!dateRegex.test(endDate)) {
+        return handleError(null, "endDate ไม่ถูกต้อง", 400);
+      }
+      const end = new Date(`${endDate}T23:59:59.999+07:00`);
+      if (isNaN(end.getTime())) {
+        return handleError(null, "endDate ไม่ถูกต้อง", 400);
+      }
+      created_at.$lte = end;
+    }
+
+    const baseQuery = { master_id: masterId };
+    if (created_at.$gte || created_at.$lte) {
+      baseQuery.created_at = created_at;
+    }
+
+    const emptyResult = () =>
+      handleSuccess(
+        {
+          transactions: [],
+          summary: {
+            total_deposits: 0,
+            total_withdrawals: 0,
+            total_transactions: 0,
+          },
+        },
+        "ดึงข้อมูล transactions สำเร็จ",
+        200,
+        { total: 0, page, perPage, totalPages: 0 },
+      );
+
+    if (username && String(username).trim()) {
+      const escaped = String(username)
+        .trim()
+        .slice(0, 50)
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const users = await User.find({
+        master_id: masterId,
+        username: { $regex: escaped, $options: "i" },
+      })
+        .select("_id")
+        .limit(1000);
+      if (users.length === 0) {
+        return emptyResult();
+      }
+      baseQuery.user_id = { $in: users.map(u => u._id) };
+    }
+
+    const depositSelect =
+      "user_id amount netAmount fee commission_percentage commission_amount system_profit channel description status created_at";
+    const withdrawalSelect =
+      "user_id amount netAmount fee commission_percentage commission_amount system_loss bank_name bank_number account_name description status created_at";
+
+    let deposits = [];
+    let withdrawals = [];
+    let totalDeposits = 0;
+    let totalWithdrawals = 0;
+
+    if (!type || type === "deposit") {
+      [deposits, totalDeposits] = await Promise.all([
+        Credit.find({ ...baseQuery, status: "success" })
+          .populate("user_id", "username phone")
+          .sort({ created_at: -1 })
+          .skip(type === "deposit" ? skip : 0)
+          .limit(type === "deposit" ? perPage : skip + perPage)
+          .select(depositSelect)
+          .lean(),
+        Credit.countDocuments({ ...baseQuery, status: "success" }),
+      ]);
+    }
+
+    if (!type || type === "withdrawal") {
+      [withdrawals, totalWithdrawals] = await Promise.all([
+        Withdrawal.find({ ...baseQuery, status: "completed" })
+          .populate("user_id", "username phone")
+          .sort({ created_at: -1 })
+          .skip(type === "withdrawal" ? skip : 0)
+          .limit(type === "withdrawal" ? perPage : skip + perPage)
+          .select(withdrawalSelect)
+          .lean(),
+        Withdrawal.countDocuments({ ...baseQuery, status: "completed" }),
+      ]);
+    }
+
+    const tagged = [
+      ...deposits.map(d => ({ ...d, type: "deposit" })),
+      ...withdrawals.map(w => ({ ...w, type: "withdrawal" })),
+    ];
+
+    let transactions;
+    if (type) {
+      transactions = tagged;
+    } else {
+      transactions = tagged
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(skip, skip + perPage);
+    }
+
+    const total = totalDeposits + totalWithdrawals;
+
+    return handleSuccess(
+      {
+        transactions,
+        summary: {
+          total_deposits: totalDeposits,
+          total_withdrawals: totalWithdrawals,
+          total_transactions: total,
+        },
+      },
+      "ดึงข้อมูล transactions สำเร็จ",
+      200,
+      { total, page, perPage, totalPages: Math.ceil(total / perPage) },
+    );
+  } catch (error) {
+    console.error("Error in getMasterTransactions:", error);
     return handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูล transactions");
   }
 };

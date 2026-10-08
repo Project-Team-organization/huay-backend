@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const User = require("../../models/user.model");
 const UserBet = require("../../models/userBetSchema.models");
 const Credit = require("../../models/credit.models");
@@ -14,6 +15,9 @@ exports.getReportByMasterId = async (master_id) => {
     if (!master) {
       return handleError(null, "ไม่พบข้อมูล Master", 404);
     }
+
+    // aggregate ไม่ cast ObjectId ให้อัตโนมัติ
+    const masterObjectId = new mongoose.Types.ObjectId(master_id);
 
     const now = new Date();
     const todayStart = new Date(now.setHours(0, 0, 0, 0));
@@ -49,7 +53,7 @@ exports.getReportByMasterId = async (master_id) => {
     const todayDeposits = await Credit.aggregate([
       {
         $match: {
-          master_id: master_id,
+          master_id: masterObjectId,
           status: 'success',
           created_at: { $gte: todayStart, $lte: todayEnd }
         }
@@ -66,7 +70,7 @@ exports.getReportByMasterId = async (master_id) => {
     const todayWithdrawals = await Withdrawal.aggregate([
       {
         $match: {
-          master_id: master_id,
+          master_id: masterObjectId,
           status: 'completed',
           created_at: { $gte: todayStart, $lte: todayEnd }
         }
@@ -88,7 +92,7 @@ exports.getReportByMasterId = async (master_id) => {
     const todayDepositCommission = await Credit.aggregate([
       {
         $match: {
-          master_id: master_id,
+          master_id: masterObjectId,
           status: 'success',
           created_at: { $gte: todayStart, $lte: todayEnd }
         }
@@ -104,7 +108,7 @@ exports.getReportByMasterId = async (master_id) => {
     const todayWithdrawalCommission = await Withdrawal.aggregate([
       {
         $match: {
-          master_id: master_id,
+          master_id: masterObjectId,
           status: 'completed',
           created_at: { $gte: todayStart, $lte: todayEnd }
         }

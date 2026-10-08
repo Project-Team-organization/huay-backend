@@ -254,3 +254,43 @@ exports.getCommissionTransactions = async (req, res) => {
     return res.status(response.status).json(response);
   }
 };
+
+/**
+ * ดึงธุรกรรมฝาก-ถอนทั้งหมดของ Master (ไม่ผูกเดือน)
+ */
+exports.getMasterTransactions = async (req, res) => {
+  const userId = req.user?._id || null;
+  const fullUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+  const ipRaw =
+    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    req.connection.remoteAddress ||
+    req.ip;
+  const ip = normalizeIP(ipRaw);
+  const referrer = req.get("Referer") || null;
+
+  try {
+    const { master_id } = req.params;
+    const { page, perPage, type, startDate, endDate, username } = req.query;
+
+    const result = await commissionService.getMasterTransactions(master_id, {
+      page,
+      perPage,
+      type,
+      startDate,
+      endDate,
+      username,
+    });
+    return res.status(result.status).json(result);
+  } catch (error) {
+    await logAction("get_master_transactions_error", {
+      tag: "get_master_transactions",
+      userId,
+      fullUrl,
+      ip,
+      referrer,
+      error: error.message,
+    });
+    const response = await handleError(error);
+    return res.status(response.status).json(response);
+  }
+};
