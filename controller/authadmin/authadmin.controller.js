@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken");
 const validate = require("../../validators/Validator");
 const { logAction } = require("../../utils/logger");
 const { normalizeIP } = require("../../utils/utils");
@@ -112,7 +113,10 @@ exports.refreshToken = async (req, res) => {
           maxAge: 24 * 60 * 60 * 1000,
         });
 
-        const response = await handleAuthSuccess(null, null, null, "รีเฟรชโทเค็นสำเร็จ", 200);
+        // ส่ง access token ใน body เฉพาะ master (client เซียนใช้ Bearer) client อื่นยังรับทาง cookie เท่านั้น
+        const decodedNew = jwt.decode(newToken);
+        const bodyToken = decodedNew?.role === "master" ? newToken : null;
+        const response = await handleAuthSuccess(bodyToken, null, null, "รีเฟรชโทเค็นสำเร็จ", 200);
         return res.status(response.status).json(response);
     } catch (error) {
         const response = await handleAuthError(error, "โทเค็นไม่ถูกต้องหรือหมดอายุ", 401);
@@ -210,10 +214,24 @@ exports.loginMaster = async (req, res) => {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        // ลบ user และ token ออกจาก response body
+        // ส่ง token + ข้อมูล master (ไม่รวม password) กลับใน body สำหรับ client เซียน (cookie ยังคงตั้งไว้ข้างบน)
+        const masterUser = result.user;
+        const accessToken = result.token;
         delete result.user;
         delete result.token;
-        delete result.refreshToken;
+        delete result.refreshToken; // refresh token ส่งทาง cookie เท่านั้น
+        result.token = accessToken;
+        result.data = {
+            _id: masterUser._id,
+            username: masterUser.username,
+            phone: masterUser.phone,
+            commission_percentage: masterUser.commission_percentage,
+            share_url_master: masterUser.share_url_master,
+            slug: masterUser.slug,
+            active: masterUser.active,
+            createdAt: masterUser.createdAt,
+            updatedAt: masterUser.updatedAt,
+        };
 
         return res.status(result.status).json(result);
     } catch (error) {
@@ -224,6 +242,22 @@ exports.loginMaster = async (req, res) => {
             data: { error: error.message, stack: error.stack, referrer, ip },
         });
 
+        const response = await handleAuthError(error);
+        return res.status(response.status).json(response);
+    }
+};
+
+// เปลี่ยนรหัสผ่าน master (เฉพาะ role master เท่านั้น)
+exports.changePasswordMaster = async (req, res) => {
+    try {
+        if (req.user?.role !== "master") {
+            return res.status(403).json({ success: false, status: 403, message: "ไม่มีสิทธิ์เข้าถึง" });
+        }
+        const { oldPassword, newPassword } = req.body || {};
+        const result = await authadminService.changePasswordMaster(req.user._id, oldPassword, newPassword);
+        return res.status(result.status).json(result);
+    } catch (error) {
+        // ห้าม log req.body (มีรหัสผ่าน)
         const response = await handleAuthError(error);
         return res.status(response.status).json(response);
     }

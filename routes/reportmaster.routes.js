@@ -4,6 +4,11 @@ const reportMasterController = require("../controller/reportmaster/reportmaster.
 const authmiddleware = require("../middleware/authadmin.middleware");
 
 // GET /api/reportmaster/:master_id
-router.get("/:master_id", authmiddleware.isMaster, reportMasterController.getReportByMasterId);
+router.get(
+  "/:master_id",
+  authmiddleware.isMaster,
+  authmiddleware.ensureOwnMaster("master_id"),
+  reportMasterController.getReportByMasterId,
+);
 
 module.exports = router;

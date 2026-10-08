@@ -277,7 +277,21 @@ async function authenticate(req, res, next) {
   }
 }
 
+// master เข้าถึงได้เฉพาะข้อมูลของตัวเอง (admin/superadmin ผ่านได้) ใช้ต่อท้าย isMaster
+const ensureOwnMaster = (paramName = "master_id") => (req, res, next) => {
+  if (
+    req.user?.role === "master" &&
+    String(req.user._id) !== String(req.params[paramName])
+  ) {
+    return res
+      .status(403)
+      .json({ message: "ไม่มีสิทธิ์เข้าถึงข้อมูลของ Master อื่น" });
+  }
+  next();
+};
+
 module.exports = {
+  ensureOwnMaster,
   isAdmin,
   isUser,
   isMaster,

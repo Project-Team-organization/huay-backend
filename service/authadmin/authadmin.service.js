@@ -267,4 +267,26 @@ exports.loginMaster = async (username, password, ip, userAgent) => {
   }
 };
 
+// เปลี่ยนรหัสผ่าน master (ต้องยืนยันรหัสเดิม)
+exports.changePasswordMaster = async (masterId, oldPassword, newPassword) => {
+  if (typeof oldPassword !== "string" || typeof newPassword !== "string" || !oldPassword || !newPassword) {
+    return handleAuthError(null, "กรุณากรอกรหัสผ่านปัจจุบันและรหัสผ่านใหม่", 400);
+  }
+  if (newPassword.length < 6) {
+    return handleAuthError(null, "รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร", 400);
+  }
+  if (newPassword === oldPassword) {
+    return handleAuthError(null, "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม", 400);
+  }
+  const masterUser = await master.findById(masterId);
+  if (!masterUser) return handleAuthError(null, "ไม่พบผู้ใช้", 404);
+  const isMatch = await bcrypt.compare(oldPassword, masterUser.password);
+  if (!isMatch) return handleAuthError(null, "รหัสผ่านปัจจุบันไม่ถูกต้อง", 400); // ต้อง 400 ไม่ใช่ 401 (FE เด้ง login เมื่อ 401)
+  masterUser.password = newPassword; // pre("save") ใน master.model.js hash ให้
+  masterUser.updatedAt = new Date();
+  await masterUser.save();
+  await RefreshToken.deleteMany({ userId: masterUser._id }); // บังคับ session อื่นต้อง login ใหม่
+  return handleSuccess(null, "เปลี่ยนรหัสผ่านสำเร็จ", 200);
+};
+
 
