@@ -2,6 +2,7 @@ const UserBet = require("../../models/userBetSchema.models");
 const LotteryWinner = require("../../models/lottery_winners.model");
 const UserTransaction = require("../../models/user.transection.model");
 const LotterySets = require("../../models/lotterySets.model");
+const User = require("../../models/user.model");
 const moment = require("moment-timezone");
 
 /**
@@ -13,14 +14,15 @@ exports.getTodayTotalBets = async () => {
     const startOfDay = moment().tz("Asia/Bangkok").startOf("day").toDate();
     const endOfDay = moment().tz("Asia/Bangkok").endOf("day").toDate();
 
-    const result = await UserBet.aggregate([
+    // 1. ยอดแทงหวยจาก UserBet (ไม่นับที่ยกเลิก)
+    const lotteryResult = await UserBet.aggregate([
       {
         $match: {
           bet_date: {
             $gte: startOfDay,
             $lte: endOfDay,
           },
-          status: { $ne: "cancelled" }, // ไม่นับที่ยกเลิก
+          status: { $ne: "cancelled" },
         },
       },
       {
@@ -30,8 +32,34 @@ exports.getTodayTotalBets = async () => {
         },
       },
     ]);
+    const lotteryBets = lotteryResult.length > 0 ? lotteryResult[0].totalAmount : 0;
 
-    return result.length > 0 ? result[0].totalAmount : 0;
+    // 2. ยอดแทงเกม/คาสิโนจาก UserTransaction (ไม่รวมหวยที่นับไปแล้ว)
+    const gameResult = await UserTransaction.aggregate([
+      {
+        $match: {
+          created_at: {
+            $gte: startOfDay,
+            $lte: endOfDay,
+          },
+          type: "bet",
+          status: { $nin: ["cancelled", "CANCEL"] },
+          $or: [
+            { category: "game" },
+            { category: { $ne: "lottery" }, ref_model: { $ne: "UserBet" } },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$amount" },
+        },
+      },
+    ]);
+    const gameBets = gameResult.length > 0 ? gameResult[0].totalAmount : 0;
+
+    return Number((lotteryBets + gameBets).toFixed(2));
   } catch (error) {
     console.error("Error in getTodayTotalBets:", error);
     throw error;
@@ -40,14 +68,15 @@ exports.getTodayTotalBets = async () => {
 
 /**
  * 💸 ยอดจ่ายรางวัลวันนี้
- * นับจาก LotteryWinner.payout ที่สร้างวันนี้
+ * นับจากทั้งหวย (LotteryWinner) และเกมคาสิโน/สล็อต (UserTransaction)
  */
 exports.getTodayTotalPayouts = async () => {
   try {
     const startOfDay = moment().tz("Asia/Bangkok").startOf("day").toDate();
     const endOfDay = moment().tz("Asia/Bangkok").endOf("day").toDate();
 
-    const result = await LotteryWinner.aggregate([
+    // 1. ยอดจ่ายรางวัลหวย
+    const lotteryResult = await LotteryWinner.aggregate([
       {
         $match: {
           createdAt: {
@@ -59,12 +88,45 @@ exports.getTodayTotalPayouts = async () => {
       {
         $group: {
           _id: null,
-          totalPayout: { $sum: "$payout" },
+          totalPayout: { $sum: { $ifNull: ["$reward", "$payout"] } },
         },
       },
     ]);
+    const lotteryPayouts = lotteryResult.length > 0 ? lotteryResult[0].totalPayout : 0;
 
-    return result.length > 0 ? result[0].totalPayout : 0;
+    // 2. ยอดจ่ายรางวัลเกมจาก UserTransaction
+    const gameResult = await UserTransaction.aggregate([
+      {
+        $match: {
+          created_at: {
+            $gte: startOfDay,
+            $lte: endOfDay,
+          },
+          category: "game",
+          $or: [
+            { type: "payout" },
+            { type: "bet", payout_amount: { $gt: 0 } },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalPayout: {
+            $sum: {
+              $cond: [
+                { $eq: ["$type", "payout"] },
+                "$amount",
+                { $ifNull: ["$payout_amount", 0] },
+              ],
+            },
+          },
+        },
+      },
+    ]);
+    const gamePayouts = gameResult.length > 0 ? gameResult[0].totalPayout : 0;
+
+    return Number((lotteryPayouts + gamePayouts).toFixed(2));
   } catch (error) {
     console.error("Error in getTodayTotalPayouts:", error);
     throw error;
@@ -118,34 +180,38 @@ exports.getTodayNetProfit = async () => {
 
 /**
  * 🎯 จำนวนผู้เล่นทั้งหมดวันนี้
- * นับจำนวน user_id ที่ไม่ซ้ำกันใน UserBet วันนี้
+ * นับจำนวน user_id ที่ไม่ซ้ำกันจากทั้งหวยและเกมวันนี้
  */
 exports.getTodayTotalPlayers = async () => {
   try {
     const startOfDay = moment().tz("Asia/Bangkok").startOf("day").toDate();
     const endOfDay = moment().tz("Asia/Bangkok").endOf("day").toDate();
 
-    const result = await UserBet.aggregate([
-      {
-        $match: {
-          bet_date: {
-            $gte: startOfDay,
-            $lte: endOfDay,
-          },
-          status: { $ne: "cancelled" },
-        },
+    // 1. ผู้เล่นหวยวันนี้
+    const lotteryPlayers = await UserBet.distinct("user_id", {
+      bet_date: {
+        $gte: startOfDay,
+        $lte: endOfDay,
       },
-      {
-        $group: {
-          _id: "$user_id",
-        },
+      status: { $ne: "cancelled" },
+    });
+
+    // 2. ผู้เล่นเกมวันนี้
+    const gamePlayers = await UserTransaction.distinct("user_id", {
+      created_at: {
+        $gte: startOfDay,
+        $lte: endOfDay,
       },
-      {
-        $count: "totalPlayers",
-      },
+      type: "bet",
+      status: { $nin: ["cancelled", "CANCEL"] },
+    });
+
+    const uniqueUsers = new Set([
+      ...lotteryPlayers.map(id => id.toString()),
+      ...gamePlayers.map(id => id.toString()),
     ]);
 
-    return result.length > 0 ? result[0].totalPlayers : 0;
+    return uniqueUsers.size;
   } catch (error) {
     console.error("Error in getTodayTotalPlayers:", error);
     throw error;
@@ -190,7 +256,7 @@ exports.getDashboardSummary = async () => {
         this.getTodayLotteryRounds(),
       ]);
 
-    const netProfit = totalBets - totalPayouts;
+    const netProfit = Number((totalBets - totalPayouts).toFixed(2));
 
     // ดึง 5 ธุรกรรมล่าสุดจริง
     let recentTransactions = [];
@@ -290,28 +356,33 @@ exports.getDashboardSummary = async () => {
  */
 exports.getEngagementStats = async () => {
   try {
-    const UserBet = require("../../models/userBetSchema.models");
+    const UserTransaction = require("../../models/user.transection.model");
     const moment = require("moment-timezone");
+
+    const betMatchFilter = {
+      type: "bet",
+      status: { $nin: ["cancelled", "CANCEL"] },
+    };
 
     // 1. รายเดือน (12 เดือนย้อนหลัง)
     const startOfMonthly = moment().tz("Asia/Bangkok").subtract(11, "months").startOf("month").toDate();
-    const monthlyResult = await UserBet.aggregate([
+    const monthlyResult = await UserTransaction.aggregate([
       {
         $match: {
-          bet_date: { $gte: startOfMonthly },
-          status: { $ne: "cancelled" }
-        }
+          created_at: { $gte: startOfMonthly },
+          ...betMatchFilter,
+        },
       },
       {
         $group: {
           _id: {
-            year: { $year: { date: "$bet_date", timezone: "Asia/Bangkok" } },
-            month: { $month: { date: "$bet_date", timezone: "Asia/Bangkok" } }
+            year: { $year: { date: "$created_at", timezone: "Asia/Bangkok" } },
+            month: { $month: { date: "$created_at", timezone: "Asia/Bangkok" } },
           },
           players: { $addToSet: "$user_id" },
-          totalAmount: { $sum: "$total_bet_amount" }
-        }
-      }
+          totalAmount: { $sum: "$amount" },
+        },
+      },
     ]);
 
     const monthlyCategories = [];
@@ -333,22 +404,22 @@ exports.getEngagementStats = async () => {
 
     // 2. รายสัปดาห์ (7 วันย้อนหลัง)
     const startOfWeekly = moment().tz("Asia/Bangkok").subtract(6, "days").startOf("day").toDate();
-    const weeklyResult = await UserBet.aggregate([
+    const weeklyResult = await UserTransaction.aggregate([
       {
         $match: {
-          bet_date: { $gte: startOfWeekly },
-          status: { $ne: "cancelled" }
-        }
+          created_at: { $gte: startOfWeekly },
+          ...betMatchFilter,
+        },
       },
       {
         $group: {
           _id: {
-            date: { $dateToString: { format: "%Y-%m-%d", date: "$bet_date", timezone: "Asia/Bangkok" } }
+            date: { $dateToString: { format: "%Y-%m-%d", date: "$created_at", timezone: "Asia/Bangkok" } },
           },
           players: { $addToSet: "$user_id" },
-          totalAmount: { $sum: "$total_bet_amount" }
-        }
-      }
+          totalAmount: { $sum: "$amount" },
+        },
+      },
     ]);
 
     const weeklyCategories = [];
@@ -369,36 +440,36 @@ exports.getEngagementStats = async () => {
 
     // 3. รายไตรมาส (4 ไตรมาสของปีนี้)
     const startOfQuarterly = moment().tz("Asia/Bangkok").startOf("year").toDate();
-    const quarterlyResult = await UserBet.aggregate([
+    const quarterlyResult = await UserTransaction.aggregate([
       {
         $match: {
-          bet_date: { $gte: startOfQuarterly },
-          status: { $ne: "cancelled" }
-        }
+          created_at: { $gte: startOfQuarterly },
+          ...betMatchFilter,
+        },
       },
       {
         $group: {
           _id: {
             quarter: {
               $cond: [
-                { $lte: [{ $month: { date: "$bet_date", timezone: "Asia/Bangkok" } }, 3] }, 1,
+                { $lte: [{ $month: { date: "$created_at", timezone: "Asia/Bangkok" } }, 3] }, 1,
                 {
                   $cond: [
-                    { $lte: [{ $month: { date: "$bet_date", timezone: "Asia/Bangkok" } }, 6] }, 2,
+                    { $lte: [{ $month: { date: "$created_at", timezone: "Asia/Bangkok" } }, 6] }, 2,
                     {
                       $cond: [
-                        { $lte: [{ $month: { date: "$bet_date", timezone: "Asia/Bangkok" } }, 9] }, 3, 4
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
+                        { $lte: [{ $month: { date: "$created_at", timezone: "Asia/Bangkok" } }, 9] }, 3, 4
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
           },
           players: { $addToSet: "$user_id" },
-          totalAmount: { $sum: "$total_bet_amount" }
-        }
-      }
+          totalAmount: { $sum: "$amount" },
+        },
+      },
     ]);
 
     const quarterlyCategories = ["Q1", "Q2", "Q3", "Q4"];
@@ -414,7 +485,7 @@ exports.getEngagementStats = async () => {
     return {
       monthly: { categories: monthlyCategories, players: monthlyPlayers, bets: monthlyBets },
       weekly: { categories: weeklyCategories, players: weeklyPlayers, bets: weeklyBets },
-      quarterly: { categories: quarterlyCategories, players: quarterlyPlayers, bets: quarterlyBets }
+      quarterly: { categories: quarterlyCategories, players: quarterlyPlayers, bets: quarterlyBets },
     };
   } catch (error) {
     console.error("Error in getEngagementStats:", error);
@@ -618,7 +689,7 @@ exports.getPlayerReport = async (
           },
         ]);
 
-        // ยอดแทง (ใช้ bet_date สำหรับ UserBet)
+        // ยอดแทง (หวย + เกม)
         let betDateFilter = {};
         if (startDate && endDate) {
           const start = moment(startDate)
@@ -627,31 +698,32 @@ exports.getPlayerReport = async (
             .toDate();
           const end = moment(endDate).tz("Asia/Bangkok").endOf("day").toDate();
           betDateFilter = {
-            bet_date: {
+            created_at: {
               $gte: start,
               $lte: end,
             },
           };
         }
 
-        const bets = await UserBet.aggregate([
+        const bets = await UserTransaction.aggregate([
           {
             $match: {
               user_id: user._id,
-              status: { $ne: "cancelled" },
+              type: "bet",
+              status: { $nin: ["cancelled", "CANCEL"] },
               ...betDateFilter,
             },
           },
           {
             $group: {
               _id: null,
-              total: { $sum: "$total_bet_amount" },
+              total: { $sum: "$amount" },
               count: { $sum: 1 },
             },
           },
         ]);
 
-        // ยอดถูกรางวัล (ใช้ createdAt สำหรับ LotteryWinner)
+        // ยอดถูกรางวัล
         let winDateFilter = {};
         if (startDate && endDate) {
           const start = moment(startDate)
@@ -660,24 +732,37 @@ exports.getPlayerReport = async (
             .toDate();
           const end = moment(endDate).tz("Asia/Bangkok").endOf("day").toDate();
           winDateFilter = {
-            createdAt: {
+            created_at: {
               $gte: start,
               $lte: end,
             },
           };
         }
 
-        const winnings = await LotteryWinner.aggregate([
+        const winnings = await UserTransaction.aggregate([
           {
             $match: {
               user_id: user._id,
+              status: { $nin: ["cancelled", "CANCEL"] },
+              $or: [
+                { type: "payout" },
+                { type: "bet", payout_amount: { $gt: 0 } },
+              ],
               ...winDateFilter,
             },
           },
           {
             $group: {
               _id: null,
-              total: { $sum: "$payout" },
+              total: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$type", "payout"] },
+                    "$amount",
+                    { $ifNull: ["$payout_amount", 0] },
+                  ],
+                },
+              },
               count: { $sum: 1 },
             },
           },
