@@ -6,7 +6,7 @@ const PromotionSchema = new mongoose.Schema(
     description: { type: String, required: true },
     type: {
       type: String,
-      enum: ["daily-deposit", "instant-bonus", "referral", "rebate"],
+      enum: ["daily-deposit", "instant-bonus", "referral", "rebate", "turnover-bonus"],
       required: true,
     },
     target: {

@@ -8,7 +8,7 @@ const userTransactionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["bet", "payout", "deposit", "withdraw", "rebate", "refund"],
+    enum: ["bet", "payout", "deposit", "withdraw", "rebate", "refund", "commission"],
     required: true,
   },
   amount: {
@@ -31,7 +31,7 @@ const userTransactionSchema = new mongoose.Schema({
   ref_model: {
     type: String,
     required: false,
-    enum: ['UserBet', 'Credit', 'Withdrawal']
+    enum: ['UserBet', 'Credit', 'Withdrawal', 'UserCommissionClaim']
   },
   category: {
     type: String,

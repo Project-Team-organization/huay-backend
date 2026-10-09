@@ -6,6 +6,7 @@ const UserTransaction = require("../../models/user.transection.model");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const commissionService = require("../commission/commission.service");
 const { deleteFile } = require("../../middleware/upload.middleware");
+const turnoverService = require("../turnover/turnover.service");
 
 // สร้างคำขอถอนเงิน
 exports.createWithdrawal = async function ({
@@ -34,6 +35,14 @@ exports.createWithdrawal = async function ({
     // เช็คว่า user มีเงินเพียงพอหรือไม่
     if (user.credit < amount) {
       throw new Error("เงินในบัญชีไม่เพียงพอ");
+    }
+
+    // ตรวจสอบยอดเทิร์นโอเวอร์โปรโมชั่น
+    const turnoverStatus = await turnoverService.calculateUserTurnover(user._id);
+    if (!turnoverStatus.canWithdraw) {
+      throw new Error(
+        `ไม่สามารถถอนเงินได้ เนื่องจากยังทำยอดเทิร์นโอเวอร์ไม่ครบตามเงื่อนไขโปรโมชั่น "${turnoverStatus.promotionName}" (ยอดเล่นปัจจุบัน ${Number(turnoverStatus.currentTurnover).toLocaleString()} / ต้องทำ ${Number(turnoverStatus.requiredTurnover).toLocaleString()} บาท - ขาดอีก ${Number(turnoverStatus.remainingTurnover).toLocaleString()} บาท)`
+      );
     }
 
     // ไม่มีค่าธรรมเนียม
@@ -204,7 +213,15 @@ exports.getWithdrawalById = async id => {
       return handleError(null, "กรุณาระบุ ID ของรายการถอนเงิน", 400);
     }
 
-    return await Withdrawal.findById(id).populate("user_id", "username");
+    const withdrawal = await Withdrawal.findById(id).populate("user_id", "username full_name phone credit");
+    if (!withdrawal) return null;
+
+    const doc = withdrawal.toObject ? withdrawal.toObject() : withdrawal;
+    const targetUserId = doc.user_id?._id || doc.user_id;
+    if (targetUserId) {
+      doc.turnover_status = await turnoverService.calculateUserTurnover(targetUserId);
+    }
+    return doc;
   } catch (error) {
     return handleError(error);
   }
@@ -254,8 +271,19 @@ exports.getAllWithdrawals = async function ({
 
     const total = await Withdrawal.countDocuments(query);
 
+    const withdrawalsWithTurnover = await Promise.all(
+      withdrawals.map(async (w) => {
+        const item = w.toObject ? w.toObject() : w;
+        const targetUserId = item.user_id?._id || item.user_id;
+        if (targetUserId) {
+          item.turnover_status = await turnoverService.calculateUserTurnover(targetUserId);
+        }
+        return item;
+      })
+    );
+
     return {
-      data: withdrawals,
+      data: withdrawalsWithTurnover,
       pagination: {
         total,
         page,
@@ -266,6 +294,10 @@ exports.getAllWithdrawals = async function ({
   } catch (error) {
     throw error;
   }
+};
+
+exports.getUserTurnoverStatus = async function (userId) {
+  return await turnoverService.calculateUserTurnover(userId);
 };
 
 // ดึงข้อมูลการถอนเงินของ user

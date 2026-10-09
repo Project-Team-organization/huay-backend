@@ -1,8 +1,45 @@
 const express = require("express");
 const router = express.Router();
 const commissionController = require("../controller/commission/commission.controller");
+const userCommissionController = require("../controller/commission/userCommission.controller");
 const authmiddleware = require("../middleware/authadmin.middleware");
 
+// ================= USER REFERRAL COMMISSION ROUTES =================
+// การตั้งค่าคอมมิชชั่นแนะนำเพื่อน (Admin / Public)
+router.get("/referral/config", userCommissionController.getConfig);
+router.put(
+  "/referral/config",
+  authmiddleware.permissionmanageradmin,
+  userCommissionController.updateConfig
+);
+
+// สรุปข้อมูลคอมมิชชั่นของผู้ใช้งาน
+router.get("/user/summary", authmiddleware.isUser, userCommissionController.getSummary);
+
+// รายชื่อสมาชิกในสายงาน
+router.get("/user/members", authmiddleware.isUser, userCommissionController.getMembers);
+
+// กดรับเงินคอมมิชชั่นเข้ากระเป๋าเครดิตหลัก
+router.post("/user/claim", authmiddleware.isUser, userCommissionController.claimCommission);
+
+// ประวัติค่าคอมมิชชั่นที่ได้รับ
+router.get("/user/logs", authmiddleware.isUser, userCommissionController.getLogs);
+
+// รายการค่าคอมมิชชั่นของ User ทั้งหมด (สำหรับ Admin)
+router.get(
+  "/admin/users",
+  authmiddleware.permissionmanageradmin,
+  userCommissionController.getAllUserCommissions
+);
+
+// ประวัติค่าคอมมิชชั่นของ User รายบุคคล (สำหรับ Admin)
+router.get(
+  "/admin/user/:userId/logs",
+  authmiddleware.permissionmanageradmin,
+  userCommissionController.getAdminUserLogs
+);
+
+// ================= MASTER COMMISSION ROUTES =================
 // ดึงรายงานค่าคอมมิชชั่นของ Master
 router.get(
   "/master/:master_id",

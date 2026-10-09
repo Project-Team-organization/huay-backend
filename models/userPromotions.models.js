@@ -40,6 +40,7 @@ const UserPromotionSchema = new mongoose.Schema(
           amount: { type: Number, default: 0 },
           withdrawable: { type: Boolean, default: false },
           givenAt: { type: Date, default: null },
+          turnoverCompleted: { type: Boolean, default: false },
         },
 
         note: {

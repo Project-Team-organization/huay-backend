@@ -5,6 +5,7 @@ const betController = require("../controller/user/bet/user.bet.controller");
 const authmiddleware = require("../middleware/authadmin.middleware");
 const lotteryController = require("../controller/user/lottery/lottery.controller");
 const lotteryLaoController = require("../controller/user/lottery/huay.lao.controller");
+const userCommissionController = require("../controller/commission/userCommission.controller");
 
 // ค้นหา user สำหรับ select search
 router.get("/search", userController.searchUsers);
@@ -52,5 +53,11 @@ router.get("/huay/:id", lotteryController.getHuayById); // Get Huay by ID
 
 // Get users referred by the authenticated user
 router.get("/referral", authmiddleware.isUser, userController.getUsersReferredByUser);
+
+// User Referral Commission endpoints
+router.get("/commission/summary", authmiddleware.isUser, userCommissionController.getSummary);
+router.get("/commission/members", authmiddleware.isUser, userCommissionController.getMembers);
+router.post("/commission/claim", authmiddleware.isUser, userCommissionController.claimCommission);
+router.get("/commission/logs", authmiddleware.isUser, userCommissionController.getLogs);
 
 module.exports = router;

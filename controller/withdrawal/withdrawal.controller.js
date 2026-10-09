@@ -359,3 +359,30 @@ exports.getWithdrawalSlip = async function (req, res) {
     return res.status(response.status).json(response);
   }
 };
+
+// ดึงสถานะยอดเทิร์นโอเวอร์ของผู้ใช้ (สำหรับ User)
+exports.getTurnoverStatus = async function (req, res) {
+  try {
+    const user_id = req.user._id;
+    const status = await withdrawalService.getUserTurnoverStatus(user_id);
+    const response = await handleSuccess(status, "ดึงสถานะเทิร์นโอเวอร์สำเร็จ", 200);
+    return res.status(200).json(response);
+  } catch (error) {
+    const response = await handleError(error, "Failed to get turnover status", 500);
+    return res.status(500).json(response);
+  }
+};
+
+// ดึงสถานะยอดเทิร์นโอเวอร์ของผู้ใช้ (สำหรับ Admin)
+exports.getUserTurnoverStatusForAdmin = async function (req, res) {
+  try {
+    const { user_id } = req.params;
+    const status = await withdrawalService.getUserTurnoverStatus(user_id);
+    const response = await handleSuccess(status, "ดึงสถานะเทิร์นโอเวอร์สำเร็จ", 200);
+    return res.status(200).json(response);
+  } catch (error) {
+    const response = await handleError(error, "Failed to get turnover status", 500);
+    return res.status(500).json(response);
+  }
+};
+

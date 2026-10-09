@@ -27,6 +27,9 @@ const userSchema = new mongoose.Schema({
     ref: "Master",
     default: null,
   },
+  commission_balance: { type: Number, default: 0 },
+  total_commission_claimed: { type: Number, default: 0 },
+  total_commission_earned: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

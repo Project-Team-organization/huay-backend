@@ -1,6 +1,8 @@
 const User = require("../../models/user.model");
 const HentoryLog = require("../../models/hentoryLog.model");
 const UserTransaction = require("../../models/user.transection.model");
+const turnoverService = require("../turnover/turnover.service");
+const userCommissionService = require("../commission/userCommission.service");
 
 exports.getBalance = async (body, headers, rawBody) => {
   const { id, username, productId, currency } = body;
@@ -161,6 +163,11 @@ exports.placeBets = async (body, headers, rawBody, path) => {
         });
       }
     }
+
+    // บันทึกความคืบหน้ายอดเทิร์นโอเวอร์โปรโมชั่น
+    await turnoverService.recordBetProgress(user._id, totalBetAmount).catch((e) => {
+      console.error("Game turnover record error:", e.message);
+    });
   }
 
   responseData = {
@@ -1320,6 +1327,16 @@ async function logGameTransaction({
       description: description || `Hentory ${type}`,
       created_at: new Date()
     });
+
+    if (newTxn.type === "bet" && newTxn.amount > 0) {
+      userCommissionService.processBetCommission({
+        userId: user_id,
+        betAmount: newTxn.amount,
+        category: "game",
+        refId: newTxn._id,
+      }).catch((e) => console.error("Hentory referral commission error:", e.message));
+    }
+
     return newTxn;
   }
 }

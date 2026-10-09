@@ -3,6 +3,8 @@ const LotteryWinner = require("../../models/lottery_winners.model");
 const UserTransaction = require("../../models/user.transection.model");
 const LotterySets = require("../../models/lotterySets.model");
 const User = require("../../models/user.model");
+const Credit = require("../../models/credit.models");
+const Withdrawal = require("../../models/withdrawal.models");
 const moment = require("moment-timezone");
 
 /**
@@ -134,44 +136,128 @@ exports.getTodayTotalPayouts = async () => {
 };
 
 /**
- * 💵 กำไรสุทธิ (ระบบ)
- * คำนวณจาก: (เงินฝาก - เงินถอน) จาก UserTransaction
+ * 📥 ยอดฝากวันนี้
+ * นับจาก UserTransaction (type: "deposit") หรือ Credit (status: "success")
  */
-exports.getTodayNetProfit = async () => {
+exports.getTodayTotalDeposits = async () => {
   try {
     const startOfDay = moment().tz("Asia/Bangkok").startOf("day").toDate();
     const endOfDay = moment().tz("Asia/Bangkok").endOf("day").toDate();
 
-    const result = await UserTransaction.aggregate([
-      {
-        $match: {
-          created_at: {
-            $gte: startOfDay,
-            $lte: endOfDay,
+    const [txResult, creditResult] = await Promise.all([
+      UserTransaction.aggregate([
+        {
+          $match: {
+            created_at: {
+              $gte: startOfDay,
+              $lte: endOfDay,
+            },
+            type: "deposit",
           },
-          type: { $in: ["deposit", "withdraw"] },
         },
-      },
-      {
-        $group: {
-          _id: "$type",
-          total: { $sum: "$amount" },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: "$amount" },
+          },
         },
-      },
+      ]),
+      Credit.aggregate([
+        {
+          $match: {
+            created_at: {
+              $gte: startOfDay,
+              $lte: endOfDay,
+            },
+            status: "success",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: "$amount" },
+          },
+        },
+      ]),
     ]);
 
-    let deposits = 0;
-    let withdrawals = 0;
+    const txAmount = txResult.length > 0 ? txResult[0].totalAmount : 0;
+    const creditAmount = creditResult.length > 0 ? creditResult[0].totalAmount : 0;
 
-    result.forEach(item => {
-      if (item._id === "deposit") {
-        deposits = item.total;
-      } else if (item._id === "withdraw") {
-        withdrawals = item.total;
-      }
-    });
+    return Number(Math.max(txAmount, creditAmount).toFixed(2));
+  } catch (error) {
+    console.error("Error in getTodayTotalDeposits:", error);
+    throw error;
+  }
+};
 
-    return deposits - withdrawals;
+/**
+ * 📤 ยอดถอนวันนี้
+ * นับจาก UserTransaction (type: "withdraw") หรือ Withdrawal (status: "completed" / "approved")
+ */
+exports.getTodayTotalWithdrawals = async () => {
+  try {
+    const startOfDay = moment().tz("Asia/Bangkok").startOf("day").toDate();
+    const endOfDay = moment().tz("Asia/Bangkok").endOf("day").toDate();
+
+    const [txResult, withdrawalResult] = await Promise.all([
+      UserTransaction.aggregate([
+        {
+          $match: {
+            created_at: {
+              $gte: startOfDay,
+              $lte: endOfDay,
+            },
+            type: "withdraw",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: "$amount" },
+          },
+        },
+      ]),
+      Withdrawal.aggregate([
+        {
+          $match: {
+            created_at: {
+              $gte: startOfDay,
+              $lte: endOfDay,
+            },
+            status: { $in: ["completed", "approved"] },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: "$amount" },
+          },
+        },
+      ]),
+    ]);
+
+    const txAmount = txResult.length > 0 ? txResult[0].totalAmount : 0;
+    const wdAmount = withdrawalResult.length > 0 ? withdrawalResult[0].totalAmount : 0;
+
+    return Number(Math.max(txAmount, wdAmount).toFixed(2));
+  } catch (error) {
+    console.error("Error in getTodayTotalWithdrawals:", error);
+    throw error;
+  }
+};
+
+/**
+ * 💵 กำไรวันนี้ (ยอดฝาก - ยอดถอน)
+ */
+exports.getTodayNetProfit = async () => {
+  try {
+    const [todayDeposits, todayWithdrawals] = await Promise.all([
+      this.getTodayTotalDeposits(),
+      this.getTodayTotalWithdrawals(),
+    ]);
+
+    return Number((todayDeposits - todayWithdrawals).toFixed(2));
   } catch (error) {
     console.error("Error in getTodayNetProfit:", error);
     throw error;
@@ -248,15 +334,24 @@ exports.getTodayLotteryRounds = async () => {
  */
 exports.getDashboardSummary = async () => {
   try {
-    const [totalBets, totalPayouts, totalPlayers, lotteryRounds] =
-      await Promise.all([
-        this.getTodayTotalBets(),
-        this.getTodayTotalPayouts(),
-        this.getTodayTotalPlayers(),
-        this.getTodayLotteryRounds(),
-      ]);
+    const [
+      todayDeposits,
+      todayWithdrawals,
+      totalPlayers,
+      lotteryRounds,
+      totalBets,
+      totalPayouts,
+    ] = await Promise.all([
+      this.getTodayTotalDeposits(),
+      this.getTodayTotalWithdrawals(),
+      this.getTodayTotalPlayers(),
+      this.getTodayLotteryRounds(),
+      this.getTodayTotalBets(),
+      this.getTodayTotalPayouts(),
+    ]);
 
-    const netProfit = Number((totalBets - totalPayouts).toFixed(2));
+    const todayProfit = Number((todayDeposits - todayWithdrawals).toFixed(2));
+    const netProfit = todayProfit;
 
     // ดึง 5 ธุรกรรมล่าสุดจริง
     let recentTransactions = [];
@@ -334,9 +429,12 @@ exports.getDashboardSummary = async () => {
     }
 
     return {
+      todayDeposits,
+      todayWithdrawals,
+      todayProfit,
+      netProfit,
       totalBets,
       totalPayouts,
-      netProfit,
       totalPlayers,
       lotteryRounds,
       recentTransactions,
@@ -786,7 +884,7 @@ exports.getPlayerReport = async (
           netBalance: totalDeposit - totalWithdraw,
           betCount,
           winCount,
-          commission: 0, // ใส่ 0 ไปก่อนตามที่ขอ
+          commission: user.total_commission_earned || 0,
           status: user.active ? "Active" : "Suspended",
         };
       })

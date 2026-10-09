@@ -3,6 +3,7 @@ const router = express.Router();
 const withdrawalController = require("../controller/withdrawal/withdrawal.controller");
 const { isUser } = require("../middleware/authadmin.middleware");
 // Routes สำหรับ User
+router.get("/turnover-status", isUser, withdrawalController.getTurnoverStatus);
 router.post("/create", isUser, withdrawalController.createWithdrawal);
 router.get("/user/:user_id", withdrawalController.getWithdrawalsByUserId);
 router.get(
@@ -14,6 +15,7 @@ router.put("/update/:id", withdrawalController.updateWithdrawal);
 router.put("/cancel/:id", withdrawalController.cancelWithdrawal);
 
 // Routes สำหรับ Admin
+router.get("/turnover-status/:user_id", withdrawalController.getUserTurnoverStatusForAdmin);
 router.get("/get", withdrawalController.getAllWithdrawals);
 router.get("/getbyid/:id", withdrawalController.getWithdrawalById);
 router.put("/approve/:id", withdrawalController.approveWithdrawal);

@@ -6,6 +6,8 @@ const BettingType = require("../../../models/bettingTypes.model");
 const LotteryLimitedNumbers = require("../../../models/lottery_limited_numbers.model");
 const LotteryType = require("../../../models/lotteryType.model");
 const mongoose = require("mongoose");
+const turnoverService = require("../../turnover/turnover.service");
+const userCommissionService = require("../../commission/userCommission.service");
 
 exports.createUserBet = async function (user_id, lottery_set_id, bets) {
   try {
@@ -123,6 +125,22 @@ exports.createUserBet = async function (user_id, lottery_set_id, bets) {
       description: "แทงหวย",
       created_at: new Date(),
     });
+
+    // บันทึกความคืบหน้ายอดเทิร์นโอเวอร์โปรโมชั่น
+    await turnoverService.recordBetProgress(user_id, total_bet_amount).catch((e) => {
+      console.error("Turnover record error:", e.message);
+    });
+
+    // คำนวณและบันทึกค่าคอมมิชชั่นแนะนำเพื่อน (User Referral Commission)
+    await userCommissionService.processBetCommission({
+      userId: user_id,
+      betAmount: total_bet_amount,
+      category: "lottery",
+      refId: bet._id,
+    }).catch((e) => {
+      console.error("Referral commission error:", e.message);
+    });
+
     return bet;
   } catch (error) {
     console.error("❌ createUserBet error:", error.message);
