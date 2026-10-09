@@ -160,9 +160,33 @@ exports.getAgentCredit = async (req, res) => {
   }
 };
 
+// Helper for Thai timezone (UTC+7) date ranges
+function getThaiDateRange(period) {
+  const now = new Date();
+  const thaiNow = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+  const year = thaiNow.getUTCFullYear();
+  const month = thaiNow.getUTCMonth();
+  const date = thaiNow.getUTCDate();
+
+  if (period === 'today') {
+    const start = new Date(Date.UTC(year, month, date, 0, 0, 0, 0) - (7 * 60 * 60 * 1000));
+    const end = new Date(Date.UTC(year, month, date, 23, 59, 59, 999) - (7 * 60 * 60 * 1000));
+    return { start, end };
+  } else if (period === 'this_month') {
+    const start = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0) - (7 * 60 * 60 * 1000));
+    const nextMonth = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999) - (7 * 60 * 60 * 1000));
+    return { start, end: nextMonth };
+  } else if (period === 'this_year') {
+    const start = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0) - (7 * 60 * 60 * 1000));
+    const end = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999) - (7 * 60 * 60 * 1000));
+    return { start, end };
+  }
+  return null;
+}
+
 exports.getBetTransactionsV2 = async (req, res) => {
   try {
-    const { productId, date, startTime, endTime, search } = req.query;
+    const { productId, date, startTime, endTime, startDate, endDate, period, search, nextId, limit = 50 } = req.query;
 
     let query = { category: "game" };
 
@@ -188,25 +212,46 @@ exports.getBetTransactionsV2 = async (req, res) => {
       }
     }
 
-    if (date) {
+    // Date / Period Filter
+    if (period === "all") {
+      // No date filter - all time
+    } else if (period && ["today", "this_month", "this_year"].includes(period)) {
+      const range = getThaiDateRange(period);
+      if (range) {
+        query.created_at = { $gte: range.start, $lte: range.end };
+      }
+    } else if (date) {
       const start = new Date(date + "T00:00:00.000Z");
       const end = new Date(date + "T23:59:59.999Z");
       query.created_at = { $gte: start, $lte: end };
+    } else if (startDate || endDate) {
+      query.created_at = {};
+      if (startDate) query.created_at.$gte = new Date(startDate.includes("T") ? startDate : startDate + "T00:00:00.000Z");
+      if (endDate) query.created_at.$lte = new Date(endDate.includes("T") ? endDate : endDate + "T23:59:59.999Z");
     } else if (startTime || endTime) {
       query.created_at = {};
       if (startTime) query.created_at.$gte = new Date(startTime);
       if (endTime) query.created_at.$lte = new Date(endTime);
     } else {
-      // Default to today
-      const today = new Date().toISOString().split('T')[0];
-      const start = new Date(today + "T00:00:00.000Z");
-      const end = new Date(today + "T23:59:59.999Z");
-      query.created_at = { $gte: start, $lte: end };
+      // Default: today (Thai time range)
+      const range = getThaiDateRange("today");
+      if (range) {
+        query.created_at = { $gte: range.start, $lte: range.end };
+      }
     }
 
+    if (nextId) {
+      const prevTxn = await UserTransaction.findById(nextId).lean();
+      if (prevTxn) {
+        query.created_at = { ...(query.created_at || {}), $lt: prevTxn.created_at };
+      }
+    }
+
+    const pageSize = parseInt(limit, 10) || 50;
     const txns = await UserTransaction.find(query)
       .populate("user_id", "username phone")
       .sort({ created_at: -1 })
+      .limit(pageSize)
       .lean();
 
     const formattedTxns = txns.map(t => {
@@ -244,7 +289,7 @@ exports.getBetTransactionsV2 = async (req, res) => {
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    const { startDate, endDate, search } = req.query;
+    const { startDate, endDate, startTime, endTime, search, period } = req.query;
 
     let query = { category: "game" };
 
@@ -275,15 +320,28 @@ exports.getDashboardStats = async (req, res) => {
       }
     }
 
-    if (startDate || endDate) {
+    // Date / Period Filter
+    if (period === "all") {
+      // No date filter - all time
+    } else if (period && ["today", "this_month", "this_year"].includes(period)) {
+      const range = getThaiDateRange(period);
+      if (range) {
+        query.created_at = { $gte: range.start, $lte: range.end };
+      }
+    } else if (startDate || endDate) {
       query.created_at = {};
-      if (startDate) query.created_at.$gte = new Date(startDate + "T00:00:00.000Z");
-      if (endDate) query.created_at.$lte = new Date(endDate + "T23:59:59.999Z");
+      if (startDate) query.created_at.$gte = new Date(startDate.includes("T") ? startDate : startDate + "T00:00:00.000Z");
+      if (endDate) query.created_at.$lte = new Date(endDate.includes("T") ? endDate : endDate + "T23:59:59.999Z");
+    } else if (startTime || endTime) {
+      query.created_at = {};
+      if (startTime) query.created_at.$gte = new Date(startTime);
+      if (endTime) query.created_at.$lte = new Date(endTime);
     } else {
-      // Default to last 30 days
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      query.created_at = { $gte: thirtyDaysAgo };
+      // Default: today (Thai time range) so it matches bet transactions default
+      const range = getThaiDateRange("today");
+      if (range) {
+        query.created_at = { $gte: range.start, $lte: range.end };
+      }
     }
 
     const txns = await UserTransaction.find(query).lean();
