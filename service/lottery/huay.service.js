@@ -1081,6 +1081,7 @@ async function processlotterythai(lottery_set_id, createdBy, lottery_set) {
           num.is_won = isWinner;
         });
       });
+      userBet.payout_amount = totalWinAmount;
       userBet.updated_at = new Date();
       await userBet.save();
 
@@ -1319,6 +1320,7 @@ async function processlotterylaohd(
           num.is_won = isWinner;
         });
       });
+      userBet.payout_amount = totalWinAmount;
       userBet.updated_at = new Date();
       await userBet.save();
 
@@ -1590,6 +1592,7 @@ const processLotteryWinners = async (
         num.is_won = isWinner;
       });
     });
+    userBet.payout_amount = totalWinAmount;
     userBet.updated_at = new Date();
     await userBet.save();
 

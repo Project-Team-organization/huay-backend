@@ -1041,7 +1041,7 @@ cron.schedule(
       const {
         calculateAndProcessWeeklyCashback,
       } = require("../service/cashback/cashback.service");
-      const result = await calculateAndProcessWeeklyCashback();
+      const result = await calculateAndProcessWeeklyCashback(null, false);
       console.log(
         `[${new Date().toLocaleString("th-TH", {
           timeZone: "Asia/Bangkok",

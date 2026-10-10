@@ -79,8 +79,11 @@ exports.getHistory = async (req, res) => {
  */
 exports.triggerManualProcess = async (req, res) => {
   try {
-    const { targetDate } = req.body;
-    const result = await cashbackService.calculateAndProcessWeeklyCashback(targetDate);
+    const { targetDate, period } = req.body;
+    const result = await cashbackService.calculateAndProcessWeeklyCashback(
+      targetDate || period || null,
+      true // isManual = true
+    );
     return res.status(200).json(result);
   } catch (error) {
     console.error("Error in triggerManualProcess:", error);

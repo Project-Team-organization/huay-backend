@@ -44,40 +44,69 @@ exports.updateCashbackConfig = async (updateData, adminId = null) => {
 
 /**
  * 🔄 คำนวณและปรับเครดิตคืนยอดเสียรายสัปดาห์
- * @param {Date|string} targetDate วันที่ใช้อ้างอิงสัปดาห์ (default: สัปดาห์ก่อนหน้า)
+ * @param {Date|string} targetDate วันที่ใช้อ้างอิงสัปดาห์ (default: ถ้าเป็น Manual ตัดรอบสัปดาห์ปัจจุบันทันที / ถ้าเป็น Cron ตัดรอบสัปดาห์ก่อนหน้า)
+ * @param {boolean} isManual สั่งรันแบบ Manual หรือไม่
  */
-exports.calculateAndProcessWeeklyCashback = async (targetDate = null) => {
+exports.calculateAndProcessWeeklyCashback = async (targetDate = null, isManual = false) => {
   const config = await exports.getCashbackConfig();
   if (!config.is_active) {
     return { success: false, message: "ระบบคืนยอดเสียปิดใช้งานอยู่" };
   }
 
-  // คำนวณช่วงเวลาสัปดาห์ที่แล้ว (วันจันทร์ 00:00:00 ถึง วันอาทิตย์ 23:59:59)
-  const baseMoment = targetDate
-    ? moment(targetDate).tz("Asia/Bangkok")
-    : moment().tz("Asia/Bangkok").subtract(1, "weeks");
+  // ถ้าเป็นระบบอัตโนมัติ (Cron) แต่แอดมินปิดการตัดจ่ายอัตโนมัติไว้
+  if (!isManual && !config.is_auto_payout) {
+    return { success: false, message: "ระบบตัดจ่ายคืนยอดเสียอัตโนมัติถูกปิดใช้งาน" };
+  }
+
+  // คำนวณช่วงเวลาสัปดาห์
+  // - ถ้าเป็น Manual Run และไม่ระบุวันที่ ให้ตัดยอดรอบปัจจุบัน (Current Week) ได้ทันที เพื่อให้ดูผลและตรวจสอบได้ง่าย
+  // - ถ้าเป็น Cron Job (วันจันทร์ 00:05) ให้ตัดยอดของสัปดาห์ก่อนหน้า (Previous Week)
+  let baseMoment;
+  if (targetDate) {
+    if (targetDate === "current") {
+      baseMoment = moment().tz("Asia/Bangkok");
+    } else if (targetDate === "previous") {
+      baseMoment = moment().tz("Asia/Bangkok").subtract(1, "weeks");
+    } else {
+      baseMoment = moment(targetDate).tz("Asia/Bangkok");
+    }
+  } else {
+    baseMoment = isManual
+      ? moment().tz("Asia/Bangkok")
+      : moment().tz("Asia/Bangkok").subtract(1, "weeks");
+  }
 
   const startDate = baseMoment.clone().startOf("isoWeek").toDate(); // วันจันทร์ 00:00:00
   const endDate = baseMoment.clone().endOf("isoWeek").toDate();     // วันอาทิตย์ 23:59:59
 
-  // 1. ดึงรายการเดิมพันหวย (UserBet) ที่สรุปผลแล้วช่วงสัปดาห์นั้น
-  const lotteryAgg = await UserBet.aggregate([
+  // 1. ดึงรายการเดิมพันหวย (UserTransaction category: "lottery") ช่วงสัปดาห์นั้น
+  const lotteryAgg = await UserTransaction.aggregate([
     {
       $match: {
         created_at: { $gte: startDate, $lte: endDate },
-        status: { $in: ["won", "lost"] },
+        category: "lottery",
+        status: { $ne: "CANCEL" },
       },
     },
     {
       $group: {
         _id: "$user_id",
-        totalBet: { $sum: "$total_bet_amount" },
-        totalPayout: { $sum: "$payout_amount" },
+        totalBet: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "bet"] }, "$amount", 0],
+          },
+        },
+        totalPayout: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "payout"] }, "$amount", 0],
+          },
+        },
       },
     },
   ]);
 
   // 2. ดึงรายการเดิมพันเกม (UserTransaction category: "game") ช่วงสัปดาห์นั้น
+  // แยก type: "bet" (ยอดแทง) และ type: "payout" / payout_amount (ยอดเงินรางวัล) อย่างถูกต้อง
   const gameAgg = await UserTransaction.aggregate([
     {
       $match: {
@@ -89,8 +118,20 @@ exports.calculateAndProcessWeeklyCashback = async (targetDate = null) => {
     {
       $group: {
         _id: "$user_id",
-        totalBet: { $sum: "$amount" },
-        totalPayout: { $sum: "$payout_amount" },
+        totalBet: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "bet"] }, "$amount", 0],
+          },
+        },
+        totalPayout: {
+          $sum: {
+            $cond: [
+              { $eq: ["$type", "payout"] },
+              "$amount",
+              { $ifNull: ["$payout_amount", 0] },
+            ],
+          },
+        },
       },
     },
   ]);
@@ -135,9 +176,9 @@ exports.calculateAndProcessWeeklyCashback = async (targetDate = null) => {
 
   for (const item of userMap.values()) {
     const userId = item.userId;
-    const totalBet = item.totalBet || 0;
-    const totalPayout = item.totalPayout || 0;
-    const netLoss = totalBet - totalPayout;
+    const totalBet = Number((item.totalBet || 0).toFixed(2));
+    const totalPayout = Number((item.totalPayout || 0).toFixed(2));
+    const netLoss = Number(Math.max(0, totalBet - totalPayout).toFixed(2));
 
     // ตรวจสอบเงื่อนไขยอดเสียสุทธิ
     if (netLoss <= 0 || netLoss < config.min_loss_amount) {
@@ -169,7 +210,7 @@ exports.calculateAndProcessWeeklyCashback = async (targetDate = null) => {
     if (!user) continue;
 
     const balanceBefore = user.credit || 0;
-    const balanceAfter = balanceBefore + cashbackAmount;
+    const balanceAfter = Number((balanceBefore + cashbackAmount).toFixed(2));
 
     user.credit = balanceAfter;
     await user.save();
@@ -186,6 +227,9 @@ exports.calculateAndProcessWeeklyCashback = async (targetDate = null) => {
       status: "success",
     });
 
+    const lotteryLoss = Number(Math.max(0, (item.lotteryBet || 0) - (item.lotteryPayout || 0)).toFixed(2));
+    const gameLoss = Number(Math.max(0, (item.gameBet || 0) - (item.gamePayout || 0)).toFixed(2));
+
     // บันทึก Log
     const log = await CashbackLog.create({
       user_id: userId,
@@ -193,25 +237,29 @@ exports.calculateAndProcessWeeklyCashback = async (targetDate = null) => {
       end_date: endDate,
       total_bet: totalBet,
       total_payout: totalPayout,
-      lottery_bet: item.lotteryBet,
-      lottery_payout: item.lotteryPayout,
-      game_bet: item.gameBet,
-      game_payout: item.gamePayout,
+      lottery_bet: Number((item.lotteryBet || 0).toFixed(2)),
+      lottery_payout: Number((item.lotteryPayout || 0).toFixed(2)),
+      game_bet: Number((item.gameBet || 0).toFixed(2)),
+      game_payout: Number((item.gamePayout || 0).toFixed(2)),
       net_loss: netLoss,
       cashback_rate: config.percentage,
       cashback_amount: cashbackAmount,
       status: "completed",
-      remark: `คืนยอดเสีย ${config.percentage}% (หวยเสีย: ${item.lotteryBet - item.lotteryPayout}, เกมเสีย: ${item.gameBet - item.gamePayout})`,
+      remark: `คืนยอดเสีย ${config.percentage}% (หวยเสีย: ${lotteryLoss}, เกมเสีย: ${gameLoss})`,
     });
 
     processedCount++;
-    totalCashbackPaid += cashbackAmount;
+    totalCashbackPaid = Number((totalCashbackPaid + cashbackAmount).toFixed(2));
     logs.push(log);
   }
 
+  const periodText = isManual && (!targetDate || targetDate === "current")
+    ? `รอบปัจจุบัน (${moment(startDate).format("DD/MM/YYYY")} - ${moment(endDate).format("DD/MM/YYYY")})`
+    : `รอบวันที่ (${moment(startDate).format("DD/MM/YYYY")} - ${moment(endDate).format("DD/MM/YYYY")})`;
+
   return {
     success: true,
-    message: `ประมวลผลคืนยอดเสียสำเร็จ ${processedCount} รายการ รวมเป็นเงิน ${totalCashbackPaid} บาท`,
+    message: `ประมวลผลคืนยอดเสีย${periodText}สำเร็จ ${processedCount} รายการ รวมเป็นเงิน ${totalCashbackPaid} บาท`,
     startDate,
     endDate,
     processedCount,
@@ -284,23 +332,34 @@ exports.getUserCashbackSummary = async (userId) => {
 
   const userObjectId = new (require("mongoose").Types.ObjectId)(userId);
 
-  const lotteryAgg = await UserBet.aggregate([
+  // 1. ดึงรายการเดิมพันหวย (UserTransaction category: "lottery")
+  const lotteryAgg = await UserTransaction.aggregate([
     {
       $match: {
         user_id: userObjectId,
         created_at: { $gte: startDate, $lte: endDate },
-        status: { $in: ["won", "lost"] },
+        category: "lottery",
+        status: { $ne: "CANCEL" },
       },
     },
     {
       $group: {
         _id: null,
-        totalBet: { $sum: "$total_bet_amount" },
-        totalPayout: { $sum: "$payout_amount" },
+        totalBet: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "bet"] }, "$amount", 0],
+          },
+        },
+        totalPayout: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "payout"] }, "$amount", 0],
+          },
+        },
       },
     },
   ]);
 
+  // 2. ดึงรายการเดิมพันเกม (UserTransaction category: "game")
   const gameAgg = await UserTransaction.aggregate([
     {
       $match: {
@@ -313,21 +372,33 @@ exports.getUserCashbackSummary = async (userId) => {
     {
       $group: {
         _id: null,
-        totalBet: { $sum: "$amount" },
-        totalPayout: { $sum: "$payout_amount" },
+        totalBet: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "bet"] }, "$amount", 0],
+          },
+        },
+        totalPayout: {
+          $sum: {
+            $cond: [
+              { $eq: ["$type", "payout"] },
+              "$amount",
+              { $ifNull: ["$payout_amount", 0] },
+            ],
+          },
+        },
       },
     },
   ]);
 
-  const lotteryBet = lotteryAgg.length > 0 ? lotteryAgg[0].totalBet : 0;
-  const lotteryPayout = lotteryAgg.length > 0 ? lotteryAgg[0].totalPayout : 0;
+  const lotteryBet = lotteryAgg.length > 0 ? Number(lotteryAgg[0].totalBet.toFixed(2)) : 0;
+  const lotteryPayout = lotteryAgg.length > 0 ? Number(lotteryAgg[0].totalPayout.toFixed(2)) : 0;
 
-  const gameBet = gameAgg.length > 0 ? gameAgg[0].totalBet : 0;
-  const gamePayout = gameAgg.length > 0 ? gameAgg[0].totalPayout : 0;
+  const gameBet = gameAgg.length > 0 ? Number(gameAgg[0].totalBet.toFixed(2)) : 0;
+  const gamePayout = gameAgg.length > 0 ? Number(gameAgg[0].totalPayout.toFixed(2)) : 0;
 
-  const totalBet = lotteryBet + gameBet;
-  const totalPayout = lotteryPayout + gamePayout;
-  const netLoss = Math.max(0, totalBet - totalPayout);
+  const totalBet = Number((lotteryBet + gameBet).toFixed(2));
+  const totalPayout = Number((lotteryPayout + gamePayout).toFixed(2));
+  const netLoss = Number(Math.max(0, totalBet - totalPayout).toFixed(2));
 
   let estimatedCashback = 0;
   if (config.is_active && netLoss >= config.min_loss_amount) {
@@ -353,6 +424,10 @@ exports.getUserCashbackSummary = async (userId) => {
       end_date: endDate,
       total_bet: totalBet,
       total_payout: totalPayout,
+      lottery_bet: lotteryBet,
+      lottery_payout: lotteryPayout,
+      game_bet: gameBet,
+      game_payout: gamePayout,
       net_loss: netLoss,
       estimated_cashback: estimatedCashback,
     },
