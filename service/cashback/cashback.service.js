@@ -280,12 +280,12 @@ exports.getCashbackHistory = async (query = {}) => {
   const filter = {};
 
   if (startDate || endDate) {
-    filter.created_at = {};
+    filter.createdAt = {};
     if (startDate) {
-      filter.created_at.$gte = moment(startDate).tz("Asia/Bangkok").startOf("day").toDate();
+      filter.createdAt.$gte = moment(startDate).tz("Asia/Bangkok").startOf("day").toDate();
     }
     if (endDate) {
-      filter.created_at.$lte = moment(endDate).tz("Asia/Bangkok").endOf("day").toDate();
+      filter.createdAt.$lte = moment(endDate).tz("Asia/Bangkok").endOf("day").toDate();
     }
   }
 
@@ -305,7 +305,7 @@ exports.getCashbackHistory = async (query = {}) => {
   const total = await CashbackLog.countDocuments(filter);
   const logs = await CashbackLog.find(filter)
     .populate("user_id", "username full_name phone credit")
-    .sort({ created_at: -1 })
+    .sort({ createdAt: -1, _id: -1 })
     .skip(skip)
     .limit(limitNum);
 
@@ -410,7 +410,7 @@ exports.getUserCashbackSummary = async (userId) => {
 
   // ดึงประวัติได้รับคืนยอดเสียนัดล่าสุด
   const lastCashback = await CashbackLog.findOne({ user_id: userId })
-    .sort({ created_at: -1 });
+    .sort({ createdAt: -1, _id: -1 });
 
   return {
     config: {

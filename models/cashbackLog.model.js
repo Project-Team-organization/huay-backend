@@ -64,6 +64,13 @@ const cashbackLogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+cashbackLogSchema.virtual("created_at").get(function () {
+  return this.createdAt;
+});
+
+cashbackLogSchema.set("toJSON", { virtuals: true });
+cashbackLogSchema.set("toObject", { virtuals: true });
+
 cashbackLogSchema.index({ user_id: 1, start_date: 1 }, { unique: true });
 
 module.exports = mongoose.model("CashbackLog", cashbackLogSchema);
