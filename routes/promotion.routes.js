@@ -10,6 +10,8 @@ router.post("/createByUserID", promotionController.createPromotionByUserID);
 router.get("/", promotionController.getAllPromotions);
 router.get("/user", promotionController.getAllUserPromotions);
 router.get("/user/:id", promotionController.getUserPromotionsById);
+// NOTE: "/public" must be declared before "/:id" or it is swallowed as an id.
+router.get("/public", promotionController.getPublicPromotions);
 router.get("/:id", promotionController.getPromotionById);
 router.put("/:id", promotionController.updatePromotion);
 router.patch("/:id", promotionController.updatePromotion);

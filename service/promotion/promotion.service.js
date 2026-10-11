@@ -147,6 +147,23 @@ exports.getAllPromotions = async function ({ page = 1, limit = 10 }) {
   }
 };
 
+// Public list for the player site: active, currently valid, visible to everyone.
+exports.getPublicPromotions = async function () {
+  const now = new Date();
+  return Promotion.find({
+    active: true,
+    target: { $in: ["all", "normal"] },
+    $and: [
+      { $or: [{ startDate: { $lte: now } }, { startDate: null }] },
+      { $or: [{ endDate: null }, { endDate: { $gte: now } }] },
+    ],
+  })
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .populate({ path: "images", options: { sort: { createdAt: 1 } } })
+    .lean();
+};
+
 exports.uploadService = async (file, promotionId, description, req) => {
   try {
     const promotionExists = await Promotion.findById(promotionId);

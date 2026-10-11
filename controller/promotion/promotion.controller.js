@@ -5,6 +5,7 @@ const {
   handleSuccessResetResponse,
 } = require("../../utils/responseHandler");
 const { isValidObjectId } = require("../../utils/utils");
+const { toPublicPromotion } = require("../../utils/promotionPublic");
 require("dotenv").config();
 
 exports.createPromotion = async (req, res) => {
@@ -124,6 +125,20 @@ exports.getAllPromotions = async (req, res) => {
     return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(error, "Failed to get all promotions");
+    return res.status(response.status).json(response);
+  }
+};
+
+exports.getPublicPromotions = async (req, res) => {
+  try {
+    const promotions = await promotionService.getPublicPromotions();
+    const response = await handleSuccess(
+      promotions.map(toPublicPromotion),
+      "ดึงข้อมูลโปรโมชั่นสำเร็จ"
+    );
+    return res.status(response.status).json(response);
+  } catch (error) {
+    const response = await handleError(error, "ไม่สามารถดึงข้อมูลโปรโมชั่นได้");
     return res.status(response.status).json(response);
   }
 };
