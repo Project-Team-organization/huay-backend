@@ -20,6 +20,7 @@ const reportMasterRoutes = require("./reportmaster.routes");
 const hentoryRoutes = require("./hentory.routes");
 const hentoryCallbackRoutes = require("./hentory.callback.routes");
 const logoRoutes = require("./logo.routes");
+const siteSettingRoutes = require("./siteSetting.routes");
 const promoBannerRoutes = require("./promoBanner.routes");
 const seamlessAdminRoutes = require("./seamless.admin.routes");
 const cashbackRoutes = require("./cashback.routes");
@@ -103,6 +104,7 @@ router.use("/provider", hentoryRoutes);
 router.use("/callback/hentory", hentoryCallbackRoutes);
 
 router.use("/logo", logoRoutes);
+router.use("/site-settings", siteSettingRoutes);
 router.use("/admin/seamless", seamlessAdminRoutes);
 router.use("/cashback", cashbackRoutes);
 router.use("/system-bank", systemBankRoutes);

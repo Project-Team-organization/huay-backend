@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 
+const ALLOWED_TYPES = ["login", "sidebar", "favicon"];
 const uploadDir = path.join(__dirname, "../../uploads/logos");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -35,11 +36,11 @@ const upload = multer({
 exports.uploadLogo = [
   (req, res, next) => {
     const { type } = req.params;
-    if (!["login", "sidebar"].includes(type)) {
+    if (!ALLOWED_TYPES.includes(type)) {
       return res.status(400).json({
         success: false,
         status: 400,
-        message: "type ต้องเป็น login หรือ sidebar เท่านั้น",
+        message: "type ต้องเป็น login, sidebar หรือ favicon เท่านั้น",
       });
     }
     next();
@@ -68,8 +69,8 @@ exports.uploadLogo = [
 exports.getLogo = async (req, res) => {
   try {
     const { type } = req.params;
-    if (!["login", "sidebar"].includes(type)) {
-      const response = await handleError(null, "type ต้องเป็น login หรือ sidebar เท่านั้น", 400);
+    if (!ALLOWED_TYPES.includes(type)) {
+      const response = await handleError(null, "type ต้องเป็น login, sidebar หรือ favicon เท่านั้น", 400);
       return res.status(response.status).json(response);
     }
 
