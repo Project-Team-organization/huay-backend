@@ -1,6 +1,7 @@
 const withdrawalService = require("../../service/withdrawal/withdrawal.service");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const { optionalFileUpload } = require("../../middleware/upload.middleware");
+const { emitToAdmin } = require("../../utils/socket");
 
 // สร้างคำขอถอนเงิน
 exports.createWithdrawal = async function (req, res) {
@@ -30,6 +31,25 @@ exports.createWithdrawal = async function (req, res) {
       withdrawal,
       "สร้างคำขอถอนเงินสำเร็จ รอการอนุมัติ",
     );
+
+    // แจ้งเตือน real-time ไปยัง Admin
+    try {
+      emitToAdmin("new_transaction", {
+        type: "withdrawal",
+        id: withdrawal._id,
+        amount: withdrawal.amount,
+        username: req.user?.username || req.user?.phone || req.user?.name || "สมาชิก",
+        user_id: user_id,
+        bank_name: withdrawal.bank_name,
+        bank_number: withdrawal.bank_number,
+        account_name: withdrawal.account_name,
+        created_at: withdrawal.created_at || new Date(),
+        message: `มีคำขอถอนเงินใหม่ ฿${Number(withdrawal.amount).toLocaleString()}`,
+      });
+    } catch (err) {
+      console.error("Error emitting new_transaction for withdrawal:", err);
+    }
+
     return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(

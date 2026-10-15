@@ -1,4 +1,5 @@
 const express = require("express");
+const http = require("http");
 const { lens } = require("@lensjs/express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
@@ -7,6 +8,7 @@ const path = require("path");
 const connectDB = require("./config/db");
 const config = require("./config/config");
 const routes = require("./routes");
+const { initSocket } = require("./utils/socket");
 
 // Import cron job functions
 require("./cronjob/cronjob_set");
@@ -14,6 +16,10 @@ require("./cronjob/cleanup.logs");
 
 async function startServer() {
   const app = express();
+  const server = http.createServer(app);
+
+  // setup socket.io
+  initSocket(server);
 
   // setup lens monitoring
   await lens({
@@ -87,8 +93,8 @@ async function startServer() {
   console.log("📋 End of Routes\n");
 
   // start server
-  app.listen(config.port, () =>
-    console.log(`API running on port ${config.port}`),
+  server.listen(config.port, () =>
+    console.log(`API and Socket running on port ${config.port}`),
   );
 }
 

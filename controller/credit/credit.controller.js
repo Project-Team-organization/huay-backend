@@ -4,6 +4,7 @@ const {
   optionalFileUpload,
   requiredFileUpload,
 } = require("../../middleware/upload.middleware");
+const { emitToAdmin } = require("../../utils/socket");
 
 exports.createCredit = [
   optionalFileUpload("slip_image"),
@@ -96,6 +97,23 @@ exports.createCreditUser = [
         credit,
         "สร้างคำขอเติมเงินสำเร็จ รอการอนุมัติ",
       );
+
+      // แจ้งเตือน real-time ไปยัง Admin
+      try {
+        emitToAdmin("new_transaction", {
+          type: "deposit",
+          id: credit._id,
+          amount: credit.amount,
+          username: req.user?.username || req.user?.phone || req.user?.name || "สมาชิก",
+          user_id: user_id,
+          channel: credit.channel,
+          created_at: credit.created_at || new Date(),
+          message: `มีคำขอฝากเงินใหม่ ฿${Number(credit.amount).toLocaleString()}`,
+        });
+      } catch (err) {
+        console.error("Error emitting new_transaction for deposit:", err);
+      }
+
       return res.status(response.status).json(response);
     } catch (error) {
       const response = await handleError(error);
