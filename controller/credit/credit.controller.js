@@ -57,10 +57,24 @@ exports.createCredit = [
       // ตรวจสอบว่าเป็น admin เติมเงิน (success) หรือ user ฝาก (pending)
       const message =
         credit.status === "success"
-          ? "เติมเงินสำเร็จ"
-          : "สร้างคำขอเติมเงินสำเร็จ รอการอนุมัติ";
-
       const response = await handleSuccess(credit, message);
+
+      // แจ้งเตือน real-time ไปยัง Admin
+      try {
+        emitToAdmin("new_transaction", {
+          type: "deposit",
+          id: credit._id,
+          amount: credit.amount,
+          username: credit.user_id?.full_name || credit.user_id?.username || "สมาชิก",
+          user_id: user_id,
+          channel: credit.channel || "bank_transfer",
+          created_at: credit.created_at || new Date(),
+          message: `มีคำขอฝากเงินใหม่ ฿${Number(credit.amount).toLocaleString()}`,
+        });
+      } catch (err) {
+        console.error("Error emitting new_transaction for deposit in createCredit:", err);
+      }
+
       return res.status(response.status).json(response);
     } catch (error) {
       const response = await handleError(error);

@@ -2,51 +2,40 @@ const { Server } = require("socket.io");
 
 let io = null;
 
-const allowedOrigins = [
-  "https://admin.kaojing.online",
-  "https://xian.kaojing.online",
-  "https://asia.kaojing.online",
-  "https://kaojing.online",
-  "https://admin.luckyk168.com",
-  "https://sain.luckyk168.com",
-  "https://www.luckyk168.com",
-  "https://luckyk168.com",
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "https://asian.luckyk168.com",
-];
-
 function initSocket(server) {
   io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl, server-to-server) or matching allowed list
-        if (!origin || allowedOrigins.includes(origin) || origin.startsWith("http://localhost")) {
-          return callback(null, true);
-        }
-        return callback(null, true); // Permissive for local/dev
+        // Allow all origins (reflection) for development & production
+        // This prevents any CORS mismatch between localhost, 127.0.0.1, and domain names
+        return callback(null, true);
       },
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       credentials: true,
     },
+    allowEIO3: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
   });
 
   io.on("connection", (socket) => {
-    // console.log(`🔌 Client connected to Socket.io: ${socket.id}`);
+    const origin = socket.handshake.headers.origin || socket.handshake.address;
+    console.log(`🔌 [Socket.io] Client connected: ${socket.id} from ${origin}`);
 
     // Join admin room
     socket.on("join_admin_room", () => {
       socket.join("admin_room");
-      // console.log(`🛡️ Socket ${socket.id} joined admin_room`);
+      console.log(`🛡️ [Socket.io] Socket ${socket.id} joined admin_room`);
       socket.emit("joined_admin_room_success", { status: true, time: new Date() });
     });
 
     socket.on("leave_admin_room", () => {
       socket.leave("admin_room");
+      console.log(`🚪 [Socket.io] Socket ${socket.id} left admin_room`);
     });
 
-    socket.on("disconnect", () => {
-      // console.log(`🔌 Client disconnected from Socket.io: ${socket.id}`);
+    socket.on("disconnect", (reason) => {
+      console.log(`❌ [Socket.io] Client disconnected: ${socket.id} (${reason})`);
     });
   });
 
@@ -60,15 +49,22 @@ function getIO() {
 
 /**
  * Emit an event to all admin clients
- * @param {string} event - Event name (e.g. 'new_deposit', 'new_withdrawal')
+ * @param {string} event - Event name (e.g. 'new_deposit', 'new_withdrawal', 'new_transaction')
  * @param {object} data - Payload
  */
 function emitToAdmin(event, data) {
   if (!io) {
-    console.warn("⚠️ Socket.io not initialized yet. Skipping emit:", event);
+    console.warn("⚠️ [Socket.io] Not initialized yet. Skipping emit:", event);
     return;
   }
-  // Emit to admin_room and broadcast
+  const connectedCount = io.engine?.clientsCount || 0;
+  console.log(`📡 [Socket.io] Emitting '${event}' to ${connectedCount} connected client(s):`, {
+    type: data.type,
+    amount: data.amount,
+    user: data.username,
+  });
+
+  // Emit to admin_room AND broadcast to root so any connected admin receives it
   io.to("admin_room").emit(event, data);
   io.emit(event, data);
 }
