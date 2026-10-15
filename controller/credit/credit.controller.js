@@ -4,7 +4,7 @@ const {
   optionalFileUpload,
   requiredFileUpload,
 } = require("../../middleware/upload.middleware");
-const { emitToAdmin } = require("../../utils/socket");
+const { emitToAdmin, emitToUser } = require("../../utils/socket");
 
 exports.createCredit = [
   optionalFileUpload("slip_image"),
@@ -254,6 +254,21 @@ exports.approveCredit = async function (req, res) {
     const { id } = req.params;
     const credit = await creditService.approveCredit({ id });
 
+    // แจ้งเตือนไปยัง User เจ้าของบิล
+    try {
+      if (credit && credit.user_id) {
+        emitToUser(credit.user_id, "transaction_status_updated", {
+          type: "deposit",
+          status: "approved",
+          id: credit._id,
+          amount: credit.amount,
+          message: `การฝากเงินของคุณจำนวน ฿${Number(credit.amount).toLocaleString()} ได้รับการอนุมัติแล้ว`,
+        });
+      }
+    } catch (err) {
+      console.error("Error emitting to user in approveCredit:", err);
+    }
+
     const response = await handleSuccess(credit, "อนุมัติการฝากเงินสำเร็จ");
     return res.status(response.status).json(response);
   } catch (error) {
@@ -266,6 +281,21 @@ exports.cancelCredit = async function (req, res) {
   try {
     const { id } = req.params;
     const credit = await creditService.cancelCredit({ id });
+
+    // แจ้งเตือนไปยัง User เจ้าของบิล
+    try {
+      if (credit && credit.user_id) {
+        emitToUser(credit.user_id, "transaction_status_updated", {
+          type: "deposit",
+          status: "rejected",
+          id: credit._id,
+          amount: credit.amount,
+          message: `คำขอฝากเงินของคุณจำนวน ฿${Number(credit.amount).toLocaleString()} ถูกปฏิเสธ`,
+        });
+      }
+    } catch (err) {
+      console.error("Error emitting to user in cancelCredit:", err);
+    }
 
     const response = await handleSuccess(credit, "ยกเลิกการฝากเงินสำเร็จ");
     return res.status(response.status).json(response);

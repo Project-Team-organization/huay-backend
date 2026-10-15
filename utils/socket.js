@@ -34,6 +34,24 @@ function initSocket(server) {
       console.log(`🚪 [Socket.io] Socket ${socket.id} left admin_room`);
     });
 
+    // Join user specific room
+    socket.on("join_user_room", (userId) => {
+      if (userId) {
+        const cleanId = String(userId?._id || userId);
+        const roomName = `user_${cleanId}`;
+        socket.join(roomName);
+        console.log(`👤 [Socket.io] Socket ${socket.id} joined ${roomName}`);
+        socket.emit("joined_user_room_success", { status: true, room: roomName });
+      }
+    });
+
+    socket.on("leave_user_room", (userId) => {
+      if (userId) {
+        const cleanId = String(userId?._id || userId);
+        socket.leave(`user_${cleanId}`);
+      }
+    });
+
     socket.on("disconnect", (reason) => {
       console.log(`❌ [Socket.io] Client disconnected: ${socket.id} (${reason})`);
     });
@@ -69,8 +87,30 @@ function emitToAdmin(event, data) {
   io.emit(event, data);
 }
 
+/**
+ * Emit an event to a specific user
+ * @param {string|object} userId - User's MongoDB _id
+ * @param {string} event - Event name (e.g. 'transaction_status_updated')
+ * @param {object} data - Payload
+ */
+function emitToUser(userId, event, data) {
+  if (!io) {
+    console.warn("⚠️ [Socket.io] Not initialized yet. Skipping emit to user:", userId);
+    return;
+  }
+  const cleanUserId = String(userId?._id || userId);
+  const roomName = `user_${cleanUserId}`;
+  console.log(`📡 [Socket.io] Emitting '${event}' to room ${roomName}:`, {
+    type: data.type,
+    status: data.status,
+    amount: data.amount,
+  });
+  io.to(roomName).emit(event, data);
+}
+
 module.exports = {
   initSocket,
   getIO,
   emitToAdmin,
+  emitToUser,
 };

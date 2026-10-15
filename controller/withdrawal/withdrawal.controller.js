@@ -1,7 +1,7 @@
 const withdrawalService = require("../../service/withdrawal/withdrawal.service");
 const { handleSuccess, handleError } = require("../../utils/responseHandler");
 const { optionalFileUpload } = require("../../middleware/upload.middleware");
-const { emitToAdmin } = require("../../utils/socket");
+const { emitToAdmin, emitToUser } = require("../../utils/socket");
 
 // สร้างคำขอถอนเงิน
 exports.createWithdrawal = async function (req, res) {
@@ -198,6 +198,22 @@ exports.approveWithdrawal = [
         withdrawal,
         "อนุมัติการถอนเงินสำเร็จ",
       );
+
+      // แจ้งเตือนไปยัง User เจ้าของคำขอถอนเงิน
+      try {
+        if (withdrawal && withdrawal.user_id) {
+          emitToUser(withdrawal.user_id, "transaction_status_updated", {
+            type: "withdrawal",
+            status: "approved",
+            id: withdrawal._id,
+            amount: withdrawal.amount,
+            message: `การถอนเงินของคุณจำนวน ฿${Number(withdrawal.amount).toLocaleString()} ได้รับการอนุมัติและโอนเงินเรียบร้อยแล้ว`,
+          });
+        }
+      } catch (err) {
+        console.error("Error emitting to user in approveWithdrawal:", err);
+      }
+
       return res.status(response.status).json(response);
     } catch (error) {
       const response = await handleError(
@@ -221,6 +237,22 @@ exports.rejectWithdrawal = async function (req, res) {
       rejectedReason,
       approvedBy,
     });
+
+    // แจ้งเตือนไปยัง User เจ้าของคำขอถอนเงิน
+    try {
+      if (withdrawal && withdrawal.user_id) {
+        emitToUser(withdrawal.user_id, "transaction_status_updated", {
+          type: "withdrawal",
+          status: "rejected",
+          id: withdrawal._id,
+          amount: withdrawal.amount,
+          reason: rejectedReason || "ไม่ระบุสาเหตุ",
+          message: `คำขอถอนเงินของคุณจำนวน ฿${Number(withdrawal.amount).toLocaleString()} ถูกปฏิเสธ${rejectedReason ? `: ${rejectedReason}` : ""}`,
+        });
+      }
+    } catch (err) {
+      console.error("Error emitting to user in rejectWithdrawal:", err);
+    }
 
     const response = await handleSuccess(withdrawal, "ปฏิเสธการถอนเงินสำเร็จ");
     return res.status(response.status).json(response);
