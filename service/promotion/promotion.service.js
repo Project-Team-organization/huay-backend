@@ -5,6 +5,7 @@ const UserPromotion = require("../../models/userPromotions.models");
 const Image = require("../../models/img.promotion.model");
 const fs = require("fs");
 const path = require("path");
+const { saveImageBuffer, safeDelete } = require("../../utils/promoBannerUpload");
 
 exports.createPromotion = async function (promotionData) {
   try {
@@ -174,58 +175,77 @@ exports.uploadService = async (file, promotionId, description, req) => {
     if (!promotionExists) {
       throw new Error("Promotion ID not found");
     }
-    const uploadDir = path.join(__dirname, "../../uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
-    }
 
     const existingImage = await Image.findOne({ promotion_id: promotionId });
-
-    if (existingImage) {
-      const oldImagePath = path.join(
-        uploadDir,
-        path.basename(existingImage.image)
-      );
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
+    if (existingImage && existingImage.image) {
+      const oldFileName = path.basename(existingImage.image);
+      await safeDelete(oldFileName);
     }
 
-    const filename = `${Date.now()}_${file.name}`;
-    const filepath = path.join(uploadDir, filename);
-    await file.mv(filepath);
+    const originalName = file.originalname || file.name || "promotion.jpg";
+    let imageUrl = "";
 
-    const url = `${req.protocol}://${req.get("host")}/uploads/${filename}`;
+    if (file.buffer) {
+      const saved = await saveImageBuffer(file.buffer);
+      imageUrl = saved.imageUrl;
+    } else if (typeof file.mv === "function") {
+      const uploadDir = path.join(__dirname, "../../uploads/promotions");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const filename = `${Date.now()}_${originalName.replace(/\s+/g, "_")}`;
+      const filepath = path.join(uploadDir, filename);
+      await file.mv(filepath);
+      imageUrl = `/uploads/promotions/${filename}`;
+    } else {
+      throw new Error("No image buffer or file stream available");
+    }
 
     if (existingImage) {
-      existingImage.name = file.name;
-      existingImage.description = description;
-      existingImage.image = url;
+      existingImage.name = originalName;
+      existingImage.description = description !== undefined ? description : (existingImage.description || "");
+      existingImage.image = imageUrl;
       await existingImage.save();
 
       return {
-        name: file.name,
-        url,
+        name: originalName,
+        url: imageUrl,
         mongoId: existingImage._id,
       };
     } else {
       const image = new Image({
         promotion_id: promotionId,
-        name: file.name,
-        description,
-        image: url,
+        name: originalName,
+        description: description || "",
+        image: imageUrl,
       });
 
       await image.save();
 
       return {
-        name: file.name,
-        url,
+        name: originalName,
+        url: imageUrl,
         mongoId: image._id,
       };
     }
   } catch (error) {
     throw new Error(`Upload failed: ${error.message}`);
+  }
+};
+
+exports.deleteImageService = async (promotionId) => {
+  try {
+    const images = await Image.find({ promotion_id: promotionId });
+    for (const img of images) {
+      if (img.image) {
+        const fileName = path.basename(img.image);
+        await safeDelete(fileName);
+      }
+      await Image.deleteOne({ _id: img._id });
+    }
+    return { success: true };
+  } catch (error) {
+    throw new Error(`Delete image failed: ${error.message}`);
   }
 };
 

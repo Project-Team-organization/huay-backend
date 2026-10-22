@@ -145,21 +145,13 @@ exports.getPublicPromotions = async (req, res) => {
 
 exports.uploadFile = async (req, res) => {
   try {
-    if (!req.files || !req.files.image) {
-      return res.status(400).json({ error: "Please upload an image" });
+    const file = req.file || (req.files && req.files.image);
+    if (!file) {
+      return res.status(400).json({ success: false, error: "Please upload an image" });
     }
 
-    const file = req.files.image;
-
-    if (!file.mimetype.startsWith("image/")) {
-      return res.status(400).json({ error: "File must be an image" });
-    }
-
-    const MAX_SIZE = parseInt(process.env.MAX_IMAGE_SIZE) || 2 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      return res.status(400).json({
-        error: `Image size must not exceed ${MAX_SIZE / 1024 / 1024}MB`,
-      });
+    if (file.mimetype && !file.mimetype.startsWith("image/")) {
+      return res.status(400).json({ success: false, error: "File must be an image" });
     }
 
     const promotionId = req.params.id;
@@ -176,9 +168,23 @@ exports.uploadFile = async (req, res) => {
       success: true,
       message: "Image uploaded successfully",
       file: result,
+      data: result,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.deletePromotionImage = async (req, res) => {
+  try {
+    const promotionId = req.params.id;
+    await promotionService.deleteImageService(promotionId);
+    return res.status(200).json({
+      success: true,
+      message: "Promotion image deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 
