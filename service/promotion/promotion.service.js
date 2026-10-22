@@ -151,11 +151,15 @@ exports.getAllPromotions = async function ({ page = 1, limit = 10 }) {
 exports.getPublicPromotions = async function () {
   const now = new Date();
   return Promotion.find({
-    active: true,
-    target: { $in: ["all", "normal"] },
+    active: { $ne: false },
+    $or: [
+      { target: { $in: ["all", "normal", "referrer"] } },
+      { target: null },
+      { target: { $exists: false } },
+    ],
     $and: [
-      { $or: [{ startDate: { $lte: now } }, { startDate: null }] },
-      { $or: [{ endDate: null }, { endDate: { $gte: now } }] },
+      { $or: [{ startDate: { $lte: now } }, { startDate: null }, { startDate: { $exists: false } }] },
+      { $or: [{ endDate: null }, { endDate: { $gte: now } }, { endDate: { $exists: false } }] },
     ],
   })
     .sort({ createdAt: -1 })
