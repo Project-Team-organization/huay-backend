@@ -5,7 +5,7 @@ const { handleSuccess, handleError } = require("../utils/responseHandler");
 
 const logoDir = path.join(__dirname, "../uploads/logos");
 
-const LIMITS = { site_name: 120, site_description: 300 };
+const LIMITS = { site_name: 120, site_description: 300, contact_url: 500 };
 
 // Sanitize a string field. Returns { value } (null when empty) or { error }.
 function sanitizeText(input, maxLength) {
@@ -38,6 +38,7 @@ async function buildPayload() {
   return {
     site_name: doc?.site_name || null,
     site_description: doc?.site_description || null,
+    contact_url: doc?.contact_url || null,
     favicon_url: favicon.url,
     favicon_updated_at: favicon.updatedAt,
     login_logo_url: logoInfo("login").url,
@@ -61,7 +62,7 @@ exports.updateSiteSettings = async (req, res) => {
   try {
     const body = req.body || {};
     const $set = {};
-    for (const field of ["site_name", "site_description"]) {
+    for (const field of ["site_name", "site_description", "contact_url"]) {
       if (body[field] === undefined) continue;
       const result = sanitizeText(body[field], LIMITS[field]);
       if (result.error) {

@@ -19,6 +19,12 @@ const siteSettingSchema = new mongoose.Schema(
       maxlength: 300,
       default: null,
     },
+    contact_url: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: null,
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
