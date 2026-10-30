@@ -742,3 +742,238 @@ exports.getMasterTransactions = async (masterId, filters = {}) => {
     return handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูล transactions");
   }
 };
+
+/**
+ * ดึงสรุปยอดของเซียนเดือนปัจจุบัน สำหรับ Admin
+ * คำนวณยอดฝากจริง (ไม่รวมโปรโมชั่น), ยอดถอน, ยอดสุทธิ (ฝากจริง - ถอน), และคอมมิชชั่น
+ */
+exports.getAdminMasterCurrentSummary = async masterId => {
+  try {
+    const master = await Master.findById(masterId).select(
+      "username phone commission_percentage share_url_master active createdAt",
+    );
+    if (!master) {
+      return handleError(null, "ไม่พบข้อมูล Master", 404);
+    }
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    const period_start = new Date(year, month - 1, 1, 0, 0, 0, 0);
+    const period_end = new Date(year, month, 0, 23, 59, 59, 999);
+
+    // ดึง user ทั้งหมดในสายของ master
+    const usersInMaster = await User.find({ master_id: masterId }).select("_id");
+    const userIds = usersInMaster.map(u => u._id);
+
+    // Filter สำหรับเครดิตฝาก และถอน
+    const matchMasterDeposit = {
+      $or: [
+        { master_id: new mongoose.Types.ObjectId(masterId) },
+        { user_id: { $in: userIds } },
+      ],
+      status: "success",
+      created_at: { $gte: period_start, $lte: period_end },
+    };
+
+    const matchMasterWithdrawal = {
+      $or: [
+        { master_id: new mongoose.Types.ObjectId(masterId) },
+        { user_id: { $in: userIds } },
+      ],
+      status: "completed",
+      created_at: { $gte: period_start, $lte: period_end },
+    };
+
+    const [depositAgg, withdrawalAgg, existingMasterComm, uniqueUsers] =
+      await Promise.all([
+        Credit.aggregate([
+          { $match: matchMasterDeposit },
+          {
+            $group: {
+              _id: null,
+              real_deposit_amount: { $sum: "$amount" }, // ยอดฝากจริง ไม่รวมโปรโมชั่น
+              total_promotion: { $sum: { $ifNull: ["$credit_promotion", 0] } },
+              total_deposit_amount: { $sum: "$netAmount" }, // ยอดฝากรวมโปรโมชั่น
+              deposit_count: { $sum: 1 },
+            },
+          },
+        ]),
+        Withdrawal.aggregate([
+          { $match: matchMasterWithdrawal },
+          {
+            $group: {
+              _id: null,
+              total_withdrawal_amount: { $sum: "$amount" }, // ยอดถอน
+              withdrawal_count: { $sum: 1 },
+            },
+          },
+        ]),
+        MasterCommission.findOne({
+          master_id: masterId,
+          year,
+          month,
+        }),
+        Credit.distinct("user_id", matchMasterDeposit),
+      ]);
+
+    const real_deposit_amount = depositAgg[0]?.real_deposit_amount || 0;
+    const total_promotion = depositAgg[0]?.total_promotion || 0;
+    const total_deposit_amount = depositAgg[0]?.total_deposit_amount || 0;
+    const deposit_count = depositAgg[0]?.deposit_count || 0;
+
+    const total_withdrawal_amount =
+      withdrawalAgg[0]?.total_withdrawal_amount || 0;
+    const withdrawal_count = withdrawalAgg[0]?.withdrawal_count || 0;
+
+    // ยอดสุทธิจำนวนจริง = ยอดฝากจริง (ไม่รวมโปรโมชั่น) - ยอดถอน
+    const net_real_amount = real_deposit_amount - total_withdrawal_amount;
+
+    const commission_percentage = master.commission_percentage || 0;
+    // คำนวณค่าคอมมิชชั่นจากยอดสุทธิจริง
+    const calculated_commission = (net_real_amount * commission_percentage) / 100;
+
+    return handleSuccess(
+      {
+        master: {
+          _id: master._id,
+          username: master.username,
+          phone: master.phone,
+          commission_percentage: master.commission_percentage,
+          share_url_master: master.share_url_master,
+          active: master.active,
+          createdAt: master.createdAt,
+        },
+        period: {
+          year,
+          month,
+          period_start,
+          period_end,
+        },
+        summary: {
+          real_deposit_amount, // ฝากจริง ไม่รวมโปร
+          total_promotion, // ยอดโปรโมชั่น
+          total_deposit_amount, // ยอดฝากรวมโปร
+          deposit_count,
+          total_withdrawal_amount, // ถอน
+          withdrawal_count,
+          net_real_amount, // ยอดสุทธิจำนวนจริง (ฝากจริง - ถอน)
+          commission_percentage,
+          calculated_commission, // ค่าคอมมิชชั่นที่คำนวณได้
+          user_count: uniqueUsers.length,
+          status: existingMasterComm ? existingMasterComm.status : "active",
+          commission_id: existingMasterComm ? existingMasterComm._id : null,
+          paid_at: existingMasterComm ? existingMasterComm.paid_at : null,
+        },
+      },
+      "ดึงข้อมูลสรุปค่าคอมมิชชั่นเดือนปัจจุบันสำเร็จ",
+      200,
+    );
+  } catch (error) {
+    console.error("Error in getAdminMasterCurrentSummary:", error);
+    return handleError(error, "เกิดข้อผิดพลาดในการดึงข้อมูลสรุปค่าคอมมิชชั่น");
+  }
+};
+
+/**
+ * ดึงรายการประวัติคอมมิชชั่นทั้งหมดของ Master รายคน สำหรับ Admin
+ */
+exports.getAdminMasterCommissions = async (masterId, filters = {}) => {
+  try {
+    const master = await Master.findById(masterId).select(
+      "username phone commission_percentage share_url_master active createdAt",
+    );
+    if (!master) {
+      return handleError(null, "ไม่พบข้อมูล Master", 404);
+    }
+
+    const { page = 1, perPage = 10, year, month, status } = filters;
+    const query = { master_id: masterId };
+
+    if (year) query.year = parseInt(year);
+    if (month) query.month = parseInt(month);
+    if (status) query.status = status;
+
+    const skip = (parseInt(page) - 1) * parseInt(perPage);
+    const limit = parseInt(perPage);
+
+    const [commissions, total] = await Promise.all([
+      MasterCommission.find(query)
+        .sort({ year: -1, month: -1, created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      MasterCommission.countDocuments(query),
+    ]);
+
+    // สำหรับแต่ละ record คำนวณ real_deposit_amount (ไม่รวมโปรโมชั่น)
+    const enrichedCommissions = await Promise.all(
+      commissions.map(async comm => {
+        try {
+          const depAgg = await Credit.aggregate([
+            {
+              $match: {
+                master_id: new mongoose.Types.ObjectId(masterId),
+                status: "success",
+                created_at: { $gte: comm.period_start, $lte: comm.period_end },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                real_deposit_amount: { $sum: "$amount" },
+                total_promotion: {
+                  $sum: { $ifNull: ["$credit_promotion", 0] },
+                },
+              },
+            },
+          ]);
+          const real_deposit_amount =
+            depAgg[0]?.real_deposit_amount ?? comm.total_deposit_amount;
+          const total_promotion = depAgg[0]?.total_promotion ?? 0;
+          const net_real_amount =
+            real_deposit_amount - comm.total_withdrawal_amount;
+
+          return {
+            ...comm,
+            real_deposit_amount,
+            total_promotion,
+            net_real_amount,
+          };
+        } catch (e) {
+          return {
+            ...comm,
+            real_deposit_amount: comm.total_deposit_amount,
+            total_promotion: 0,
+            net_real_amount: comm.net_amount,
+          };
+        }
+      }),
+    );
+
+    const pagination = {
+      total,
+      page: parseInt(page),
+      perPage: parseInt(perPage),
+      totalPages: Math.ceil(total / parseInt(perPage)),
+    };
+
+    return handleSuccess(
+      {
+        master,
+        commissions: enrichedCommissions,
+      },
+      "ดึงข้อมูลประวัติค่าคอมมิชชั่นของเซียนสำเร็จ",
+      200,
+      pagination,
+    );
+  } catch (error) {
+    console.error("Error in getAdminMasterCommissions:", error);
+    return handleError(
+      error,
+      "เกิดข้อผิดพลาดในการดึงข้อมูลประวัติค่าคอมมิชชั่น",
+    );
+  }
+};
+

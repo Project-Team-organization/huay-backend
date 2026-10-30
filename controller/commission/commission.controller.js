@@ -294,3 +294,83 @@ exports.getMasterTransactions = async (req, res) => {
     return res.status(response.status).json(response);
   }
 };
+
+/**
+ * ดึงสรุปยอดของเซียนเดือนปัจจุบัน สำหรับ Admin
+ */
+exports.getAdminMasterCurrentSummary = async (req, res) => {
+  const userId = req.user?._id || null;
+  const fullUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+  const ipRaw =
+    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    req.connection.remoteAddress ||
+    req.ip;
+  const ip = normalizeIP(ipRaw);
+  const referrer = req.get("Referer") || null;
+
+  try {
+    const { master_id } = req.params;
+
+    if (!master_id) {
+      const response = await handleError(null, "กรุณาระบุ Master ID", 400);
+      return res.status(response.status).json(response);
+    }
+
+    const result =
+      await commissionService.getAdminMasterCurrentSummary(master_id);
+    return res.status(result.status).json(result);
+  } catch (error) {
+    await logAction("get_admin_master_current_summary_error", {
+      tag: "get_admin_master_current_summary",
+      userId,
+      fullUrl,
+      ip,
+      referrer,
+      error: error.message,
+    });
+    const response = await handleError(error);
+    return res.status(response.status).json(response);
+  }
+};
+
+/**
+ * ดึงประวัติคอมมิชชั่นของ Master รายคน สำหรับ Admin
+ */
+exports.getAdminMasterCommissions = async (req, res) => {
+  const userId = req.user?._id || null;
+  const fullUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+  const ipRaw =
+    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    req.connection.remoteAddress ||
+    req.ip;
+  const ip = normalizeIP(ipRaw);
+  const referrer = req.get("Referer") || null;
+
+  try {
+    const { master_id } = req.params;
+    const { page, perPage, year, month, status } = req.query;
+
+    if (!master_id) {
+      const response = await handleError(null, "กรุณาระบุ Master ID", 400);
+      return res.status(response.status).json(response);
+    }
+
+    const result = await commissionService.getAdminMasterCommissions(
+      master_id,
+      { page, perPage, year, month, status },
+    );
+    return res.status(result.status).json(result);
+  } catch (error) {
+    await logAction("get_admin_master_commissions_error", {
+      tag: "get_admin_master_commissions",
+      userId,
+      fullUrl,
+      ip,
+      referrer,
+      error: error.message,
+    });
+    const response = await handleError(error);
+    return res.status(response.status).json(response);
+  }
+};
+

@@ -99,4 +99,19 @@ router.get(
   commissionController.getCommissionTransactions,
 );
 
+// สรุปยอดเดือนปัจจุบันของ Master (สำหรับ Admin)
+router.get(
+  "/admin/master/:master_id/current-summary",
+  authmiddleware.permissionmanageradmin,
+  commissionController.getAdminMasterCurrentSummary,
+);
+
+// ดึงประวัติคอมมิชชั่นของ Master รายคน (สำหรับ Admin)
+router.get(
+  "/admin/master/:master_id/commissions",
+  authmiddleware.permissionmanageradmin,
+  commissionController.getAdminMasterCommissions,
+);
+
 module.exports = router;
+
