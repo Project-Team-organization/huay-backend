@@ -25,6 +25,18 @@ const siteSettingSchema = new mongoose.Schema(
       maxlength: 500,
       default: null,
     },
+    line_url: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: null,
+    },
+    telegram_url: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: null,
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
