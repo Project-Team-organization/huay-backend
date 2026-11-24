@@ -33,6 +33,7 @@ const adminLoginLimiter = rateLimit({
         method: req.method,
         ip,
         data: {
+          ip,
           message: "Blocked by rate limiter: Too many failed login attempts",
           attemptedUsername: req.body?.username || "unknown",
           userAgent: req.get("User-Agent") || "unknown",
@@ -64,10 +65,29 @@ const userLoginLimiter = rateLimit({
   standardHeaders: "draft-7",
   legacyHeaders: false,
   handler: (req, res, next, options) => {
+    const ip = getLogIP(req);
+    try {
+      logAction("login_user_rate_limit_blocked", {
+        tag: "security_alert",
+        endpoint: req.originalUrl,
+        method: req.method,
+        ip,
+        data: {
+          ip,
+          message: "Blocked by rate limiter: Too many failed user login attempts",
+          attemptedUsername: req.body?.phone || req.body?.username || "unknown",
+          userAgent: req.get("User-Agent") || "unknown",
+        },
+      });
+    } catch (err) {
+      console.error("Failed to log user rate limit block:", err.message);
+    }
+
     return res.status(429).json({
       success: false,
       status: 429,
       message: "คุณกรอกรหัสผ่านไม่ถูกต้องเกินจำนวนครั้งที่กำหนด กรุณารอ 15 นาทีแล้วลองใหม่อีกครั้ง",
+      retryAfter: Math.ceil(options.windowMs / 1000 / 60) + " นาที",
     });
   },
 });
