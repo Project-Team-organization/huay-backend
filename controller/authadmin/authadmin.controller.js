@@ -14,10 +14,10 @@ exports.login = async (req, res) => {
     const fullUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
     const referrer = req.get("Referer") || null;
     const userAgent = req.get("User-Agent");
-    const { username, password } = req.body;
+    const { username, password } = req.body || {};
 
     try {
-        const { error } = validate.loginValidate(req.body);
+        const { error } = validate.loginValidate(req.body || {});
         if (error) {
             await logAction("login_admin_failed_validation", {
               tag: "login",
@@ -163,7 +163,7 @@ exports.loginMaster = async (req, res) => {
     const fullUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
     const referrer = req.get("Referer") || null;
     const userAgent = req.get("User-Agent");
-    const { username, password } = req.body;
+    const { username, password } = req.body || {};
 
     try {
         const result = await authadminService.loginMaster(username, password, ip, userAgent);
