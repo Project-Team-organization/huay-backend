@@ -16,6 +16,9 @@ require("./cronjob/cleanup.logs");
 
 async function startServer() {
   const app = express();
+
+  // Trust reverse proxy (Nginx) for accurate client IP in rate limiting & logs
+  app.set("trust proxy", 1);
   const server = http.createServer(app);
 
   // setup socket.io

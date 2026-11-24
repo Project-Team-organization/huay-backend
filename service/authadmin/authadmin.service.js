@@ -128,12 +128,17 @@ exports.handleRefreshToken = async (refreshToken) => {
     });
   
     if (!existing) throw new Error("Invalid token");
-    if(payload.role === 'admin'){
-      const adminUser = await admin.findOne({_id: payload._id});
-      if(!adminUser){
+    if (payload.role === 'admin') {
+      const adminUser = await admin.findOne({ _id: payload._id, active: true });
+      if (!adminUser) {
         throw new Error("Invalid token");
       }
       payload.premission = adminUser.role;
+    } else if (payload.role === 'superadmin') {
+      const superadminUser = await superadmin.findOne({ _id: payload._id, active: true });
+      if (!superadminUser) {
+        throw new Error("Invalid token");
+      }
     }
   
     const newAccessToken = jwt.sign(

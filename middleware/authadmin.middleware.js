@@ -1,5 +1,30 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/config");
+const admin = require("../models/admin.model");
+const superadmin = require("../models/superadmin.model");
+const master = require("../models/master.model");
+
+// Helper เช็คว่าบัญชียังมีอยู่จริงใน DB และ active: true
+async function verifyActiveAccount(decoded) {
+  if (!decoded || !decoded._id) return false;
+  try {
+    if (decoded.role === "superadmin") {
+      const s = await superadmin.findById(decoded._id).select("active");
+      return s && s.active;
+    }
+    if (decoded.role === "admin") {
+      const a = await admin.findById(decoded._id).select("active");
+      return a && a.active;
+    }
+    if (decoded.role === "master") {
+      const m = await master.findById(decoded._id).select("active");
+      return m && m.active;
+    }
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
 
 const isUser = (req, res, next) => {
   const token =
@@ -36,7 +61,7 @@ const isUser = (req, res, next) => {
   }
 };
 
-const isMaster = (req, res, next) => {
+const isMaster = async (req, res, next) => {
   const token =
     req.cookies?.access_token ||
     req.headers["x-access-token"] ||
@@ -70,7 +95,7 @@ const isMaster = (req, res, next) => {
   }
 };
 
-const isAdmin = (req, res, next) => {
+const isAdmin = async (req, res, next) => {
   const token =
     req.cookies?.access_token ||
     req.headers["x-access-token"] ||

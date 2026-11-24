@@ -28,6 +28,7 @@ const systemBankRoutes = require("./systemBank.routes");
 const bannerRoutes = require("./banner.routes");
 
 const { authenticate } = require("../middleware/authadmin.middleware");
+const { userLoginLimiter } = require("../middleware/rateLimiter.middleware");
 
 router.get("/check", (req, res) => {
   console.log("Response  check");
@@ -58,7 +59,7 @@ router.get("/test", (req, res) => {
 });
 
 // ส่วน user
-router.post("/login", authRoutes.login);
+router.post("/login", userLoginLimiter, authRoutes.login);
 router.post("/refreshToken", authRoutes.refreshToken);
 router.post("/logout", authRoutes.logout);
 router.get("/profile/me", authenticate, authRoutes.getProfile);
