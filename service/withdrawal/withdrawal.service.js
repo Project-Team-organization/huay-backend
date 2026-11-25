@@ -12,16 +12,22 @@ const turnoverService = require("../turnover/turnover.service");
 exports.createWithdrawal = async function ({
   user_id,
   amount,
-  bank_name,
-  bank_number,
-  account_name,
   description,
 }) {
   try {
-    // เช็คว่า user_id มีอยู่ในฐานข้อมูลหรือไม่
+    // ดึงข้อมูลผู้ใช้งานจริงจากฐานข้อมูล
     const user = await User.findById(user_id);
     if (!user) {
       throw new Error("ไม่พบผู้ใช้งานในระบบ");
+    }
+
+    // ป้องกันการปลอมแปลงบัญชีธนาคาร: บังคับใช้ข้อมูลธนาคารที่ลงทะเบียนไว้กับบัญชีผู้ใช้เท่านั้น
+    const withdrawalBankName = user.bank_name;
+    const withdrawalBankNumber = user.bank_number;
+    const withdrawalAccountName = user.full_name || user.username;
+
+    if (!withdrawalBankName || !withdrawalBankNumber) {
+      throw new Error("กรุณาระบุข้อมูลบัญชีธนาคารในโปรไฟล์ก่อนทำรายการถอนเงิน");
     }
 
     // แปลง amount เป็นตัวเลขเพื่อป้องกันปัญหาจากประเภทข้อมูล (string)
@@ -30,11 +36,6 @@ exports.createWithdrawal = async function ({
     // เช็คว่า amount มีค่ามากกว่า 0 หรือไม่
     if (isNaN(amount) || amount <= 0) {
       throw new Error("จำนวนเงินต้องมากกว่า 0 และเป็นตัวเลขที่ถูกต้อง");
-    }
-
-    // เช็คว่า user มีเงินเพียงพอหรือไม่
-    if (user.credit < amount) {
-      throw new Error("เงินในบัญชีไม่เพียงพอ");
     }
 
     // ตรวจสอบยอดเทิร์นโอเวอร์โปรโมชั่น
@@ -49,12 +50,19 @@ exports.createWithdrawal = async function ({
     const fee = 0;
     const netAmount = amount;
 
-    // ไม่คำนวณค่าคอมมิชชั่นตอนสร้าง รอคำนวณตอนอนุมัติ
+    // หักเงินจาก user แบบ Atomic เพื่อป้องกัน Race Condition
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: user._id, credit: { $gte: amount } },
+      { $inc: { credit: -amount } },
+      { new: true }
+    );
 
-    // หักเงินจาก user ทันทีตอนสร้างคำขอ
-    const balanceBefore = user.credit;
-    user.credit -= amount;
-    await user.save();
+    if (!updatedUser) {
+      throw new Error("ยอดเงินในบัญชีไม่เพียงพอสำหรับการถอนเงิน");
+    }
+
+    const balanceBefore = updatedUser.credit + amount;
+    const balanceAfter = updatedUser.credit;
 
     // บันทึก transaction
     const userTransaction = new UserTransaction({
@@ -62,32 +70,29 @@ exports.createWithdrawal = async function ({
       type: "withdraw",
       amount: amount,
       balance_before: balanceBefore,
-      balance_after: user.credit,
+      balance_after: balanceAfter,
       ref_id: null, // จะอัพเดทหลังจากสร้าง withdrawal
       ref_model: "Withdrawal",
       description:
-        description || `ถอนเงินไปยัง ${bank_name} เลขที่บัญชี ${bank_number}`,
+        description || `ถอนเงินไปยัง ${withdrawalBankName} เลขที่บัญชี ${withdrawalBankNumber}`,
       created_at: new Date(),
     });
 
     // สร้างข้อมูล withdrawal ใหม่ด้วยสถานะ pending (หักเครดิตแล้ว)
     const newWithdrawal = new Withdrawal({
       user_id: user._id,
-      master_id: null, // จะอัพเดทตอนอนุมัติ
+      master_id: null,
       amount,
       netAmount,
       fee,
-
-      // ข้อมูลค่าคอมมิชชั่น - จะคำนวณตอนอนุมัติ
       commission_percentage: 0,
       commission_amount: 0,
       system_loss: 0,
-
-      bank_name,
-      bank_number,
-      account_name,
+      bank_name: withdrawalBankName,
+      bank_number: withdrawalBankNumber,
+      account_name: withdrawalAccountName,
       description,
-      status: "pending", // หักเงินแล้ว รอ admin อนุมัติ
+      status: "pending",
       created_at: new Date(),
       updated_at: new Date(),
     });

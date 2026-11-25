@@ -92,7 +92,85 @@ const userLoginLimiter = rateLimit({
   },
 });
 
+/**
+ * 🛡️ User Register Rate Limiter
+ * - ป้องกันการสมัครสมาชิกอัตโนมัติ (Spam / Bot registrations)
+ * - จำกัด 5 ครั้ง ต่อ 15 นาที ต่อ 1 IP
+ */
+const userRegisterLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    const ip = getLogIP(req);
+    try {
+      logAction("register_rate_limit_blocked", {
+        tag: "security_alert",
+        endpoint: req.originalUrl,
+        method: req.method,
+        ip,
+        data: {
+          ip,
+          message: "Blocked by rate limiter: Too many registration attempts",
+          phone: req.body?.phone || "unknown",
+          userAgent: req.get("User-Agent") || "unknown",
+        },
+      });
+    } catch (err) {
+      console.error("Failed to log register rate limit block:", err.message);
+    }
+
+    return res.status(429).json({
+      success: false,
+      status: 429,
+      message: "คุณทำรายการสมัครสมาชิกบ่อยเกินไป กรุณารอ 15 นาทีแล้วลองใหม่อีกครั้ง",
+      retryAfter: Math.ceil(options.windowMs / 1000 / 60) + " นาที",
+    });
+  },
+});
+
+/**
+ * 🛡️ User Forgot Password Rate Limiter
+ * - ป้องกันการสุ่มค้นหาหรือดึงข้อมูลผ่านระบบลืมรหัสผ่าน
+ * - จำกัด 5 ครั้ง ต่อ 15 นาที ต่อ 1 IP
+ */
+const userForgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    const ip = getLogIP(req);
+    try {
+      logAction("forgot_password_rate_limit_blocked", {
+        tag: "security_alert",
+        endpoint: req.originalUrl,
+        method: req.method,
+        ip,
+        data: {
+          ip,
+          message: "Blocked by rate limiter: Too many forgot password attempts",
+          phone: req.body?.phone || "unknown",
+          userAgent: req.get("User-Agent") || "unknown",
+        },
+      });
+    } catch (err) {
+      console.error("Failed to log forgot password rate limit block:", err.message);
+    }
+
+    return res.status(429).json({
+      success: false,
+      status: 429,
+      message: "คุณทำรายการลืมรหัสผ่านบ่อยเกินไป กรุณารอ 15 นาทีแล้วลองใหม่อีกครั้ง",
+      retryAfter: Math.ceil(options.windowMs / 1000 / 60) + " นาที",
+    });
+  },
+});
+
 module.exports = {
   adminLoginLimiter,
   userLoginLimiter,
+  userRegisterLimiter,
+  userForgotPasswordLimiter,
 };

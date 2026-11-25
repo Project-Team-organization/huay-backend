@@ -139,10 +139,57 @@ exports.updateUser = async (userId, updateData, currentUser) => {
       return handleError(null, "กรุณาระบุ ID ของ User", 400);
     }
 
-    // ตรวจสอบ username ซ้ำ
-    if (updateData.username) {
+    // ป้องกัน IDOR: ถ้าเป็น role 'user' ต้องแก้ไขได้เฉพาะข้อมูลของตนเองเท่านั้น
+    if (currentUser.role === "user") {
+      if (currentUser.user_id.toString() !== userId.toString()) {
+        return handleError(null, "ไม่มีสิทธิ์แก้ไขข้อมูลของสมาชิกคนอื่น", 403);
+      }
+    }
+
+    // Whitelist ฟิลด์ที่อนุญาตให้อัพเดท ป้องกัน Mass Assignment
+    const sanitizedData = {};
+
+    if (currentUser.role === "user") {
+      // สมาชิกทั่วไปแก้ไขได้เฉพาะ line_id, profile_picture หรือรหัสผ่านของตนเอง
+      if (updateData.line_id !== undefined) sanitizedData.line_id = updateData.line_id;
+      if (updateData.profile_picture !== undefined) sanitizedData.profile_picture = updateData.profile_picture;
+      if (updateData.password !== undefined && updateData.password.trim() !== "") {
+        // หากเปลี่ยนรหัสผ่าน ต้องตรวจ old_password หากมีการส่งมา
+        const targetUser = await User.findById(userId);
+        if (!targetUser) return handleError(null, "ไม่พบ User ที่ต้องการแก้ไข", 404);
+        if (updateData.old_password) {
+          const isMatch = await bcrypt.compare(updateData.old_password, targetUser.password);
+          if (!isMatch) {
+            return handleError(null, "รหัสผ่านเดิมไม่ถูกต้อง", 400);
+          }
+        }
+        sanitizedData.password = updateData.password;
+      }
+    } else {
+      // แอดมิน / ซุปเปอร์แอดมิน
+      // อนุญาตให้แก้ไขข้อมูลส่วนตัวได้ แต่ห้ามแก้ไข credit หรือค่าคอมมิชชั่นผ่าน endpoint นี้
+      const allowedAdminFields = [
+        "full_name",
+        "username",
+        "phone",
+        "password",
+        "bank_name",
+        "bank_number",
+        "profile_picture",
+        "master_id",
+        "line_id"
+      ];
+      for (const field of allowedAdminFields) {
+        if (updateData[field] !== undefined) {
+          sanitizedData[field] = updateData[field];
+        }
+      }
+    }
+
+    // ตรวจสอบ username ซ้ำ (เฉพาะเมื่อมีการขอแก้ไข username)
+    if (sanitizedData.username) {
       const existingUser = await User.findOne({
-        username: updateData.username,
+        username: sanitizedData.username,
         _id: { $ne: userId },
       });
 
@@ -153,17 +200,17 @@ exports.updateUser = async (userId, updateData, currentUser) => {
 
     const now = new Date();
 
-    if (updateData.password) {
+    if (sanitizedData.password) {
       const user = await User.findById(userId);
       if (!user) {
         return handleError(null, "ไม่พบ User ที่ต้องการแก้ไข", 404);
       }
 
-      const hashedPassword = await bcrypt.hash(updateData.password, 10);
+      const hashedPassword = await bcrypt.hash(sanitizedData.password, 10);
 
       await User.findByIdAndUpdate(userId, {
         $set: {
-          ...updateData,
+          ...sanitizedData,
           password: hashedPassword,
           last_password_change: {
             date: now,
@@ -240,7 +287,7 @@ exports.updateUser = async (userId, updateData, currentUser) => {
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { $set: updateData },
+      { $set: sanitizedData },
       { new: true }
     ).select("-password");
 

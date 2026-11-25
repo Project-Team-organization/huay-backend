@@ -44,27 +44,27 @@ const { fetchLatestKoreanStockVipLottery, getAllKoreanStockVipLottery } = requir
 const { fetchLatestHangsengAfternoonLottery, getAllHangsengAfternoonLottery } = require('../controller/lottery/lottery_hangseng_afternoon.controller');
 
 // Route to create a lottery Sets
-router.post("/createSets", lotterySetsController.createLotterySets);
+router.post("/createSets", isAdmin, lotterySetsController.createLotterySets);
 router.get("/getLotterySets", lotterySetsController.getLotterySets);
 router.get("/getLotterySets/:id", lotterySetsController.getLotterySetsById);
-router.put("/update/LotterySets/:id", lotterySetsController.updateLotterySets);
-router.delete("/delete/all", lotterySetsController.deleteAllLotterySets);
-router.delete("/delete/:id", lotterySetsController.deleteLottery);
+router.put("/update/LotterySets/:id", isAdmin, lotterySetsController.updateLotterySets);
+router.delete("/delete/all", isAdmin, lotterySetsController.deleteAllLotterySets);
+router.delete("/delete/:id", isAdmin, lotterySetsController.deleteLottery);
 
 // Route to create a lottery type
-router.post("/createType", lotteryTypeController.createLotteryType);
+router.post("/createType", isAdmin, lotteryTypeController.createLotteryType);
 router.get("/getType", lotteryTypeController.GetLotteryType);
 router.delete(
   "/deleteLotteryType/:id",
   lotteryTypeController.DeleteLotteryType
 );
-router.put("/updateType/:id", lotteryTypeController.UpdateLotteryType);
+router.put("/updateType/:id", isAdmin, lotteryTypeController.UpdateLotteryType);
 
 //route  to create a Betting Types
-router.post("/createBettingTypes", bettingTypesController.createBettingType);
+router.post("/createBettingTypes", isAdmin, bettingTypesController.createBettingType);
 router.get("/getBettingTypes", bettingTypesController.getBettingTypes);
 router.get("/getBettingTypes/:id", bettingTypesController.getBettingTypeById);
-router.put("/updateBettingTypes/:id", bettingTypesController.updateBettingType);
+router.put("/updateBettingTypes/:id", isAdmin, bettingTypesController.updateBettingType);
 router.delete(
   "/deleteBettingTypes/:id",
   bettingTypesController.deleteBettingTypeById
@@ -75,18 +75,18 @@ router.get(
 );
 
 // Route to create a Huay ยังไม่ได้เริ่มใช้งาน
-router.post("/createHuay", huayController.createHuay); //Create Huay Manual //รอเเก้ไข
-router.post("/createManualHuay", huayController.createManualHuay); // Create Manual Huay with auto-generation
-router.post("/createHuayAPI", huayController.createHuayAPI); // Create Huay from API
+router.post("/createHuay", isAdmin, huayController.createHuay); //Create Huay Manual //รอเเก้ไข
+router.post("/createManualHuay", isAdmin, huayController.createManualHuay); // Create Manual Huay with auto-generation
+router.post("/createHuayAPI", isAdmin, huayController.createHuayAPI); // Create Huay from API
 //แก้ออกผลหวย 
-router.post("/createThaiLotteryManual", huayController.createThaiLotteryManual); // Manual Thai Govt Lottery
-router.post("/createGsbManual", huayController.createGsbManual); // Manual GSB (ออมสิน) Lottery
-router.post("/createSavingsManual", huayController.createSavingsManual); // Manual Savings (ธกส) Lottery
+router.post("/createThaiLotteryManual", isAdmin, huayController.createThaiLotteryManual); // Manual Thai Govt Lottery
+router.post("/createGsbManual", isAdmin, huayController.createGsbManual); // Manual GSB (ออมสิน) Lottery
+router.post("/createSavingsManual", isAdmin, huayController.createSavingsManual); // Manual Savings (ธกส) Lottery
 
 router.get("/huay", huayController.getAllHuay); // Get Huay A;;
 router.get("/huay/set/:id", huayController.getHuay); // Get Huay By Lotter Set
 router.get("/huay/:id", huayController.getHuayById); // Get Huay by ID 
-router.put("/huay/:id", huayController.updateHuay); // Update Huay //รอเเก้ไข
+router.put("/huay/:id", isAdmin, huayController.updateHuay); // Update Huay //รอเเก้ไข
 
 // huay ล่าสุด ที่ออก
 router.get("/huay/latest/result", huayController.getLatestResultedHuay);
@@ -116,9 +116,9 @@ router.get('/limited-numbers', LotteryLimitedNumbersController.getAllWithPaginat
 router.get('/limited-numbers/:id', LotteryLimitedNumbersController.getById);
 router.get('/limited-numbers/lottery-set/:lotterySetId', LotteryLimitedNumbersController.getByLotterySetId);
 
-router.post('/limited-numbers', LotteryLimitedNumbersController.create);
-router.put('/limited-numbers/:id', LotteryLimitedNumbersController.update);
-router.delete('/limited-numbers/:id', LotteryLimitedNumbersController.delete);
+router.post('/limited-numbers', isAdmin, LotteryLimitedNumbersController.create);
+router.put('/limited-numbers/:id', isAdmin, LotteryLimitedNumbersController.update);
+router.delete('/limited-numbers/:id', isAdmin, LotteryLimitedNumbersController.delete);
 // ดึงข้อมูลเลขที่มีการแทงสูงสุด by lotterySetId
 router.get('/limited-numbers/lottery-set/:lotterySetId/top-betting', LotteryLimitedNumbersController.getTopBettingNumbers);
 
@@ -142,186 +142,186 @@ router.get("/lotteryresults/by-result/:lottery_result_id", lotteryResultsControl
 router.get("/lotteryresults/by-betting-type/:betting_type_id", lotteryResultsController.getLotteryResultsByBettingType);
 
 // 5. ลบข้อมูลจากผู้เล่นที่ถูกรางวัล
-router.delete("/lotteryresults/:lottery_result_id", lotteryResultsController.deleteLotteryResultAndItems);
+router.delete("/lotteryresults/:lottery_result_id", isAdmin, lotteryResultsController.deleteLotteryResultAndItems);
 
 // 6. lotteryresultitems   by lottery_set_id
 router.get("/lotteryresultitems/lottery-set/:lottery_set_id", lotteryResultsController.getLotteryResultItemsByLotterySetId);
 
 
 //สร้างข้อมูลหวยลาว
-router.post('/lao/latest', fetchLatestLaoLottery);
+router.post('/lao/latest', isAdmin, fetchLatestLaoLottery);
 
 //ดึงข้อมูลหวยลาวทั้งหมดแบบ pagination
 router.get('/lao', getAllLaoLottery);
 
 //สร้างข้อมูลหวยลาว Extra
-router.post('/lao-extra/latest', fetchLatestLaoExtraLottery);
+router.post('/lao-extra/latest', isAdmin, fetchLatestLaoExtraLottery);
 
 //ดึงข้อมูลหวยลาว Extra ทั้งหมดแบบ pagination
 router.get('/lao-extra', getAllLaoExtraLottery);
 
 //สร้างข้อมูลหวยลาวสตาร์
-router.post('/lao-stars/latest', fetchLatestLaoStarsLottery);
+router.post('/lao-stars/latest', isAdmin, fetchLatestLaoStarsLottery);
 
 //ดึงข้อมูลหวยลาวสตาร์ทั้งหมดแบบ pagination
 router.get('/lao-stars', getAllLaoStarsLottery);
 
 // Lao Union Lottery Routes
-router.post('/lao-union/latest', lotteryLaoUnionController.fetchLatestResult);
+router.post('/lao-union/latest', isAdmin, lotteryLaoUnionController.fetchLatestResult);
 router.get('/lao-union', lotteryLaoUnionController.getLatestResult);
 
 //สร้างข้อมูลหวยลาวสตาร์ VIP
-router.post('/lao-stars-vip/latest', fetchLatestLaoStarsVipLottery);
+router.post('/lao-stars-vip/latest', isAdmin, fetchLatestLaoStarsVipLottery);
 
 //ดึงข้อมูลหวยลาวสตาร์ VIP ทั้งหมดแบบ pagination
 router.get('/lao-stars-vip', getAllLaoStarsVipLottery);
 
 //สร้างข้อมูลหวยลาวกาชาด
-router.post('/lao-redcross/latest', fetchLatestLaoRedcrossLottery);
+router.post('/lao-redcross/latest', isAdmin, fetchLatestLaoRedcrossLottery);
 
 //ดึงข้อมูลหวยลาวกาชาดทั้งหมดแบบ pagination
 router.get('/lao-redcross', getAllLaoRedcrossLottery);
 
 //สร้างข้อมูลหวยลาวท่าแขก VIP
-router.post('/lao-thakhek-vip/latest', fetchLatestLaoThakhekVipLottery);
+router.post('/lao-thakhek-vip/latest', isAdmin, fetchLatestLaoThakhekVipLottery);
 
 //ดึงข้อมูลหวยลาวท่าแขก VIP ทั้งหมดแบบ pagination
 router.get('/lao-thakhek-vip', getAllLaoThakhekVipLottery);
 
 //สร้างข้อมูลหวยลาวท่าแขก 5D
-router.post('/lao-thakhek-5d/latest', fetchLatestLaoThakhek5dLottery);
+router.post('/lao-thakhek-5d/latest', isAdmin, fetchLatestLaoThakhek5dLottery);
 
 //ดึงข้อมูลหวยลาวท่าแขก 5D ทั้งหมดแบบ pagination
 router.get('/lao-thakhek-5d', getAllLaoThakhek5dLottery);
 
 //สร้างข้อมูลหวยลาว TV
-router.post('/lao-tv/latest', fetchLatestLaoTvLottery);
+router.post('/lao-tv/latest', isAdmin, fetchLatestLaoTvLottery);
 
 //ดึงข้อมูลหวยลาว TV ทั้งหมดแบบ pagination
 router.get('/lao-tv', getAllLaoTvLottery);
 
 //สร้างข้อมูลหวยลาว VIP
-router.post('/lao-vip/latest', fetchLatestLaoVipLottery);
+router.post('/lao-vip/latest', isAdmin, fetchLatestLaoVipLottery);
 
 //ดึงข้อมูลหวยลาว VIP ทั้งหมดแบบ pagination
 router.get('/lao-vip', getAllLaoVipLottery);
 
 //สร้างข้อมูลหวยลาว HD
-router.post('/lao-hd/latest', fetchLatestLaoHdLottery);
+router.post('/lao-hd/latest', isAdmin, fetchLatestLaoHdLottery);
 
 //ดึงข้อมูลหวยลาว HD ทั้งหมดแบบ pagination
 router.get('/lao-hd', getAllLaoHdLottery);
 
 //สร้างข้อมูลหวยออมสิน
-router.post('/thai-savings/latest', fetchLatestThaiSavingsLottery);
+router.post('/thai-savings/latest', isAdmin, fetchLatestThaiSavingsLottery);
 
 //ดึงข้อมูลหวยออมสินทั้งหมดแบบ pagination
 router.get('/thai-savings', getAllThaiSavingsLottery);
 
 //สร้างข้อมูลหวย ธกส
-router.post('/thai-gsb/latest', fetchLatestThaiGsbLottery);
+router.post('/thai-gsb/latest', isAdmin, fetchLatestThaiGsbLottery);
 
 //ดึงข้อมูลหวย ธกส ทั้งหมดแบบ pagination
 router.get('/thai-gsb', getAllThaiGsbLottery);
 
 //สร้างข้อมูลหวย Magnum 4D
-router.post('/magnum-4d/latest', fetchLatestMagnum4dLottery);
+router.post('/magnum-4d/latest', isAdmin, fetchLatestMagnum4dLottery);
 
 //ดึงข้อมูลหวย Magnum 4D ทั้งหมดแบบ pagination
 router.get('/magnum-4d', getAllMagnum4dLottery);
 
 //สร้างข้อมูลหวย Singapore 4D
-router.post('/singapore-4d/latest', fetchLatestSingapore4dLottery);
+router.post('/singapore-4d/latest', isAdmin, fetchLatestSingapore4dLottery);
 
 //ดึงข้อมูลหวย Singapore 4D ทั้งหมดแบบ pagination
 router.get('/singapore-4d', getAllSingapore4dLottery);
 
 //สร้างข้อมูลหวย Grand Dragon 4D
-router.post('/grand-dragon-4d/latest', fetchLatestGrandDragon4dLottery);
+router.post('/grand-dragon-4d/latest', isAdmin, fetchLatestGrandDragon4dLottery);
 
 //ดึงข้อมูลหวย Grand Dragon 4D ทั้งหมดแบบ pagination
 router.get('/grand-dragon-4d', getAllGrandDragon4dLottery);
 
 //สร้างข้อมูลหวยฮานอยอาเซียน
-router.post('/hanoi-asean/latest', fetchLatestHanoiAseanLottery);
+router.post('/hanoi-asean/latest', isAdmin, fetchLatestHanoiAseanLottery);
 
 //ดึงข้อมูลหวยฮานอยอาเซียนทั้งหมดแบบ pagination
 router.get('/hanoi-asean', getAllHanoiAseanLottery);
 
 //สร้างข้อมูลหวยฮานอย HD
-router.post('/hanoi-hd/latest', fetchLatestHanoiHdLottery);
+router.post('/hanoi-hd/latest', isAdmin, fetchLatestHanoiHdLottery);
 
 //ดึงข้อมูลหวยฮานอย HD ทั้งหมดแบบ pagination
 router.get('/hanoi-hd', getAllHanoiHdLottery);
 
 //สร้างข้อมูลหวยฮานอยสตาร์
-router.post('/hanoi-star/latest', fetchLatestHanoiStarLottery);
+router.post('/hanoi-star/latest', isAdmin, fetchLatestHanoiStarLottery);
 
 //ดึงข้อมูลหวยฮานอยสตาร์ทั้งหมดแบบ pagination
 router.get('/hanoi-star', getAllHanoiStarLottery);
 
 //สร้างข้อมูลหวยฮานอย TV
-router.post('/hanoi-tv/latest', fetchLatestHanoiTvLottery);
+router.post('/hanoi-tv/latest', isAdmin, fetchLatestHanoiTvLottery);
 
 //ดึงข้อมูลหวยฮานอย TV ทั้งหมดแบบ pagination
 router.get('/hanoi-tv', getAllHanoiTvLottery);
 
 //สร้างข้อมูลหวยฮานอยเฉพาะกิจ
-router.post('/hanoi-special/latest', fetchLatestHanoiSpecialLottery);
+router.post('/hanoi-special/latest', isAdmin, fetchLatestHanoiSpecialLottery);
 
 //ดึงข้อมูลหวยฮานอยเฉพาะกิจทั้งหมดแบบ pagination
 router.get('/hanoi-special', getAllHanoiSpecialLottery);
 
 //สร้างข้อมูลหวยฮานอยกาชาด
-router.post('/hanoi-redcross/latest', fetchLatestHanoiRedcrossLottery);
+router.post('/hanoi-redcross/latest', isAdmin, fetchLatestHanoiRedcrossLottery);
 
 //ดึงข้อมูลหวยฮานอยกาชาดทั้งหมดแบบ pagination
 router.get('/hanoi-redcross', getAllHanoiRedcrossLottery);
 
 //สร้างข้อมูลหวยฮานอยพิเศษ
-router.post('/hanoi-special-api/latest', fetchLatestHanoiSpecialApiLottery);
+router.post('/hanoi-special-api/latest', isAdmin, fetchLatestHanoiSpecialApiLottery);
 
 //ดึงข้อมูลหวยฮานอยพิเศษทั้งหมดแบบ pagination
 router.get('/hanoi-special-api', getAllHanoiSpecialApiLottery);
 
 //สร้างข้อมูลหวยฮานอย
-router.post('/hanoi/latest', fetchLatestHanoiLottery);
+router.post('/hanoi/latest', isAdmin, fetchLatestHanoiLottery);
 
 //ดึงข้อมูลหวยฮานอยทั้งหมดแบบ pagination
 router.get('/hanoi', getAllHanoiLottery);
 
 //สร้างข้อมูลหวยฮานอยพัฒนา
-router.post('/hanoi-develop/latest', fetchLatestHanoiDevelopLottery);
+router.post('/hanoi-develop/latest', isAdmin, fetchLatestHanoiDevelopLottery);
 
 //ดึงข้อมูลหวยฮานอยพัฒนาทั้งหมดแบบ pagination
 router.get('/hanoi-develop', getAllHanoiDevelopLottery);
 
 //สร้างข้อมูลหวยฮานอย VIP
-router.post('/hanoi-vip/latest', fetchLatestHanoiVipLottery);
+router.post('/hanoi-vip/latest', isAdmin, fetchLatestHanoiVipLottery);
 
 //ดึงข้อมูลหวยฮานอย VIP ทั้งหมดแบบ pagination
 router.get('/hanoi-vip', getAllHanoiVipLottery);
 
 //สร้างข้อมูลหวยฮานอย EXTRA
-router.post('/hanoi-extra/latest', fetchLatestHanoiExtraLottery);
+router.post('/hanoi-extra/latest', isAdmin, fetchLatestHanoiExtraLottery);
 
 //ดึงข้อมูลหวยฮานอย EXTRA ทั้งหมดแบบ pagination
 router.get('/hanoi-extra', getAllHanoiExtraLottery);
 
 //สร้างข้อมูลหวยหุ้นอิยิปต์
-router.post('/egypt-stock/latest', fetchLatestEgyptStockLottery);
+router.post('/egypt-stock/latest', isAdmin, fetchLatestEgyptStockLottery);
 
 //ดึงข้อมูลหวยหุ้นอิยิปต์ทั้งหมดแบบ pagination
 router.get('/egypt-stock', getAllEgyptStockLottery);
 
 //สร้างข้อมูลหวยหุ้นเกาหลี VIP
-router.post('/korean-stock-vip/latest', fetchLatestKoreanStockVipLottery);
+router.post('/korean-stock-vip/latest', isAdmin, fetchLatestKoreanStockVipLottery);
 
 //ดึงข้อมูลหวยหุ้นเกาหลี VIP ทั้งหมดแบบ pagination
 router.get('/korean-stock-vip', getAllKoreanStockVipLottery);
 
 //สร้างข้อมูลหวยฮั่งเส็งรอบบ่าย
-router.post('/hangseng-afternoon/latest', fetchLatestHangsengAfternoonLottery);
+router.post('/hangseng-afternoon/latest', isAdmin, fetchLatestHangsengAfternoonLottery);
 
 //ดึงข้อมูลหวยฮั่งเส็งรอบบ่ายทั้งหมดแบบ pagination
 router.get('/hangseng-afternoon', getAllHangsengAfternoonLottery);
@@ -329,34 +329,34 @@ router.get('/hangseng-afternoon', getAllHangsengAfternoonLottery);
 
 
 //สร้างหวยลาวแบบ manual
-router.post("/manul/create/hd", serviceHuayManualController.createHd);
-router.post("/manul/create/redcross", serviceHuayManualController.createRedcross);
-router.post("/manul/create/tv", serviceHuayManualController.createTv);
-router.post("/manul/create/vip", serviceHuayManualController.createVip);
-router.post("/manul/create/start-vip", serviceHuayManualController.createStarsVip);
-router.post("/manul/create/thakhek-5d", serviceHuayManualController.createThakhek5d);
-router.post("/manul/create/thakhek-vip", serviceHuayManualController.createThakhekVip);
-router.post("/manul/create/extra", serviceHuayManualController.createExtra);
-router.post("/manul/create/start", serviceHuayManualController.createStars);
-router.post("/manul/create/union", serviceHuayManualController.createUnion)
-router.post("/manul/create/lao", serviceHuayManualController.createLao)
+router.post("/manul/create/hd", isAdmin, serviceHuayManualController.createHd);
+router.post("/manul/create/redcross", isAdmin, serviceHuayManualController.createRedcross);
+router.post("/manul/create/tv", isAdmin, serviceHuayManualController.createTv);
+router.post("/manul/create/vip", isAdmin, serviceHuayManualController.createVip);
+router.post("/manul/create/start-vip", isAdmin, serviceHuayManualController.createStarsVip);
+router.post("/manul/create/thakhek-5d", isAdmin, serviceHuayManualController.createThakhek5d);
+router.post("/manul/create/thakhek-vip", isAdmin, serviceHuayManualController.createThakhekVip);
+router.post("/manul/create/extra", isAdmin, serviceHuayManualController.createExtra);
+router.post("/manul/create/start", isAdmin, serviceHuayManualController.createStars);
+router.post("/manul/create/union", isAdmin, serviceHuayManualController.createUnion)
+router.post("/manul/create/lao", isAdmin, serviceHuayManualController.createLao)
 
 //สร้างหวยฮานอยแบบ manual
-router.post("/manul/hanoi/create/hanoi", serviceHanoiManualController.createHanoi);
-router.post("/manul/hanoi/create/hanoi-develop", serviceHanoiManualController.createHanoiDevelop);
-router.post("/manul/hanoi/create/hanoi-vip", serviceHanoiManualController.createHanoiVip);
-router.post("/manul/hanoi/create/hanoi-extra", serviceHanoiManualController.createHanoiExtra);
-router.post("/manul/hanoi/create/hanoi-asean", serviceHanoiManualController.createHanoiAsean);
-router.post("/manul/hanoi/create/hanoi-hd", serviceHanoiManualController.createHanoiHd);
-router.post("/manul/hanoi/create/hanoi-star", serviceHanoiManualController.createHanoiStar);
-router.post("/manul/hanoi/create/hanoi-tv", serviceHanoiManualController.createHanoiTv);
-router.post("/manul/hanoi/create/hanoi-special", serviceHanoiManualController.createHanoiSpecial);
-router.post("/manul/hanoi/create/hanoi-redcross", serviceHanoiManualController.createHanoiRedcross);
-router.post("/manul/hanoi/create/hanoi-special-api", serviceHanoiManualController.createHanoiSpecialApi);
+router.post("/manul/hanoi/create/hanoi", isAdmin, serviceHanoiManualController.createHanoi);
+router.post("/manul/hanoi/create/hanoi-develop", isAdmin, serviceHanoiManualController.createHanoiDevelop);
+router.post("/manul/hanoi/create/hanoi-vip", isAdmin, serviceHanoiManualController.createHanoiVip);
+router.post("/manul/hanoi/create/hanoi-extra", isAdmin, serviceHanoiManualController.createHanoiExtra);
+router.post("/manul/hanoi/create/hanoi-asean", isAdmin, serviceHanoiManualController.createHanoiAsean);
+router.post("/manul/hanoi/create/hanoi-hd", isAdmin, serviceHanoiManualController.createHanoiHd);
+router.post("/manul/hanoi/create/hanoi-star", isAdmin, serviceHanoiManualController.createHanoiStar);
+router.post("/manul/hanoi/create/hanoi-tv", isAdmin, serviceHanoiManualController.createHanoiTv);
+router.post("/manul/hanoi/create/hanoi-special", isAdmin, serviceHanoiManualController.createHanoiSpecial);
+router.post("/manul/hanoi/create/hanoi-redcross", isAdmin, serviceHanoiManualController.createHanoiRedcross);
+router.post("/manul/hanoi/create/hanoi-special-api", isAdmin, serviceHanoiManualController.createHanoiSpecialApi);
 
 //สร้างหวย 4D แบบ manual
-router.post("/manual/create/singapore-4d", service4DManualController.createSingapore4d);
-router.post("/manual/create/magnum-4d", service4DManualController.createMagnum4d);
-router.post("/manual/create/grand-dragon-4d", service4DManualController.createGrandDragon4d);
+router.post("/manual/create/singapore-4d", isAdmin, service4DManualController.createSingapore4d);
+router.post("/manual/create/magnum-4d", isAdmin, service4DManualController.createMagnum4d);
+router.post("/manual/create/grand-dragon-4d", isAdmin, service4DManualController.createGrandDragon4d);
 
 module.exports = router;

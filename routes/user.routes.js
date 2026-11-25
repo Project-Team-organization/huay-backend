@@ -3,16 +3,17 @@ const router = express.Router();
 const userController = require("../controller/user/user.controller");
 const betController = require("../controller/user/bet/user.bet.controller");
 const authmiddleware = require("../middleware/authadmin.middleware");
+const { userRegisterLimiter, userForgotPasswordLimiter } = require("../middleware/rateLimiter.middleware");
 const lotteryController = require("../controller/user/lottery/lottery.controller");
 const lotteryLaoController = require("../controller/user/lottery/huay.lao.controller");
 const userCommissionController = require("../controller/commission/userCommission.controller");
 
 // ค้นหา user สำหรับ select search
-router.get("/search", userController.searchUsers);
+router.get("/search", authmiddleware.isAdmin, userController.searchUsers);
 
-router.post("/register", userController.register);
+router.post("/register", userRegisterLimiter, userController.register);
 
-router.get("/history/:id", userController.getPasswordHistory);
+router.get("/history/:id", authmiddleware.isAdmin, userController.getPasswordHistory);
 router.post("/code", userController.checkCode);
 
 // ส่วนของ user ที่ใช้ได้
@@ -22,6 +23,7 @@ router.put("/update/:id", authmiddleware.isUser, userController.updateUser);
 // ลืมรหัสผ่านด้วยเบอร์โทรและเลขบัญชีธนาคาร
 router.post(
   "/forgotpassword",
+  userForgotPasswordLimiter,
   userController.forgotPasswordWithBankNumber
 );
 
@@ -43,8 +45,8 @@ router.get("/all/huay", lotteryLaoController.getLotteryByDateAndType);
 router.post("/bet", authmiddleware.isUser, betController.createUserBet);
 router.post("/cancel/:id", authmiddleware.isUser, betController.cancelUserBet);
 router.get("/bet", authmiddleware.isUser, betController.getUserBetsById);
-router.get("/bet/:id", betController.getUserBetByPk);
-router.get("/bet/find/all", authmiddleware.isUser, betController.getUserBetAll);
+router.get("/bet/:id", authmiddleware.isUser, betController.getUserBetByPk);
+router.get("/bet/find/all", authmiddleware.isAdmin, betController.getUserBetAll);
 
 // user ดูเลขหวย
 router.get("/huay", lotteryController.getAllHuay); // Get Huay A;；

@@ -3,6 +3,7 @@ const config = require("../config/config");
 const admin = require("../models/admin.model");
 const superadmin = require("../models/superadmin.model");
 const master = require("../models/master.model");
+const User = require("../models/user.model");
 
 // Helper เช็คว่าบัญชียังมีอยู่จริงใน DB และ active: true
 async function verifyActiveAccount(decoded) {
@@ -20,13 +21,17 @@ async function verifyActiveAccount(decoded) {
       const m = await master.findById(decoded._id).select("active");
       return m && m.active;
     }
+    if (decoded.role === "user") {
+      const u = await User.findById(decoded._id).select("active");
+      return u && u.active;
+    }
   } catch (e) {
     return false;
   }
   return true;
 }
 
-const isUser = (req, res, next) => {
+const isUser = async (req, res, next) => {
   const token =
     req.cookies?.access_token ||
     req.headers["x-access-token"] ||
@@ -47,6 +52,12 @@ const isUser = (req, res, next) => {
       req.user.role === "superadmin" ||
       req.user.role === "user"
     ) {
+      const isActive = await verifyActiveAccount(decoded);
+      if (!isActive) {
+        return res.status(401).json({
+          message: "บัญชีนี้ไม่มีอยู่ในระบบหรือถูกระงับการใช้งาน",
+        });
+      }
       next();
     } else {
       return res.status(403).json({

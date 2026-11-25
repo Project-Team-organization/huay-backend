@@ -101,10 +101,18 @@ exports.getUserBetByPk = async (req, res) => {
   try {
     const bet_id = req.params.id;
 
-    const bet = await userBetService.getUserBetByPk( bet_id);
+    const bet = await userBetService.getUserBetByPk(bet_id);
 
     if (!bet) {
       return res.status(404).json({ message: "ไม่พบข้อมูลการแทงหวย" });
+    }
+
+    // ตรวจสอบสิทธิ์: สมาชิกทั่วไปสามารถดูได้เฉพาะโพยของตนเองเท่านั้น
+    if (req.user && req.user.role === "user") {
+      const betUserId = bet.user_id?._id ? bet.user_id._id.toString() : bet.user_id?.toString();
+      if (betUserId !== req.user._id.toString()) {
+        return res.status(403).json({ message: "ไม่มีสิทธิ์เข้าถึงข้อมูลการแทงหวยนี้" });
+      }
     }
 
     const response = await handleSuccess(bet, "ดึงข้อมูลการแทงหวยสำเร็จ");

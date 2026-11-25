@@ -257,6 +257,18 @@ async function validateUserCredit(user_id, total_bet_amount) {
   return user;
 }
 // เช็ค เงินในเครดิต ว่าพอไหม?
+async function deductUserCreditAtomic(user_id, amount) {
+  const user = await User.findOneAndUpdate(
+    { _id: user_id, credit: { $gte: amount } },
+    { $inc: { credit: -amount } },
+    { new: true }
+  );
+  if (!user) {
+    throw new Error("เครดิตไม่เพียงพอสำหรับการเดิมพัน");
+  }
+  return user;
+}
+
 async function deductUserCredit(user_id, amount) {
   await User.updateOne({ _id: user_id }, { $inc: { credit: -amount } });
 }
@@ -339,20 +351,40 @@ exports.cancelUserBet = async function (user_id, bet_id) {
       return null;
     }
 
-    const user = await User.findById(user_id);
-    const balance_before = user.credit;
+    const lotterySet = userBet.lottery_set_id;
+    if (!lotterySet) {
+      throw new Error("ไม่พบชุดหวยของโพยนี้");
+    }
 
-    await User.updateOne(
+    // ตรวจสอบว่าหวยยังเปิดรับแทงอยู่
+    if (lotterySet.status !== "open") {
+      throw new Error("ไม่สามารถยกเลิกโพยได้เนื่องจากรอบหวยไม่ได้เปิดรับแทงแล้ว");
+    }
+
+    // ตรวจสอบว่ายังไม่ถึงเวลาปิดรับแทง
+    if (lotterySet.close_time && new Date() >= new Date(lotterySet.close_time)) {
+      throw new Error("ไม่สามารถยกเลิกโพยได้เนื่องจากเลยเวลาปิดรับแทงแล้ว");
+    }
+
+    // อัพเดทสถานะโพยเป็น cancelled แบบ Atomic เพื่อป้องกันการกดยกเลิกซ้ำ
+    const updatedBet = await UserBet.findOneAndUpdate(
+      { _id: bet_id, user_id, status: "pending" },
+      { $set: { status: "cancelled", updated_at: new Date() } },
+      { new: true }
+    );
+    if (!updatedBet) {
+      throw new Error("ไม่สามารถยกเลิกโพยได้ หรือโพยถูกยกเลิกไปแล้ว");
+    }
+
+    // คืนเงินให้ user แบบ Atomic
+    const updatedUser = await User.findOneAndUpdate(
       { _id: user_id },
-      { $inc: { credit: userBet.total_bet_amount } }
+      { $inc: { credit: userBet.total_bet_amount } },
+      { new: true }
     );
 
-    const userAfter = await User.findById(user_id);
-    const balance_after = userAfter.credit;
-
-    userBet.status = "cancelled";
-    userBet.updated_at = new Date();
-    await userBet.save();
+    const balance_after = updatedUser.credit;
+    const balance_before = updatedUser.credit - userBet.total_bet_amount;
 
     await UserTransaction.create({
       user_id,
@@ -364,14 +396,14 @@ exports.cancelUserBet = async function (user_id, bet_id) {
       ref_model: "UserBet",
       category: "lottery",
       provider_name: "LOTTERY",
-      game_name: userBet.lottery_set_id?.name || "หวย",
+      game_name: lotterySet?.name || "หวย",
       bet_id: userBet._id.toString(),
       status: "CANCEL",
       description: "ยกเลิกการแทงหวยและคืนเครดิต",
       created_at: new Date(),
     });
 
-    return userBet;
+    return updatedBet;
   } catch (error) {
     console.error("❌ cancelUserBet error:", error.message);
     throw error;
