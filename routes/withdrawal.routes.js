@@ -1,33 +1,34 @@
 const express = require("express");
 const router = express.Router();
 const withdrawalController = require("../controller/withdrawal/withdrawal.controller");
-const { isUser } = require("../middleware/authadmin.middleware");
+const { isUser, isAdmin } = require("../middleware/authadmin.middleware");
+
 // Routes สำหรับ User
 router.get("/turnover-status", isUser, withdrawalController.getTurnoverStatus);
 router.post("/create", isUser, withdrawalController.createWithdrawal);
-router.get("/user/:user_id", withdrawalController.getWithdrawalsByUserId);
 router.get(
   "/history/getuser",
   isUser,
   withdrawalController.getWithdrawalsBytoken,
 );
-router.put("/update/:id", withdrawalController.updateWithdrawal);
-router.put("/cancel/:id", withdrawalController.cancelWithdrawal);
 
-// Routes สำหรับ Admin
-router.get("/turnover-status/:user_id", withdrawalController.getUserTurnoverStatusForAdmin);
-router.get("/get", withdrawalController.getAllWithdrawals);
-router.get("/getbyid/:id", withdrawalController.getWithdrawalById);
-router.put("/approve/:id", withdrawalController.approveWithdrawal);
-router.put("/reject/:id", withdrawalController.rejectWithdrawal);
+// Routes สำหรับ Admin (ต้องมีสิทธิ์ Admin ทั้งหมด)
+router.get("/user/:user_id", isAdmin, withdrawalController.getWithdrawalsByUserId);
+router.put("/update/:id", isAdmin, withdrawalController.updateWithdrawal);
+router.put("/cancel/:id", isAdmin, withdrawalController.cancelWithdrawal);
 
-router.post("/deduct-admin/", withdrawalController.deductFromAdmin);
+router.get("/turnover-status/:user_id", isAdmin, withdrawalController.getUserTurnoverStatusForAdmin);
+router.get("/get", isAdmin, withdrawalController.getAllWithdrawals);
+router.get("/getbyid/:id", isAdmin, withdrawalController.getWithdrawalById);
+router.put("/approve/:id", isAdmin, withdrawalController.approveWithdrawal);
+router.put("/reject/:id", isAdmin, withdrawalController.rejectWithdrawal);
 
-router.delete("/delete/:id", withdrawalController.deleteWithdrawal);
+// หักเงินจาก admin
+router.post("/deduct-admin/", isAdmin, withdrawalController.deductFromAdmin);
+
+router.delete("/delete/:id", isAdmin, withdrawalController.deleteWithdrawal);
 
 // ดูรูปสลิปโอนเงิน
-router.get("/slip/:id", withdrawalController.getWithdrawalSlip);
-
-//หักเงินจาก admin
+router.get("/slip/:id", isAdmin, withdrawalController.getWithdrawalSlip);
 
 module.exports = router;

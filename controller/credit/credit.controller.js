@@ -15,21 +15,18 @@ exports.createCredit = [
         amount,
         channel,
         description,
-        addcredit_admin_id,
-        addcredit_admin_name,
-        addcredit_admin_role,
       } = req.body;
 
-      // ตรวจสอบว่าเป็น admin เติมเงิน หรือ user ฝาก
-      const isAdminTopup =
-        addcredit_admin_id && addcredit_admin_name && addcredit_admin_role;
+      // ดึงข้อมูลแอดมินจาก req.user ที่ผ่านการตรวจสอบสิทธิ์ isAdmin อย่างถูกต้อง
+      const addcredit_admin_id = req.user?._id || req.user?.id;
+      const addcredit_admin_name = req.user?.username;
+      const addcredit_admin_role = req.user?.role;
 
-      // ถ้าไม่ใช่ admin เติมเงิน (เป็น user ฝาก) ต้องมีรูป
-      if (!isAdminTopup && !req.file) {
+      if (!addcredit_admin_id || !addcredit_admin_name) {
         const response = await handleError(
           null,
-          "กรุณาแนบสลิปการโอนเงิน (User ฝากเงินต้องแนบสลิป)",
-          400,
+          "ไม่พบข้อมูลแอดมินผู้ทำรายการ กรุณาเข้าสู่ระบบใหม่",
+          401,
         );
         return res.status(response.status).json(response);
       }

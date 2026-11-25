@@ -1,19 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const dashboardController = require("../controller/admin/dashboard.controller");
-const authmiddleware = require("../middleware/authadmin.middleware");
+const { isAdmin } = require("../middleware/authadmin.middleware");
 
-// Dashboard Summary - API เส้นเดียว
+// Dashboard Summary - API เส้นเดียว (Admin เท่านั้น)
 router.get(
   "/summary",
-  // authmiddleware.permissionmanageradmin,
+  isAdmin,
   dashboardController.getDashboardSummary
 );
 
-// Player Report - รายงานผู้เล่นพร้อม pagination
+// Player Report - รายงานผู้เล่นพร้อม pagination (Admin เท่านั้น)
 router.get(
   "/player-report",
-  // authmiddleware.permissionmanageradmin,
+  isAdmin,
   dashboardController.getPlayerReport
 );
 

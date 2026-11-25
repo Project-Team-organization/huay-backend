@@ -183,8 +183,7 @@ exports.approveWithdrawal = [
   async function (req, res) {
     try {
       const { id } = req.params;
-      const { approvedBy } = req.body;
-
+      const approvedBy = req.user?._id || req.user?.id || req.body.approvedBy;
       const withdrawal = await withdrawalService.approveWithdrawal({
         id,
         approvedBy,
@@ -230,8 +229,8 @@ exports.approveWithdrawal = [
 exports.rejectWithdrawal = async function (req, res) {
   try {
     const { id } = req.params;
-    const { rejectedReason, approvedBy } = req.body;
-
+    const { rejectedReason } = req.body;
+    const approvedBy = req.user?._id || req.user?.id || req.body.approvedBy;
     const withdrawal = await withdrawalService.rejectWithdrawal({
       id,
       rejectedReason,
@@ -343,10 +342,11 @@ exports.deductFromAdmin = async function (req, res) {
       bank_number,
       account_name,
       description,
-      addcredit_admin_id,
-      addcredit_admin_name,
-      addcredit_admin_role,
+      // ดึงข้อมูล admin จาก req.user เท่านั้น
     } = req.body;
+    const addcredit_admin_id = req.user?._id || req.user?.id;
+    const addcredit_admin_name = req.user?.username;
+    const addcredit_admin_role = req.user?.role;
 
     if (!addcredit_admin_id || !addcredit_admin_name || !addcredit_admin_role) {
       const response = await handleError(

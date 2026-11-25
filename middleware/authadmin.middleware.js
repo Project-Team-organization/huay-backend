@@ -82,6 +82,12 @@ const isMaster = async (req, res, next) => {
       req.user.role === "superadmin" ||
       req.user.role === "master"
     ) {
+      const isActive = await verifyActiveAccount(decoded);
+      if (!isActive) {
+        return res.status(401).json({
+          message: "บัญชีนี้ไม่มีอยู่ในระบบหรือถูกระงับการใช้งาน",
+        });
+      }
       next();
     } else {
       return res.status(403).json({
@@ -112,6 +118,12 @@ const isAdmin = async (req, res, next) => {
     req.user = decoded;
     // ตรวจสอบ role
     if (req.user.role === "admin" || req.user.role === "superadmin") {
+      const isActive = await verifyActiveAccount(decoded);
+      if (!isActive) {
+        return res.status(401).json({
+          message: "บัญชีนี้ไม่มีอยู่ในระบบหรือถูกระงับการใช้งาน",
+        });
+      }
       next();
     } else {
       return res.status(403).json({
@@ -126,7 +138,7 @@ const isAdmin = async (req, res, next) => {
 };
 
 // เช็ค mangagersuperadmin
-const permissionmanagersuperadmin = (req, res, next) => {
+const permissionmanagersuperadmin = async (req, res, next) => {
   const token =
     req.cookies?.access_token ||
     req.headers["x-access-token"] ||
@@ -168,7 +180,7 @@ const permissionmanagersuperadmin = (req, res, next) => {
   }
 };
 // เช็ค manageradmin
-const permissionmanageradmin = (req, res, next) => {
+const permissionmanageradmin = async (req, res, next) => {
   const token =
     req.cookies?.access_token ||
     req.headers["x-access-token"] ||
@@ -205,7 +217,7 @@ const permissionmanageradmin = (req, res, next) => {
 };
 
 // เช็ค  managermaster
-const permissionmanagermaster = (req, res, next) => {
+const permissionmanagermaster = async (req, res, next) => {
   const token =
     req.cookies?.access_token ||
     req.headers["x-access-token"] ||
@@ -242,7 +254,7 @@ const permissionmanagermaster = (req, res, next) => {
 };
 
 // เช็ค lotterytype
-const permissionlotterytype = (req, res, next) => {
+const permissionlotterytype = async (req, res, next) => {
   const token =
     req.cookies?.access_token ||
     req.headers["x-access-token"] ||
