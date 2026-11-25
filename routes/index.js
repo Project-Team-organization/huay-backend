@@ -40,24 +40,6 @@ router.get("/check", (req, res) => {
   return;
 });
 
-router.get("/test", (req, res) => {
-  console.log("Test route called");
-  res.status(200).json({
-    status: 200,
-    success: true,
-    message: "Test route is working!",
-    timestamp: new Date().toISOString(),
-    data: {
-      server: "Lottery API Server",
-      version: "1.0.0",
-      environment: process.env.NODE_ENV || "development",
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      randomNumber: Math.floor(Math.random() * 1000),
-    },
-  });
-});
-
 // ส่วน user
 router.post("/login", userLoginLimiter, authRoutes.login);
 router.post("/refreshToken", authRoutes.refreshToken);

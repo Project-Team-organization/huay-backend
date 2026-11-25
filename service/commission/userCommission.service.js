@@ -297,14 +297,23 @@ async function claimCommission(userId) {
   }
 
   const claimAmount = Math.round(balance * 100) / 100;
-  const balanceBefore = user.credit || 0;
-  const balanceAfter = balanceBefore + claimAmount;
 
-  // ปรับปรุงยอดเงินของผู้ใช้
-  user.commission_balance = 0;
-  user.total_commission_claimed = (user.total_commission_claimed || 0) + claimAmount;
-  user.credit = balanceAfter;
-  await user.save();
+  // ปรับปรุงยอดเงินของผู้ใช้แบบ Atomic ป้องกัน Race Condition
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: userId, commission_balance: { $gte: claimAmount, $gt: 0 } },
+    {
+      $inc: { credit: claimAmount, total_commission_claimed: claimAmount },
+      $set: { commission_balance: 0 },
+    },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    throw new Error("ไม่มียอดคอมมิชชั่นสะสมที่สามารถกดรับได้ หรือรายการนี้กำลังถูกดำเนินการ");
+  }
+
+  const balanceAfter = updatedUser.credit;
+  const balanceBefore = balanceAfter - claimAmount;
 
   // บันทึกรายการกดรับ
   const claimRecord = await UserCommissionClaim.create({

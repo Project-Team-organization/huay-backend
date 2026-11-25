@@ -10,7 +10,7 @@ router.get("/public", systemBankController.getPublicSystemBank);
 router.get("/logs", permissionmanageradmin, systemBankController.getSystemBankLogs);
 
 // Route สำหรับระบบ / admin
-router.get("/", systemBankController.getSystemBank);
+router.get("/", permissionmanageradmin, systemBankController.getSystemBank);
 router.put("/", permissionmanageradmin, systemBankController.updateSystemBank);
 
 module.exports = router;

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const User = require("../../models/user.model");
 const Master = require("../../models/master.model");
 const PasswordHistory = require("../../models/history.chang.password.model");
+const RefreshToken = require("../../models/refreshToken.model");
 const ForgotPasswordRequest = require("../../models/forgotPasswordRequest.model");
 const { generateReferralCode } = require("../../utils/utils");
 const {
@@ -519,6 +520,9 @@ exports.forgotPasswordWithBankNumber = async ({ phone, bank_number, new_password
       },
       { new: true }
     ).select("-password");
+
+    // บังคับ Logout ทุก Session เดิมเพื่อความปลอดภัยเมื่อมีการรีเซ็ตรหัสผ่าน
+    await RefreshToken.deleteMany({ userId: user._id });
 
     // บันทึกประวัติการเปลี่ยนรหัสผ่าน
     const now = new Date();

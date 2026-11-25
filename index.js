@@ -1,6 +1,5 @@
 const express = require("express");
 const http = require("http");
-const { lens } = require("@lensjs/express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -23,12 +22,6 @@ async function startServer() {
 
   // setup socket.io
   initSocket(server);
-
-  // setup lens monitoring
-  await lens({
-    app,
-    enabled: true,
-  });
 
   // Middleware
   app.use(
