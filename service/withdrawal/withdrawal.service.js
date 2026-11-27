@@ -38,6 +38,17 @@ exports.createWithdrawal = async function ({
       throw new Error("จำนวนเงินต้องมากกว่า 0 และเป็นตัวเลขที่ถูกต้อง");
     }
 
+    // ป้องกันการสร้างคำขอถอนเงินซ้ำซ้อนขณะมีรายการรอดำเนินการอยู่
+    const existingPending = await Withdrawal.findOne({
+      user_id: user._id,
+      status: "pending",
+    });
+    if (existingPending) {
+      throw new Error(
+        "คุณมีรายการถอนเงินที่รอดำเนินการอยู่แล้ว กรุณารอทำรายการก่อนหน้าให้เสร็จสิ้น"
+      );
+    }
+
     // ตรวจสอบยอดเทิร์นโอเวอร์โปรโมชั่น
     const turnoverStatus = await turnoverService.calculateUserTurnover(user._id);
     if (!turnoverStatus.canWithdraw) {

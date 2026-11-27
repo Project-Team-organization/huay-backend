@@ -2,10 +2,11 @@ const express = require("express");
 const router = express.Router();
 const withdrawalController = require("../controller/withdrawal/withdrawal.controller");
 const { isUser, isAdmin } = require("../middleware/authadmin.middleware");
+const { withdrawalLimiter } = require("../middleware/rateLimiter.middleware");
 
 // Routes สำหรับ User
 router.get("/turnover-status", isUser, withdrawalController.getTurnoverStatus);
-router.post("/create", isUser, withdrawalController.createWithdrawal);
+router.post("/create", isUser, withdrawalLimiter, withdrawalController.createWithdrawal);
 router.get(
   "/history/getuser",
   isUser,

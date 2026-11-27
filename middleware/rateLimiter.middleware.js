@@ -168,9 +168,106 @@ const userForgotPasswordLimiter = rateLimit({
   },
 });
 
+/**
+ * 🛡️ Global API Rate Limiter
+ * - ป้องกันการยิงถล่ม API รัวๆ (DDoS / Flooding / Scraping)
+ * - จำกัด 300 ครั้ง ต่อ 1 นาที ต่อ 1 IP (ยกเว้น callback ของค่ายเกม)
+ */
+const globalApiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 300,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: (req) => req.originalUrl?.startsWith("/api/callback/hentory"),
+  handler: (req, res) => {
+    return res.status(429).json({
+      success: false,
+      status: 429,
+      message: "คุณส่งคำขอถี่เกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง",
+    });
+  },
+});
+
+/**
+ * 🛡️ User Bet Rate Limiter
+ * - ป้องกันบอทยิงแทงหวยรัวๆ (จำกัด 30 ครั้ง / นาที / IP)
+ */
+const userBetLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      success: false,
+      status: 429,
+      message: "คุณทำรายการแทงหวยถี่เกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง",
+    });
+  },
+});
+
+/**
+ * 🛡️ Withdrawal Rate Limiter
+ * - ป้องกันการกดถอนเงินซ้ำซ้อนหรือยิงสคริปต์ถอนเงิน (จำกัด 5 ครั้ง / 5 นาที / IP)
+ */
+const withdrawalLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      success: false,
+      status: 429,
+      message: "คุณทำรายการถอนเงินบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง",
+    });
+  },
+});
+
+/**
+ * 🛡️ Deposit Rate Limiter
+ * - ป้องกันการยิงสแปมแจ้งฝากเงิน (จำกัด 5 ครั้ง / 5 นาที / IP)
+ */
+const depositLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      success: false,
+      status: 429,
+      message: "คุณทำรายการฝากเงินบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง",
+    });
+  },
+});
+
+/**
+ * 🛡️ Commission Claim Rate Limiter
+ * - ป้องกันการยิงรับค่าคอมมิชชั่นรัวๆ (จำกัด 5 ครั้ง / 5 นาที / IP)
+ */
+const commissionClaimLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      success: false,
+      status: 429,
+      message: "คุณทำรายการรับค่าคอมมิชชั่นบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง",
+    });
+  },
+});
+
 module.exports = {
   adminLoginLimiter,
   userLoginLimiter,
   userRegisterLimiter,
   userForgotPasswordLimiter,
+  globalApiLimiter,
+  userBetLimiter,
+  withdrawalLimiter,
+  depositLimiter,
+  commissionClaimLimiter,
 };

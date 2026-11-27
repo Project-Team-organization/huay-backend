@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 const creditController = require("../controller/credit/credit.controller");
 const { isUser, isAdmin } = require("../middleware/authadmin.middleware");
+const { depositLimiter } = require("../middleware/rateLimiter.middleware");
 
 // สำหรับ admin สร้าง/ปรับยอดเครดิต (ต้องมีสิทธิ์ Admin)
 router.post("/create", isAdmin, creditController.createCredit);
 
 // ของ user
-router.post("/createuser", isUser, creditController.createCreditUser);
+router.post("/createuser", isUser, depositLimiter, creditController.createCreditUser);
 router.get("/history/getuser", isUser, creditController.getCreditsBytoken);
 
 // routes สำหรับ transaction

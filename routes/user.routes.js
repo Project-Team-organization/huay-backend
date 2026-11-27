@@ -3,7 +3,12 @@ const router = express.Router();
 const userController = require("../controller/user/user.controller");
 const betController = require("../controller/user/bet/user.bet.controller");
 const authmiddleware = require("../middleware/authadmin.middleware");
-const { userRegisterLimiter, userForgotPasswordLimiter } = require("../middleware/rateLimiter.middleware");
+const {
+  userRegisterLimiter,
+  userForgotPasswordLimiter,
+  userBetLimiter,
+  commissionClaimLimiter,
+} = require("../middleware/rateLimiter.middleware");
 const lotteryController = require("../controller/user/lottery/lottery.controller");
 const lotteryLaoController = require("../controller/user/lottery/huay.lao.controller");
 const userCommissionController = require("../controller/commission/userCommission.controller");
@@ -42,7 +47,7 @@ router.get("/lottery", lotteryController.getLotteryUserSets);
 router.get("/all/huay", lotteryLaoController.getLotteryByDateAndType);
 
 // ส่วนของ user bet
-router.post("/bet", authmiddleware.isUser, betController.createUserBet);
+router.post("/bet", authmiddleware.isUser, userBetLimiter, betController.createUserBet);
 router.post("/cancel/:id", authmiddleware.isUser, betController.cancelUserBet);
 router.get("/bet", authmiddleware.isUser, betController.getUserBetsById);
 router.get("/bet/:id", authmiddleware.isUser, betController.getUserBetByPk);
@@ -59,7 +64,7 @@ router.get("/referral", authmiddleware.isUser, userController.getUsersReferredBy
 // User Referral Commission endpoints
 router.get("/commission/summary", authmiddleware.isUser, userCommissionController.getSummary);
 router.get("/commission/members", authmiddleware.isUser, userCommissionController.getMembers);
-router.post("/commission/claim", authmiddleware.isUser, userCommissionController.claimCommission);
+router.post("/commission/claim", authmiddleware.isUser, commissionClaimLimiter, userCommissionController.claimCommission);
 router.get("/commission/logs", authmiddleware.isUser, userCommissionController.getLogs);
 
 module.exports = router;

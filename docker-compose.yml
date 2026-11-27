@@ -5,14 +5,20 @@ services:
     image: huay_backend:1.0.0
     container_name: huay-backend
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
     volumes:
-      # ฝั่งซ้าย: เครื่อง Host (ตามใจคุณ) | ฝั่งขวา: ใน Container (ต้องตรงกับที่เจอจริง)
       - ./uploads:/app/uploads
+    networks:
+      - default
+      - mongo-db_default
     restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
+
+networks:
+  mongo-db_default:
+    external: true

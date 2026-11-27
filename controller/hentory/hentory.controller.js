@@ -241,18 +241,41 @@ exports.getBetTransactionsV2 = async (req, res) => {
     }
 
     if (nextId) {
-      const prevTxn = await UserTransaction.findById(nextId).lean();
+      const mongoose = require("mongoose");
+      let prevTxn = null;
+      if (mongoose.Types.ObjectId.isValid(nextId)) {
+        prevTxn = await UserTransaction.findById(nextId).lean();
+      }
+      if (!prevTxn) {
+        prevTxn = await UserTransaction.findOne({ bet_id: nextId, category: "game" }).lean();
+      }
       if (prevTxn) {
-        query.created_at = { ...(query.created_at || {}), $lt: prevTxn.created_at };
+        const cursorTime = prevTxn.created_at || prevTxn.createdAt;
+        if (cursorTime) {
+          query.$and = [
+            ...(query.$and || []),
+            {
+              $or: [
+                { created_at: { $lt: cursorTime } },
+                { created_at: cursorTime, _id: { $lt: prevTxn._id } },
+              ],
+            },
+          ];
+        } else {
+          query._id = { $lt: prevTxn._id };
+        }
       }
     }
 
     const pageSize = parseInt(limit, 10) || 50;
-    const txns = await UserTransaction.find(query)
+    const rawTxns = await UserTransaction.find(query)
       .populate("user_id", "username phone")
-      .sort({ created_at: -1 })
-      .limit(pageSize)
+      .sort({ created_at: -1, _id: -1 })
+      .limit(pageSize + 1)
       .lean();
+
+    const hasNextPage = rawTxns.length > pageSize;
+    const txns = hasNextPage ? rawTxns.slice(0, pageSize) : rawTxns;
 
     const formattedTxns = txns.map(t => {
       let statusStr = t.status || "LOSE";
@@ -262,6 +285,7 @@ exports.getBetTransactionsV2 = async (req, res) => {
 
       return {
         id: t.bet_id || t._id.toString(),
+        cursorId: t._id.toString(),
         betId: t.bet_id || t._id.toString(),
         username: t.user_id?.username || t.user_id?.phone || "Unknown",
         currency: "THB",
@@ -279,7 +303,7 @@ exports.getBetTransactionsV2 = async (req, res) => {
       };
     });
 
-    const response = await handleSuccess({ data: { txns: formattedTxns } }, "ดึงข้อมูลรายการเดิมพันสำเร็จ");
+    const response = await handleSuccess({ data: { txns: formattedTxns, hasNextPage } }, "ดึงข้อมูลรายการเดิมพันสำเร็จ");
     return res.status(response.status).json(response);
   } catch (error) {
     const response = await handleError(error, "เกิดข้อผิดพลาดในการดึงรายการเดิมพัน");

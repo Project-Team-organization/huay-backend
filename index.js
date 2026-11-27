@@ -8,6 +8,22 @@ const connectDB = require("./config/db");
 const config = require("./config/config");
 const routes = require("./routes");
 const { initSocket } = require("./utils/socket");
+const { globalApiLimiter } = require("./middleware/rateLimiter.middleware");
+
+function sanitizeNoSql(obj) {
+  if (!obj || typeof obj !== "object") return;
+  if (Array.isArray(obj)) {
+    for (const item of obj) sanitizeNoSql(item);
+    return;
+  }
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith("$") || key === "__proto__" || key === "constructor" || key === "prototype") {
+      delete obj[key];
+    } else {
+      sanitizeNoSql(obj[key]);
+    }
+  }
+}
 
 // Import cron job functions
 require("./cronjob/cronjob_set");
@@ -54,8 +70,21 @@ async function startServer() {
       },
     })
   );
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+  app.disable("x-powered-by");
+  app.use((req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    next();
+  });
+  app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+  app.use(cookieParser());
+  app.use((req, res, next) => {
+    sanitizeNoSql(req.body);
+    sanitizeNoSql(req.query);
+    sanitizeNoSql(req.params);
+    next();
+  });
   app.use(cookieParser());
 
   // Static files
@@ -73,7 +102,7 @@ async function startServer() {
     });
   });
 
-  app.use("/api", routes);
+  app.use("/api", globalApiLimiter, routes);
 
   // Log routes loaded
   console.log("\n📋 Routes loaded:");

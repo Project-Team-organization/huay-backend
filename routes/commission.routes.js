@@ -3,6 +3,7 @@ const router = express.Router();
 const commissionController = require("../controller/commission/commission.controller");
 const userCommissionController = require("../controller/commission/userCommission.controller");
 const authmiddleware = require("../middleware/authadmin.middleware");
+const { commissionClaimLimiter } = require("../middleware/rateLimiter.middleware");
 
 // ================= USER REFERRAL COMMISSION ROUTES =================
 // การตั้งค่าคอมมิชชั่นแนะนำเพื่อน (Admin / Public)
@@ -20,7 +21,7 @@ router.get("/user/summary", authmiddleware.isUser, userCommissionController.getS
 router.get("/user/members", authmiddleware.isUser, userCommissionController.getMembers);
 
 // กดรับเงินคอมมิชชั่นเข้ากระเป๋าเครดิตหลัก
-router.post("/user/claim", authmiddleware.isUser, userCommissionController.claimCommission);
+router.post("/user/claim", authmiddleware.isUser, commissionClaimLimiter, userCommissionController.claimCommission);
 
 // ประวัติค่าคอมมิชชั่นที่ได้รับ
 router.get("/user/logs", authmiddleware.isUser, userCommissionController.getLogs);
